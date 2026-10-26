@@ -1,0 +1,432 @@
+.psy-mascot-gif {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.09) 0%, #f8fafc 65%);
+}
+
+.psy-mascot-gif--note {
+  gap: 0.8rem;
+  padding: 0.7rem 0.85rem;
+  background: #f8fafc;
+}
+
+.psy-mascot-gif--empty {
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.75rem 1rem 1.25rem;
+  border: 0;
+  background: transparent;
+  text-align: center;
+}
+
+.psy-mascot-gif--login {
+  margin-top: 1rem;
+}
+
+.psy-mascot-gif__image {
+  display: block;
+  flex: 0 0 auto;
+  width: auto;
+  height: clamp(72px, 8vw, 96px);
+  max-width: 45%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.psy-mascot-gif--login .psy-mascot-gif__image {
+  height: clamp(96px, 12vw, 128px);
+  max-width: 55%;
+}
+
+.psy-mascot-gif--note .psy-mascot-gif__image {
+  height: clamp(62px, 7vw, 82px);
+  max-width: 40%;
+}
+
+.psy-mascot-gif--empty .psy-mascot-gif__image {
+  height: clamp(96px, 14vw, 132px);
+  max-width: 100%;
+}
+
+.psy-mascot-gif__copy {
+  min-width: 0;
+}
+
+.psy-mascot-gif__title {
+  margin: 0;
+  color: #0f172a;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.psy-mascot-gif__message {
+  margin: 0.18rem 0 0;
+  color: #475569;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.psy-mascot-gif--empty .psy-mascot-gif__copy {
+  max-width: 34rem;
+}
+
+.psy-mascot-gif--empty .psy-mascot-gif__title {
+  font-size: 0.95rem;
+}
+
+.psy-page-mascot {
+  margin-bottom: 1rem;
+}
+
+.psy-empty-mascot {
+  max-width: 34rem;
+}
+
+.psy-mascot-greeting {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.1) 0%, #f8fafc 62%);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.psy-mascot-greeting__image {
+  display: block;
+  flex: 0 0 auto;
+  width: auto;
+  height: clamp(96px, 12vw, 112px);
+  max-width: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.psy-mascot-greeting__copy {
+  min-width: 0;
+}
+
+.psy-mascot-greeting__title {
+  margin: 0;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.psy-mascot-greeting__message {
+  margin: 0.15rem 0 0;
+  color: #475569;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.psy-mascot-state {
+  position: relative;
+  display: inline-flex;
+  width: var(--psy-mascot-size, 120px);
+  height: var(--psy-mascot-size, 120px);
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  vertical-align: middle;
+}
+
+.psy-mascot-state::before {
+  position: absolute;
+  inset: 14% 10% 5%;
+  z-index: 0;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(13, 148, 136, 0.16) 0%, transparent 72%);
+  content: '';
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.psy-mascot-state img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 16px rgba(15, 23, 42, 0.14));
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.psy-mascot-launcher {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 5rem;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.psy-mascot-launcher > * {
+  pointer-events: auto;
+}
+
+.psy-mascot-launcher__panel {
+  width: min(21rem, calc(100vw - 2rem));
+  max-height: min(68vh, 26rem, calc(100vh - 12rem));
+  margin-bottom: 0.75rem;
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
+}
+
+.psy-mascot-launcher__panel[hidden] {
+  display: none !important;
+}
+
+.psy-mascot-launcher__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem 0;
+}
+
+.psy-mascot-launcher__eyebrow {
+  margin: 0;
+  color: #0f766e;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.psy-mascot-launcher__title {
+  margin: 0.1rem 0 0;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.psy-mascot-launcher__close {
+  display: inline-flex;
+  width: 1.8rem;
+  height: 1.8rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+}
+
+.psy-mascot-launcher__body {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem 0;
+}
+
+.psy-mascot-launcher__mascot {
+  flex: 0 0 auto;
+}
+
+.psy-mascot-launcher__message {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: #475569;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.psy-mascot-launcher__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.8rem 1rem 1rem;
+}
+
+.psy-mascot-launcher__suggestion {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #99f6e4;
+  border-radius: 999px;
+  background: #f0fdfa;
+  color: #0f766e;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 0.38rem 0.6rem;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.psy-mascot-launcher__suggestion:hover {
+  border-color: #5eead4;
+  background: #ccfbf1;
+}
+
+.psy-mascot-launcher__toggle {
+  position: relative;
+  display: inline-flex;
+  width: 4.2rem;
+  height: 4.2rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.18);
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.psy-mascot-launcher__toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.24);
+}
+
+.psy-mascot-launcher--celebrate .psy-mascot-launcher__toggle {
+  border-color: #2dd4bf;
+  box-shadow: 0 0 0 6px rgba(13, 148, 136, 0.16), 0 18px 40px rgba(15, 23, 42, 0.22);
+}
+
+.psy-mascot-launcher__toggle:focus-visible,
+.psy-mascot-launcher__close:focus-visible,
+.psy-mascot-launcher__suggestion:focus-visible {
+  outline: 2px solid #0d9488;
+  outline-offset: 3px;
+}
+
+.psy-mascot-launcher__pulse {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.45rem;
+  z-index: 2;
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: #0d9488;
+}
+
+.psy-mascot-launcher-spacer {
+  height: 10.5rem;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .psy-mascot-gif {
+    gap: 0.7rem;
+    padding: 0.7rem 0.8rem;
+  }
+
+  .psy-mascot-gif__image {
+    max-width: 42%;
+  }
+
+  .psy-mascot-gif--empty .psy-mascot-gif__image {
+    max-width: 100%;
+  }
+
+  .psy-mascot-greeting {
+    gap: 0.75rem;
+    padding: 0.7rem 0.8rem;
+  }
+
+  .psy-mascot-launcher {
+    right: 0.75rem;
+    bottom: 4.5rem;
+  }
+
+  .psy-mascot-launcher-spacer {
+    height: 10rem;
+  }
+
+  .psy-mascot-launcher__body {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .psy-mascot-launcher__toggle {
+    animation: psy-launcher-arrive 500ms ease-out both;
+  }
+
+  .psy-mascot-launcher__panel:not([hidden]) {
+    animation: psy-launcher-pop 180ms ease-out both;
+    transform-origin: bottom right;
+  }
+
+  .psy-mascot-launcher__pulse {
+    animation: psy-launcher-pulse 2.4s ease-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .psy-mascot-launcher__toggle,
+  .psy-mascot-launcher__panel,
+  .psy-mascot-launcher__pulse {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .psy-mascot-launcher__toggle:hover {
+    transform: none;
+  }
+}
+
+@keyframes psy-launcher-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes psy-launcher-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes psy-launcher-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.35);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(13, 148, 136, 0);
+  }
+}
