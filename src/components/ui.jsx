@@ -1,5 +1,6 @@
 import { useEffect, useId } from 'react'
 import { createPortal } from 'react-dom'
+import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { MascotGif } from './PsychologyMascot'
@@ -248,11 +249,11 @@ const statTones = {
 
 export function StatCard({ label, value, hint, icon: Icon, tone = 'teal', href, onClick }) {
   const styles = statTones[tone] || statTones.teal
-  const Wrapper = href ? 'a' : onClick ? 'button' : 'div'
+  const Wrapper = href ? Link : onClick ? 'button' : 'div'
 
   return (
     <Wrapper
-      href={href}
+      {...(href ? { to: href } : {})}
       onClick={onClick}
       className={cn(
         'group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm shadow-slate-900/[0.02] transition',

@@ -40,7 +40,7 @@ export const session = {
 
 function buildUrl(path, params) {
   const base = API_BASE_URL.replace(/\/$/, '')
-  const url = new URL(`${base}${path.startsWith('/') ? path : `/${path}`}`)
+  const url = new URL(`${base}${path.startsWith('/') ? path : `/${path}`}`, window.location.origin)
 
   Object.entries(params ?? {}).forEach(([key, value]) => {
     if (value === undefined || value === null || value === '') return

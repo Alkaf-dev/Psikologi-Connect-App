@@ -135,6 +135,29 @@ VITE_API_BASE_URL=/api/v1 npm run build
 
 Hasil build ada di `dist/`. Sajikan `dist/` sebagai SPA dan arahkan request `/api` ke backend Laravel.
 
+## GitHub Pages + backend lokal
+
+Frontend bisa disajikan dari GitHub Pages, sementara backend dan data tetap berjalan di komputer.
+
+1. Jalankan backend di port `8000` dan buka tunnel publik ke backend tersebut.
+2. Set repository variable `VITE_API_BASE_URL` ke URL tunnel + `/api/v1`, misalnya:
+   ```text
+   https://contoh-tunnel.trycloudflare.com/api/v1
+   ```
+3. Buka Settings → Pages → Source, pilih **GitHub Actions**.
+4. Push ke `main` atau jalankan workflow **Deploy frontend to GitHub Pages**.
+
+Workflow memakai `VITE_API_BASE_URL` dari repository variable. Jika variable belum diisi, workflow memakai URL tunnel yang tertulis di `.github/workflows/deploy-pages.yml`.
+
+Halaman akan tersedia di `https://alkaf-dev.github.io/Psikologi-Connect-App/`.
+
+Catatan:
+
+- GitHub Pages hanya menyajikan frontend statis; API tetap harus lewat tunnel.
+- Komputer dan tunnel harus tetap menyala saat halaman dipakai.
+- Quick tunnel bisa mati atau berubah URL. Jika berubah, perbarui `VITE_API_BASE_URL` lalu jalankan ulang workflow.
+- Untuk URL API permanen, gunakan Cloudflare named tunnel dengan domain atau ngrok static domain.
+
 ## Data demo
 
 Backend mode demo memakai file `backend/storage/app/private/demo-sheets.json`.
