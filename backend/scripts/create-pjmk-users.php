@@ -1,5 +1,6 @@
 <?php
 
+use App\Repositories\StudyProgramRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Hash;
 
@@ -9,7 +10,12 @@ $app = require __DIR__.'/../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 $users = app(UserRepository::class);
-$prodiId = '01M5C0V9EWP828SVQ4W8CRKD1T';
+$prodiId = (string) (app(StudyProgramRepository::class)->all()->first()['id'] ?? '');
+
+if ($prodiId === '') {
+    fwrite(STDERR, "Prodi demo tidak ditemukan. Jalankan php artisan sheets:setup --demo terlebih dahulu.\n");
+    exit(1);
+}
 
 $accounts = [
     'eka',
