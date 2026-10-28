@@ -2,15 +2,10 @@
 
 Aplikasi portal akademik Prodi Psikologi STIT Muhammadiyah Kediri.
 
-Repo ini berisi dua bagian:
-
-- Frontend React + Vite di root repo.
-- Backend Laravel 12 + Filament + REST API di folder `backend/`.
+Repo ini khusus **frontend React + Vite**. Backend Laravel dan data akademik berada di project/API terpisah.
 
 ## Prasyarat
 
-- PHP 8.2+ dengan ekstensi `openssl`, `pdo`, `mbstring`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`, `fileinfo`, `gd`, `intl`, dan `zip`
-- Composer 2
 - Node.js 20+ dan npm
 - Git
 
@@ -21,11 +16,10 @@ git clone https://github.com/Alkaf-dev/psikologi-connect-app.git
 cd psikologi-connect-app
 ```
 
-## 1. Jalankan backend
+## Jalankan frontend
 
 ```bash
-cd backend
-composer install
+npm install
 ```
 
 Buat file environment:
@@ -39,49 +33,21 @@ copy .env.example .env
 cp .env.example .env
 ```
 
-Lalu siapkan aplikasi dan data demo:
-
-```bash
-php artisan key:generate
-php artisan sheets:setup --demo
-php scripts/create-pjmk-users.php
-php artisan serve --host=127.0.0.1 --port=8000
-```
-
-API berjalan di `http://127.0.0.1:8000/api/v1`.
-Dokumentasi API ada di `backend/docs/openapi.yaml`.
-
-Jika port `8000` sudah dipakai proses lain, gunakan port lain:
-
-```bash
-php artisan serve --host=127.0.0.1 --port=8001
-```
-
-Sesuaikan `VITE_API_BASE_URL` di frontend jika port backend diubah.
-
-## 2. Jalankan frontend
-
-Buka terminal baru dari root repo:
-
-```bash
-npm install
-```
-
-Buat file environment frontend:
-
-```powershell
-copy .env.example .env
-```
-
-```bash
-# macOS/Linux
-cp .env.example .env
-```
-
-Isi `.env`:
+Pilih salah satu isi `.env`:
 
 ```env
+# Backend lokal langsung
 VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1
+```
+
+```env
+# Backend lokal lewat proxy Vite
+VITE_API_BASE_URL=/api/v1
+```
+
+```env
+# API production
+VITE_API_BASE_URL=https://psikologi.abudzargroup.id/api/v1
 ```
 
 Jalankan:
@@ -92,9 +58,20 @@ npm run dev
 
 Buka `http://localhost:5173`.
 
+Jika memakai `/api/v1`, backend harus berjalan di `http://127.0.0.1:8000` karena Vite mem-proxy request `/api` ke sana.
+
+## Backend/API
+
+Frontend ini hanya mengonsumsi REST API. Backend tidak disertakan di repo ini.
+
+- API lokal: `http://127.0.0.1:8000/api/v1`
+- API production: `https://psikologi.abudzargroup.id/api/v1`
+- Dokumentasi API tersedia di project backend terpisah.
+- Backend dan datanya harus tetap berjalan agar login dan data bisa diakses.
+
 ## Akun demo
 
-Semua akun memakai password `password`.
+Akun demo `pjmk@psikologi.test` dan `admin@psikologi.test` memakai password `password`. Akun PJMK lain mengikuti data backend.
 
 | Login | Role |
 | --- | --- |
@@ -105,7 +82,7 @@ Semua akun memakai password `password`.
 | `miqdad` | pjmk |
 | `lora` | pjmk |
 | `firsta` | pjmk |
-| `ica` | pjmk |
+| `raisya` | pjmk |
 | `alkaf` | pjmk |
 | `wahyu` | pjmk |
 | `rara` | pjmk |
@@ -113,7 +90,9 @@ Semua akun memakai password `password`.
 
 Login bisa memakai username, email, atau NIM. Pilih Prodi **Psikologi** saat login.
 
-Akun admin bawaan demo tetap tersedia:
+Jika login akun PJMK tertentu gagal, reset password akun tersebut di backend.
+
+Akun admin bawaan demo:
 
 | Login | Role |
 | --- | --- |
@@ -122,7 +101,13 @@ Akun admin bawaan demo tetap tersedia:
 
 ## Build frontend untuk produksi
 
-Jika frontend dan backend berada di origin yang sama dan `/api` diproxy ke backend:
+```bash
+npm run build
+```
+
+Hasil build ada di `dist/`.
+
+Jika frontend dan API berada di origin yang sama dan `/api` diproxy ke backend:
 
 ```powershell
 $env:VITE_API_BASE_URL='/api/v1'; npm run build
@@ -133,48 +118,38 @@ $env:VITE_API_BASE_URL='/api/v1'; npm run build
 VITE_API_BASE_URL=/api/v1 npm run build
 ```
 
-Hasil build ada di `dist/`. Sajikan `dist/` sebagai SPA dan arahkan request `/api` ke backend Laravel.
+Sajikan `dist/` sebagai SPA dan arahkan request `/api` ke backend Laravel.
 
-## GitHub Pages + backend lokal
+## GitHub Pages
 
-Frontend bisa disajikan dari GitHub Pages, sementara backend dan data tetap berjalan di komputer.
-
-1. Jalankan backend di port `8000` dan buka tunnel publik ke backend tersebut.
-2. Set repository variable `VITE_API_BASE_URL` ke URL tunnel + `/api/v1`, misalnya:
+1. Set repository variable `VITE_API_BASE_URL` ke URL API + `/api/v1`, misalnya:
    ```text
    https://contoh-tunnel.trycloudflare.com/api/v1
    ```
-3. Buka Settings → Pages → Source, pilih **GitHub Actions**.
-4. Push ke `main` atau jalankan workflow **Deploy frontend to GitHub Pages**.
+2. Buka Settings -> Pages -> Source, pilih **GitHub Actions**.
+3. Push ke `main` atau jalankan workflow **Deploy frontend to GitHub Pages**.
 
-Workflow memakai `VITE_API_BASE_URL` dari repository variable. Jika variable belum diisi, workflow memakai URL tunnel yang tertulis di `.github/workflows/deploy-pages.yml`.
-
-Halaman akan tersedia di `https://alkaf-dev.github.io/Psikologi-Connect-App/`.
+Halaman tersedia di `https://alkaf-dev.github.io/Psikologi-Connect-App/`.
 
 Catatan:
 
-- GitHub Pages hanya menyajikan frontend statis; API tetap harus lewat tunnel.
-- Komputer dan tunnel harus tetap menyala saat halaman dipakai.
+- GitHub Pages hanya menyajikan frontend statis; API tetap harus dapat diakses publik.
+- Komputer/backend dan tunnel harus tetap menyala saat halaman dipakai.
 - Quick tunnel bisa mati atau berubah URL. Jika berubah, perbarui `VITE_API_BASE_URL` lalu jalankan ulang workflow.
 - Untuk URL API permanen, gunakan Cloudflare named tunnel dengan domain atau ngrok static domain.
 
-## Data demo
+## Deploy cepat
 
-Backend mode demo memakai file `backend/storage/app/private/demo-sheets.json`.
-File tersebut tidak di-commit karena berisi data lokal.
-
-- `php artisan sheets:setup --demo` membuat data awal.
-- `php scripts/create-pjmk-users.php` membuat atau memperbarui 12 akun PJMK.
-- Untuk mengulang dari awal, hapus `backend/storage/app/private/demo-sheets.json`, lalu jalankan kedua perintah tersebut lagi.
-
-## Panel Laravel opsional
-
-Jika ingin memakai panel Filament di `backend`:
+Setelah perubahan frontend:
 
 ```bash
-cd backend
-npm install
-npm run build
+npm run deploy -- "pesan commit"
 ```
 
-Lalu buka `http://127.0.0.1:8000/app`.
+Atau:
+
+```powershell
+.\deploy.ps1 "pesan commit"
+```
+
+Script akan commit dan push ke `main`; GitHub Actions menangani deployment GitHub Pages.

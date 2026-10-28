@@ -1,0 +1,840 @@
+{
+    "users": [
+        [
+            "id",
+            "name",
+            "email",
+            "npm",
+            "password_hash",
+            "role",
+            "class_name",
+            "cohort",
+            "phone",
+            "active",
+            "created_at",
+            "updated_at",
+            "deleted_at",
+            "prodi_id"
+        ],
+        [
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "Admin Program Studi",
+            "admin@psikologi.test",
+            "ADMIN001",
+            "$2y$12$4j3sg.d4.FAEwjMHDCitn.tQIqUqTC64wF58Q2JUcKcsVg6MPoM72",
+            "super_admin",
+            "",
+            "",
+            "",
+            "1",
+            "2026-10-20T01:44:39+00:00",
+            "2026-10-20T13:44:11+07:00",
+            "",
+            "01M5C0V9EWP828SVQ4W8CRKD1T"
+        ],
+        [
+            "01M5BFPTQ2MKR8ASWTCW9V0AZ6",
+            "Ayu Lestari",
+            "ayu@psikologi.test",
+            "2024001",
+            "$2y$12$sGxPjxYtgRbCViEjs667nuWaQf2yFZf7FC3x28OAWPjGck9psBg/q",
+            "mahasiswa",
+            "Psikologi A",
+            "2024",
+            "0812-0000-0001",
+            "1",
+            "2026-10-20T01:44:39+00:00",
+            "2026-10-20T13:44:12+07:00",
+            "",
+            "01M5C0V9EWP828SVQ4W8CRKD1T"
+        ],
+        [
+            "01M5BFPTXHZS0HZ4ZZPDZ0P1F7",
+            "Bima Pratama",
+            "bima@psikologi.test",
+            "2024002",
+            "$2y$12$vQdOWdkQdk7rlObMWV5L/.QgMDEau5NA264KBzXbpdVK15z8eB9di",
+            "mahasiswa",
+            "Psikologi A",
+            "2024",
+            "0812-0000-0002",
+            "1",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T13:44:12+07:00",
+            "",
+            "01M5C0V9EWP828SVQ4W8CRKD1T"
+        ],
+        [
+            "01M5BFPV43N9BJEVYWYBY5FRV3",
+            "Citra Dewi",
+            "citra@psikologi.test",
+            "2024003",
+            "$2y$12$EqsnHhqhdJklO.1sFLXeyePRDixuyonQKUEnftz2TV0mPRPQ1K4qm",
+            "mahasiswa",
+            "Psikologi A",
+            "2024",
+            "0812-0000-0003",
+            "1",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T13:44:12+07:00",
+            "",
+            "01M5C0V9EWP828SVQ4W8CRKD1T"
+        ],
+        [
+            "01M5BFPVAK8DMAJXNTWMYBF499",
+            "Dimas Nugraha",
+            "dimas@psikologi.test",
+            "2024004",
+            "$2y$12$zOxLIk./dDBj4PCI19/rieZXEVYGfHF0ykQsROUf8LJzJTF9ChP5.",
+            "mahasiswa",
+            "Psikologi B",
+            "2024",
+            "0812-0000-0004",
+            "1",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T13:44:12+07:00",
+            "",
+            "01M5C0V9EWP828SVQ4W8CRKD1T"
+        ],
+        [
+            "01M5C0V9NY1ZKM0118PPSS5WE6",
+            "PJMK Program Studi",
+            "pjmk@psikologi.test",
+            "PJMK001",
+            "$2y$12$7hrTSRb3mC3rojixCiu/fuFqirvKYg56A45OOc9rD6.HMJ5mC4bwK",
+            "pjmk",
+            "",
+            "",
+            "",
+            "1",
+            "2026-10-20T13:44:12+07:00",
+            "2026-10-20T13:44:12+07:00",
+            "",
+            "01M5C0V9EWP828SVQ4W8CRKD1T"
+        ]
+    ],
+    "courses": [
+        [
+            "id",
+            "code",
+            "name",
+            "credits",
+            "lecturer",
+            "semester",
+            "class_name",
+            "description",
+            "created_at",
+            "updated_at",
+            "deleted_at",
+            "prodi_ids",
+            "meeting_link"
+        ],
+        [
+            "01M5BFPVAP8GSEH32SD4X4TTE9",
+            "PSI101",
+            "Psikologi Umum",
+            3,
+            "Dr. Rani Kusuma",
+            "Ganjil",
+            "Psikologi A",
+            "Pengantar konsep dasar psikologi dan penerapannya.",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T16:54:38+07:00",
+            "",
+            "01M5C0V9EWP828SVQ4W8CRKD1T"
+        ],
+        [
+            "01M5BFPVBC2FRKDQQGGAPM5SCW",
+            "PSI201",
+            "Psikologi Perkembangan",
+            3,
+            "Dr. Sinta Maharani",
+            "Ganjil",
+            "Psikologi A",
+            "Perkembangan manusia dari masa kanak hingga dewasa.",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T16:54:38+07:00",
+            "",
+            "01M5C0V9EWP828SVQ4W8CRKD1T"
+        ],
+        [
+            "01M5BFPVBSCCN3YRVHVX265090",
+            "PSI301",
+            "Metodologi Penelitian",
+            2,
+            "Dr. Bagus Saputra",
+            "Ganjil",
+            "Psikologi A",
+            "Perancangan penelitian kuantitatif dan kualitatif.",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T16:54:41+07:00",
+            "",
+            "01M5C0V9EWP828SVQ4W8CRKD1T"
+        ],
+        [
+            "01M5BFPVC7TRZ5J5N2EC5CGKTF",
+            "PSI102",
+            "Psikologi Sosial",
+            3,
+            "Dr. Maya Puspita",
+            "Ganjil",
+            "Psikologi B",
+            "Perilaku individu dalam konteks sosial.",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T16:54:41+07:00",
+            "",
+            "01M5C0V9EWP828SVQ4W8CRKD1T"
+        ]
+    ],
+    "schedules": [
+        [
+            "id",
+            "course_id",
+            "day",
+            "start_time",
+            "end_time",
+            "room",
+            "class_name",
+            "created_at",
+            "updated_at",
+            "deleted_at",
+            "mode",
+            "platform",
+            "meeting_link"
+        ],
+        [
+            "01M5BFPVCAH3RZT4Y3S6V7D4XF",
+            "01M5BFPVAP8GSEH32SD4X4TTE9",
+            "Senin",
+            "08:00",
+            "10:30",
+            "Ruang A201",
+            "Psikologi A",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ],
+        [
+            "01M5BFPVCN0FFCBKMEZ7T6VZM8",
+            "01M5BFPVBC2FRKDQQGGAPM5SCW",
+            "Selasa",
+            "10:00",
+            "12:30",
+            "Ruang A203",
+            "Psikologi A",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ],
+        [
+            "01M5BFPVD0EF5S6YEFXEX0RQQH",
+            "01M5BFPVBSCCN3YRVHVX265090",
+            "Kamis",
+            "13:00",
+            "15:00",
+            "",
+            "Psikologi A",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-21T12:47:42+07:00",
+            "",
+            "online",
+            "zoom",
+            "https://zoom.us/j/1234567890"
+        ],
+        [
+            "01M5BFPVDDS8SS74834TY1R4C1",
+            "01M5BFPVC7TRZ5J5N2EC5CGKTF",
+            "Jumat",
+            "08:00",
+            "10:30",
+            "Ruang B101",
+            "Psikologi B",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ]
+    ],
+    "groups": [
+        [
+            "id",
+            "course_id",
+            "name",
+            "leader_id",
+            "description",
+            "created_at",
+            "updated_at",
+            "deleted_at"
+        ],
+        [
+            "01M5BFPVDT9ECQDX8W28DW8Z2B",
+            "01M5BFPVBC2FRKDQQGGAPM5SCW",
+            "Kelompok 1 - Observasi",
+            "01M5BFPTQ2MKR8ASWTCW9V0AZ6",
+            "Observasi perkembangan anak usia sekolah.",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ],
+        [
+            "01M5BFPVF9Y3Y4AD0SWNNKZN3N",
+            "01M5BFPVBSCCN3YRVHVX265090",
+            "Kelompok 2",
+            "01M5BFPTXHZS0HZ4ZZPDZ0P1F7",
+            "Survei persepsi mahasiswa terhadap layanan kampus.",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-22T07:52:47+07:00",
+            ""
+        ],
+        [
+            "01M5BFPVGBEZBDMDTG993EG75S",
+            "01M5BFPVC7TRZ5J5N2EC5CGKTF",
+            "Kelompok B1",
+            "01M5BFPVAK8DMAJXNTWMYBF499",
+            "Studi kasus perilaku sosial di lingkungan kampus.",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ],
+        [
+            "01M5GHGS7B0NZ4Q43SGW4HF97F",
+            "01M5BFPVBSCCN3YRVHVX265090",
+            "Kel 1",
+            "01M5BFPTQ2MKR8ASWTCW9V0AZ6",
+            "",
+            "2026-10-22T07:52:31+07:00",
+            "2026-10-22T07:54:32+07:00",
+            ""
+        ],
+        [
+            "01M5GHM0THH8M0PP65D93TKR0P",
+            "01M5BFPVBSCCN3YRVHVX265090",
+            "Kelompok 3",
+            "01M5BFPVAK8DMAJXNTWMYBF499",
+            "",
+            "2026-10-22T07:54:17+07:00",
+            "2026-10-22T07:54:17+07:00",
+            ""
+        ]
+    ],
+    "group_members": [
+        [
+            "id",
+            "group_id",
+            "user_id",
+            "role",
+            "created_at",
+            "deleted_at"
+        ],
+        [
+            "01M5BFPVE557MSNYMHFEF504MC",
+            "01M5BFPVDT9ECQDX8W28DW8Z2B",
+            "01M5BFPTQ2MKR8ASWTCW9V0AZ6",
+            "ketua",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ],
+        [
+            "01M5BFPVEFCXW7JBTRD8X559QY",
+            "01M5BFPVDT9ECQDX8W28DW8Z2B",
+            "01M5BFPTXHZS0HZ4ZZPDZ0P1F7",
+            "anggota",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ],
+        [
+            "01M5BFPVEWNEFDFJF50WAS1F4B",
+            "01M5BFPVDT9ECQDX8W28DW8Z2B",
+            "01M5BFPV43N9BJEVYWYBY5FRV3",
+            "anggota",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ],
+        [
+            "01M5BFPVFMKFGGRTHY5R17F9T9",
+            "01M5BFPVF9Y3Y4AD0SWNNKZN3N",
+            "01M5BFPTXHZS0HZ4ZZPDZ0P1F7",
+            "ketua",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-22T07:52:47+07:00"
+        ],
+        [
+            "01M5BFPVFZHRCRMQ0TBDW95WWY",
+            "01M5BFPVF9Y3Y4AD0SWNNKZN3N",
+            "01M5BFPV43N9BJEVYWYBY5FRV3",
+            "anggota",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-22T07:52:47+07:00"
+        ],
+        [
+            "01M5BFPVGRNVBSNAJJT5BDPKK3",
+            "01M5BFPVGBEZBDMDTG993EG75S",
+            "01M5BFPVAK8DMAJXNTWMYBF499",
+            "ketua",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ],
+        [
+            "01M5GHGS7F093GF7TFWZE7856P",
+            "01M5GHGS7B0NZ4Q43SGW4HF97F",
+            "01M5BFPTQ2MKR8ASWTCW9V0AZ6",
+            "ketua",
+            "2026-10-22T07:52:31+07:00",
+            "2026-10-22T07:54:25+07:00"
+        ],
+        [
+            "01M5GHH93ZSYNZGG4BAV6T6T8M",
+            "01M5BFPVF9Y3Y4AD0SWNNKZN3N",
+            "01M5BFPTXHZS0HZ4ZZPDZ0P1F7",
+            "ketua",
+            "2026-10-22T07:52:47+07:00",
+            ""
+        ],
+        [
+            "01M5GHH94E33GA6PPNGX4NZ6E8",
+            "01M5BFPVF9Y3Y4AD0SWNNKZN3N",
+            "01M5BFPV43N9BJEVYWYBY5FRV3",
+            "anggota",
+            "2026-10-22T07:52:47+07:00",
+            ""
+        ],
+        [
+            "01M5GHM0TNVCZ869JAPEAAGA90",
+            "01M5GHM0THH8M0PP65D93TKR0P",
+            "01M5BFPVAK8DMAJXNTWMYBF499",
+            "ketua",
+            "2026-10-22T07:54:17+07:00",
+            ""
+        ],
+        [
+            "01M5GHM8GEND3NA35CYERJAY1W",
+            "01M5GHGS7B0NZ4Q43SGW4HF97F",
+            "01M5BFPTQ2MKR8ASWTCW9V0AZ6",
+            "ketua",
+            "2026-10-22T07:54:25+07:00",
+            "2026-10-22T07:54:32+07:00"
+        ],
+        [
+            "01M5GHMFY7BPVCYWNFY8QA5HVN",
+            "01M5GHGS7B0NZ4Q43SGW4HF97F",
+            "01M5BFPTQ2MKR8ASWTCW9V0AZ6",
+            "ketua",
+            "2026-10-22T07:54:32+07:00",
+            ""
+        ]
+    ],
+    "tasks": [
+        [
+            "id",
+            "course_id",
+            "group_id",
+            "title",
+            "description",
+            "type",
+            "deadline",
+            "created_by",
+            "created_at",
+            "updated_at",
+            "deleted_at",
+            "group_ids",
+            "meeting_number",
+            "material_url",
+            "start_at",
+            "deadline_note",
+            "collection_link",
+            "status"
+        ],
+        [
+            "01M5BFPVH5Q2D9RV135KRP77N4",
+            "01M5BFPVAP8GSEH32SD4X4TTE9",
+            "",
+            "Refleksi Psikologi Umum",
+            "Tuliskan refleksi 500 kata tentang konsep psikologi yang paling relevan dengan pengalaman Anda.",
+            "individu",
+            "2026-10-23 23:59",
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-22T21:53:24+07:00",
+            "",
+            "",
+            "",
+            "https://tahfizh.abudzarproject.com/penginputan?pekan=3",
+            "",
+            "",
+            "",
+            "active"
+        ],
+        [
+            "01M5BFPVHT15EC334MS2QWSV42",
+            "01M5BFPVBC2FRKDQQGGAPM5SCW",
+            "",
+            "Laporan Observasi Perkembangan Anak",
+            "Laporan observasi kelompok dalam format PDF. Cantumkan metode, temuan, dan refleksi.",
+            "individu",
+            "2026-10-27T23:59:00+00:00",
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ],
+        [
+            "01M5BFPVJ5QMFY2CPHW4KYXQ1X",
+            "01M5BFPVBSCCN3YRVHVX265090",
+            "01M5BFPVF9Y3Y4AD0SWNNKZN3N",
+            "Proposal Penelitian Kelompok",
+            "Susun proposal penelitian lengkap dengan latar belakang, rumusan masalah, dan metode.",
+            "kelompok",
+            "2026-11-03T23:59:00+00:00",
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ],
+        [
+            "01M5BFPVJJ0S3JKTZFYJD2GFE8",
+            "01M5BFPVC7TRZ5J5N2EC5CGKTF",
+            "",
+            "Studi Kasus Psikologi Sosial",
+            "Analisis satu fenomena sosial di sekitar Anda menggunakan teori psikologi sosial.",
+            "individu",
+            "2026-10-25T23:59:00+00:00",
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ]
+    ],
+    "submissions": [
+        [
+            "id",
+            "task_id",
+            "user_id",
+            "group_id",
+            "status",
+            "link",
+            "notes",
+            "grade",
+            "feedback",
+            "submitted_at",
+            "created_at",
+            "updated_at",
+            "deleted_at"
+        ],
+        [
+            "01M5BFPVJSXRW3AP38TQJT2679",
+            "01M5BFPVH5Q2D9RV135KRP77N4",
+            "01M5BFPTQ2MKR8ASWTCW9V0AZ6",
+            "",
+            "submitted",
+            "https://docs.google.com/document/d/contoh-refleksi-ayu",
+            "Sudah saya kerjakan, mohon dicek.",
+            "",
+            "",
+            "2026-10-19T20:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ],
+        [
+            "01M5BFPVKACKVSQ2R1KVCZDW32",
+            "01M5BFPVJ5QMFY2CPHW4KYXQ1X",
+            "01M5BFPTXHZS0HZ4ZZPDZ0P1F7",
+            "01M5BFPVF9Y3Y4AD0SWNNKZN3N",
+            "submitted",
+            "https://docs.google.com/document/d/contoh-proposal-kelompok-2",
+            "Revisi proposal kelompok 2.",
+            "",
+            "",
+            "2026-10-19T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ],
+        [
+            "01M5BFPVKQV7J9TFA0WC5G7KY2",
+            "01M5BFPVHT15EC334MS2QWSV42",
+            "01M5BFPV43N9BJEVYWYBY5FRV3",
+            "",
+            "graded",
+            "https://docs.google.com/document/d/contoh-laporan-citra",
+            "",
+            "88",
+            "Analisis sudah baik. Perdalam bagian refleksi dan tambahkan sumber primer.",
+            "2026-10-18T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ]
+    ],
+    "announcements": [
+        [
+            "id",
+            "title",
+            "body",
+            "audience",
+            "published_at",
+            "created_by",
+            "created_at",
+            "updated_at",
+            "deleted_at",
+            "prodi_ids",
+            "course_id"
+        ],
+        [
+            "01M5BFPVKVNSX748S1002DWDAD",
+            "Selamat datang di Psikologi Connect",
+            "Halo mahasiswa Psikologi!\n\nPsikologi Connect adalah portal akademik untuk melihat jadwal, tugas, kelompok, dan pengumuman. Silakan masuk menggunakan email atau NPM Anda.",
+            "all",
+            "2026-10-18T12:54:45+07:00",
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T12:54:45+07:00",
+            ""
+        ],
+        [
+            "01M5BFPVMG1V2JNRCQA7VQZKDW",
+            "Pengisian KRS Semester Ganjil",
+            "Pengisian KRS dibuka sampai akhir minggu ini. Pastikan mata kuliah yang diambil sesuai dengan rencana studi Anda.",
+            "mahasiswa",
+            "2026-10-19T01:44:40+00:00",
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ],
+        [
+            "01M5BFPVMYHT3MCW5WE8GWKBBJ",
+            "Pengingat Pengumpulan Tugas",
+            "Jangan lupa mengumpulkan tugas melalui portal sebelum deadline. Tautan yang dikumpulkan harus dapat diakses oleh dosen.",
+            "mahasiswa",
+            "2026-10-20T01:44:40+00:00",
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "2026-10-20T01:44:40+00:00",
+            "2026-10-20T01:44:40+00:00",
+            ""
+        ]
+    ],
+    "settings": [
+        [
+            "key",
+            "value",
+            "updated_at"
+        ],
+        [
+            "program_name",
+            "Program Studi Psikologi",
+            "2026-10-20T16:54:41+07:00"
+        ],
+        [
+            "academic_year",
+            "2026/2027",
+            "2026-10-20T16:54:41+07:00"
+        ],
+        [
+            "semester",
+            "Ganjil",
+            "2026-10-20T16:54:41+07:00"
+        ],
+        [
+            "contact_email",
+            "psikologi@example.ac.id",
+            "2026-10-20T16:54:41+07:00"
+        ],
+        [
+            "contact_phone",
+            "0812-3456-7890",
+            "2026-10-20T16:54:41+07:00"
+        ],
+        [
+            "public_tagline",
+            "Ruang belajar, berkolaborasi, dan bertumbuh bersama.",
+            "2026-10-20T16:54:41+07:00"
+        ],
+        [
+            "public_about",
+            "Psikologi Connect membantu mahasiswa mengakses jadwal kuliah, tugas, kelompok, dan pengumuman dalam satu tempat.",
+            "2026-10-20T16:54:41+07:00"
+        ],
+        [
+            "portal_note",
+            "Pilih Prodi, lalu masuk dengan email atau NIM untuk melihat aktivitas akademik Anda.",
+            "2026-10-20T16:54:41+07:00"
+        ]
+    ],
+    "study_programs": [
+        [
+            "id",
+            "code",
+            "name",
+            "degree",
+            "active",
+            "created_at",
+            "updated_at",
+            "deleted_at"
+        ],
+        [
+            "01M5BY0RST4KD8VY9MY7Z4W8E3",
+            "psi",
+            "Psikologi",
+            "S1",
+            "1",
+            "2026-10-20T12:54:45+07:00",
+            "2026-10-20T17:01:03+07:00",
+            "2026-10-20T17:01:03+07:00"
+        ],
+        [
+            "01M5BYFS2M6VZD31EZDGR99P1B",
+            "es",
+            "Ekonomi Syari'ah",
+            "S1",
+            "1",
+            "2026-10-20T13:02:57+07:00",
+            "2026-10-20T13:02:57+07:00",
+            ""
+        ],
+        [
+            "01M5BYGJS0HDFRBZ3MCR64Y6D1",
+            "hki",
+            "Hukum Keluarga Islam",
+            "S1",
+            "1",
+            "2026-10-20T13:03:23+07:00",
+            "2026-10-20T13:03:23+07:00",
+            ""
+        ],
+        [
+            "01M5C0V9EWP828SVQ4W8CRKD1T",
+            "psikologi",
+            "Psikologi",
+            "S1",
+            "1",
+            "2026-10-20T13:44:11+07:00",
+            "2026-10-20T13:44:11+07:00",
+            ""
+        ],
+        [
+            "01M5CDP8DAX2X85D5R4W7ET3C8",
+            "pgmi",
+            "Pendidikan Guru Madrasah Ibtidaiyah",
+            "S1",
+            "1",
+            "2026-10-20T17:28:38+07:00",
+            "2026-10-20T17:28:38+07:00",
+            ""
+        ]
+    ],
+    "notification_reads": [
+        [
+            "id",
+            "user_id",
+            "notification_key",
+            "read_at",
+            "created_at",
+            "updated_at",
+            "deleted_at"
+        ],
+        [
+            "01M5H32Z8MC6H0GBX21EJ6PXK8",
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "schedule:01M5BFPVD0EF5S6YEFXEX0RQQH:2026-10-22",
+            "2026-10-22T12:59:32+07:00",
+            "2026-10-22T12:59:32+07:00",
+            "2026-10-22T12:59:32+07:00",
+            ""
+        ],
+        [
+            "01M5H32Z8NH151VMFXAJY4T7K1",
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "schedule:01M5BFPVDDS8SS74834TY1R4C1:2026-10-23",
+            "2026-10-22T12:59:32+07:00",
+            "2026-10-22T12:59:32+07:00",
+            "2026-10-22T12:59:32+07:00",
+            ""
+        ],
+        [
+            "01M5H32Z8NH151VMFXAJY4T7K2",
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "task:01M5BFPVH5Q2D9RV135KRP77N4:1792799940",
+            "2026-10-22T12:59:32+07:00",
+            "2026-10-22T12:59:32+07:00",
+            "2026-10-22T12:59:32+07:00",
+            ""
+        ],
+        [
+            "01M5H32Z8P1HS3080FCW2A0HT0",
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "task:01M5BFPVJJ0S3JKTZFYJD2GFE8:1792972740",
+            "2026-10-22T12:59:32+07:00",
+            "2026-10-22T12:59:32+07:00",
+            "2026-10-22T12:59:32+07:00",
+            ""
+        ],
+        [
+            "01M5H32Z96D4NJRKHB496XV2DF",
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "task:01M5BFPVHT15EC334MS2QWSV42:1793145540",
+            "2026-10-22T12:59:32+07:00",
+            "2026-10-22T12:59:32+07:00",
+            "2026-10-22T12:59:32+07:00",
+            ""
+        ],
+        [
+            "01M5H32Z9JB9PW7A3PXCBR57VV",
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "task:01M5BFPVJ5QMFY2CPHW4KYXQ1X:1793750340",
+            "2026-10-22T12:59:32+07:00",
+            "2026-10-22T12:59:32+07:00",
+            "2026-10-22T12:59:32+07:00",
+            ""
+        ]
+    ],
+    "api_tokens": [
+        [
+            "id",
+            "user_id",
+            "name",
+            "token_hash",
+            "last_used_at",
+            "expires_at",
+            "revoked_at",
+            "created_at",
+            "updated_at",
+            "deleted_at"
+        ],
+        [
+            "01M5MMQH2R0YD55WBFVGACH6FK",
+            "01M5BFPTQ2MKR8ASWTCW9V0AZ6",
+            "Smoke Test",
+            "5d2a29a1507d0007e1b7e966406e7fbecb96eebc04b7b030c6d2a6ff186af17a",
+            "2026-10-23T22:05:35+07:00",
+            "2026-11-22T22:05:35+07:00",
+            "",
+            "2026-10-23T22:05:35+07:00",
+            "2026-10-23T22:05:35+07:00",
+            ""
+        ],
+        [
+            "01M5Q9T300QDWPM73TZ4J5X14H",
+            "01M5BFPTQ2MKR8ASWTCW9V0AZ6",
+            "Web React",
+            "ce14f1a374520abe0d53e179a62b600777e2847ba5f354908219a6f0090b4a08",
+            "2026-10-24T22:52:35+07:00",
+            "2026-11-23T22:52:28+07:00",
+            "",
+            "2026-10-24T22:52:28+07:00",
+            "2026-10-24T22:52:35+07:00",
+            ""
+        ],
+        [
+            "01M5Q9T46EHC1STETWHBX7DDM8",
+            "01M5BFPTEJRXSS6W5B3ANENFR6",
+            "Web React Staff",
+            "75972e1bdcaedc198847ff0538a0ef3a507eb65160a360ee46221e7478866e07",
+            "2026-10-24T22:52:36+07:00",
+            "2026-11-23T22:52:29+07:00",
+            "",
+            "2026-10-24T22:52:29+07:00",
+            "2026-10-24T22:52:36+07:00",
+            ""
+        ]
+    ]
+}
