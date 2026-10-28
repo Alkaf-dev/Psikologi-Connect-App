@@ -43,7 +43,7 @@ export default function StaffSchedule() {
         room: '',
         platform: 'zoom',
         meeting_link: '',
-        class_name: 'Psikologi A',
+        class_name: 'PSI',
       }}
       loadLookups={async () => ({ courses: await loadCourseOptions() })}
       deferLookups

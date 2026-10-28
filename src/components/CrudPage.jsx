@@ -119,7 +119,17 @@ function FormField({ field, values, lookups, errors, onChange }) {
                   )
                 }
 
-                const selected = currentArray.includes(option.value)
+                const isMatch = (item) => {
+                  if (item === option.value) return true
+                  const lower = String(item || '').toLowerCase()
+                  if (option.value === 'PSI' && (lower === 'psikologi islam' || lower === 'psikologi' || lower.includes('psikologi'))) return true
+                  if (option.value === 'HKI' && (lower === 'hukum keluarga islam' || lower.includes('hukum keluarga'))) return true
+                  if (option.value === 'ES' && (lower === "ekonomi syari'ah" || lower === 'ekonomi syariah' || lower.includes('ekonomi syari'))) return true
+                  if (option.value === 'PGMI' && (lower === 'pendidikan guru madrasah ibtidaiyah' || lower.includes('madrasah ibtidaiyah'))) return true
+                  return false
+                }
+
+                const selected = currentArray.some(isMatch)
                 return (
                   <label
                     key={option.value}
@@ -134,12 +144,9 @@ function FormField({ field, values, lookups, errors, onChange }) {
                       type="checkbox"
                       checked={selected}
                       onChange={(event) => {
-                        const next = [...currentArray]
+                        let next = currentArray.filter((item) => !isMatch(item))
                         if (event.target.checked) {
-                          if (!next.includes(option.value)) next.push(option.value)
-                        } else {
-                          const index = next.indexOf(option.value)
-                          if (index >= 0) next.splice(index, 1)
+                          next.push(option.value)
                         }
                         const finalValue = field.outputString ? next.join(', ') : next
                         onChange(field.name, finalValue)

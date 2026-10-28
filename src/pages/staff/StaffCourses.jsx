@@ -23,7 +23,7 @@ export default function StaffCourses() {
         credits: 3,
         lecturer: '',
         semester: 'Ganjil',
-        class_name: 'Psikologi Islam',
+        class_name: 'PSI',
         prodi_ids: [],
         meeting_link: '',
         description: '',

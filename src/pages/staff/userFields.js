@@ -38,7 +38,7 @@ export function buildUserFields({ studentOnly = false } = {}) {
       colSpan: 2,
       options: CLASS_OPTIONS,
       required: (values) => values.role === 'mahasiswa',
-      help: 'Centang kelas mahasiswa (misal: Psikologi Islam, 1A).',
+      help: 'Centang kelas mahasiswa (misal: PSI, 1A).',
     },
     {
       name: 'cohort',
