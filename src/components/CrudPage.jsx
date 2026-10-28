@@ -27,6 +27,7 @@ import {
   Textarea,
 } from './ui'
 import { MascotGif } from './PsychologyMascot'
+import { parseClassSelection } from '../lib/classOptions'
 
 function resolveOptions(options, values, lookups) {
   if (!options) return []
@@ -95,11 +96,38 @@ function FormField({ field, values, lookups, errors, onChange }) {
       )
 
     case 'multiselect': {
-      const currentArray = Array.isArray(value)
-        ? value
-        : typeof value === 'string'
-          ? value.split(',').map((s) => s.trim()).filter(Boolean)
-          : []
+      const validOptions = (options || []).filter((opt) => opt && opt.value !== undefined)
+      const validValues = validOptions.map((opt) => opt.value)
+      const validValuesSet = new Set(validValues.map((v) => String(v)))
+
+      let currentSelected = []
+      if (typeof field.parseValue === 'function') {
+        currentSelected = field.parseValue(value)
+      } else if (field.name === 'class_name') {
+        currentSelected = parseClassSelection(value)
+      } else if (Array.isArray(value)) {
+        currentSelected = value
+          .map((v) => (typeof v === 'object' && v !== null ? v.value : v))
+          .filter((v) => validValuesSet.has(String(v)))
+      } else if (typeof value === 'string' && value.trim()) {
+        const parts = value.split(',').map((s) => s.trim()).filter(Boolean)
+        currentSelected = parts.filter((p) => validValuesSet.has(String(p)))
+      }
+
+      currentSelected = Array.from(new Set(currentSelected)).filter((v) => validValuesSet.has(String(v)))
+
+      const handleToggle = (optValue, isChecked) => {
+        let next
+        if (isChecked) {
+          next = [...currentSelected, optValue]
+        } else {
+          next = currentSelected.filter((v) => String(v) !== String(optValue))
+        }
+
+        const ordered = validValues.filter((v) => next.some((item) => String(item) === String(v)))
+        const finalValue = field.outputString ? ordered.join(', ') : ordered
+        onChange(field.name, finalValue)
+      }
 
       return (
         <Field label={field.label} required={required} error={errorMessage} help={field.help} className={field.colSpan === 2 ? 'sm:col-span-2' : ''}>
@@ -119,17 +147,7 @@ function FormField({ field, values, lookups, errors, onChange }) {
                   )
                 }
 
-                const isMatch = (item) => {
-                  if (item === option.value) return true
-                  const lower = String(item || '').toLowerCase()
-                  if (option.value === 'PSI' && (lower === 'psikologi islam' || lower === 'psikologi' || lower.includes('psikologi'))) return true
-                  if (option.value === 'HKI' && (lower === 'hukum keluarga islam' || lower.includes('hukum keluarga'))) return true
-                  if (option.value === 'ES' && (lower === "ekonomi syari'ah" || lower === 'ekonomi syariah' || lower.includes('ekonomi syari'))) return true
-                  if (option.value === 'PGMI' && (lower === 'pendidikan guru madrasah ibtidaiyah' || lower.includes('madrasah ibtidaiyah'))) return true
-                  return false
-                }
-
-                const selected = currentArray.some(isMatch)
+                const selected = currentSelected.some((v) => String(v) === String(option.value))
                 return (
                   <label
                     key={option.value}
@@ -143,14 +161,7 @@ function FormField({ field, values, lookups, errors, onChange }) {
                     <input
                       type="checkbox"
                       checked={selected}
-                      onChange={(event) => {
-                        let next = currentArray.filter((item) => !isMatch(item))
-                        if (event.target.checked) {
-                          next.push(option.value)
-                        }
-                        const finalValue = field.outputString ? next.join(', ') : next
-                        onChange(field.name, finalValue)
-                      }}
+                      onChange={(event) => handleToggle(option.value, event.target.checked)}
                       className="h-3.5 w-3.5 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
                     />
                     <span className="min-w-0 truncate">{option.label}</span>
@@ -159,10 +170,10 @@ function FormField({ field, values, lookups, errors, onChange }) {
               })
             )}
           </div>
-          {field.showPreview !== false && currentArray.length > 0 ? (
+          {field.showPreview !== false && currentSelected.length > 0 ? (
             <p className="mt-1 text-[11px] text-teal-700 font-medium">
               <span className="text-slate-500 font-normal">Terpilih: </span>
-              {currentArray.join(', ')}
+              {currentSelected.join(', ')}
             </p>
           ) : null}
         </Field>

@@ -3,7 +3,7 @@ import CrudPage from '../../components/CrudPage'
 import { Badge } from '../../components/ui'
 import { DAYS } from '../../lib/utils'
 import { courseLabel, loadCourseOptions } from '../../lib/staffLookups'
-import { CLASS_OPTIONS } from '../../lib/classOptions'
+import { CLASS_OPTIONS, formatClassDisplay, parseClassSelection } from '../../lib/classOptions'
 
 function timeLabel(value) {
   return (value || '').slice(0, 5) || '-'
@@ -66,6 +66,7 @@ export default function StaffSchedule() {
           required: true,
           colSpan: 2,
           options: CLASS_OPTIONS,
+          parseValue: parseClassSelection,
           help: 'Centang kelas atau program studi untuk jadwal ini.',
         },
         { name: 'start_time', label: 'Mulai', type: 'time', required: true },
@@ -168,7 +169,7 @@ export default function StaffSchedule() {
           key: 'class_name',
           label: 'Kelas',
           className: 'text-center',
-          render: (schedule) => <Badge variant="neutral">{schedule.class_name}</Badge>,
+          render: (schedule) => <Badge variant="neutral">{formatClassDisplay(schedule.class_name)}</Badge>,
         },
       ]}
       mapItemToForm={(schedule) => ({

@@ -2,7 +2,7 @@ import { BookOpen, ExternalLink } from 'lucide-react'
 import CrudPage from '../../components/CrudPage'
 import { Badge } from '../../components/ui'
 import { loadProgramOptions } from '../../lib/staffLookups'
-import { CLASS_OPTIONS } from '../../lib/classOptions'
+import { CLASS_OPTIONS, formatClassDisplay, parseClassSelection } from '../../lib/classOptions'
 
 export default function StaffCourses() {
   return (
@@ -43,6 +43,7 @@ export default function StaffCourses() {
           required: true,
           colSpan: 2,
           options: CLASS_OPTIONS,
+          parseValue: parseClassSelection,
           help: 'Centang program studi dan/atau kelas rombel (1A, 1B, 1C) yang mengambil mata kuliah ini.',
         },
         {
@@ -98,7 +99,7 @@ export default function StaffCourses() {
           render: (course) => (
             <div>
               <p className="text-xs font-medium text-slate-700">{course.semester}</p>
-              <p className="text-[10px] text-slate-400">{course.class_name}</p>
+              <p className="text-[10px] text-slate-400">{formatClassDisplay(course.class_name)}</p>
             </div>
           ),
         },

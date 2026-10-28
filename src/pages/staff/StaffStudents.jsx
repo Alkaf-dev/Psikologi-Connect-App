@@ -5,6 +5,7 @@ import UserGroupsModal from '../../components/UserGroupsModal'
 import { Badge, Button } from '../../components/ui'
 import { formatDate } from '../../lib/utils'
 import { loadProgramOptions } from '../../lib/staffLookups'
+import { formatClassDisplay } from '../../lib/classOptions'
 import { buildUserFields, emptyUserValues, userToForm, userToPayload } from './userFields'
 
 const activeOptions = [
@@ -65,7 +66,7 @@ export default function StaffStudents() {
             className: 'text-center',
             render: (student) => (
               <div>
-                <p className="text-xs font-medium text-slate-700">{student.class_name || '-'}</p>
+                <p className="text-xs font-medium text-slate-700">{formatClassDisplay(student.class_name)}</p>
                 <p className="text-[10px] text-slate-400">{student.cohort ? `Angkatan ${student.cohort}` : '-'}</p>
               </div>
             ),

@@ -21,6 +21,7 @@ import {
   Skeleton,
 } from '../../components/ui'
 import { MascotGif } from '../../components/PsychologyMascot'
+import { formatClassDisplay } from '../../lib/classOptions'
 
 const todayIndex = new Date().getDay()
 const todayName = DAYS[(todayIndex + 6) % 7]
@@ -174,7 +175,7 @@ export default function StudentSchedule() {
                         </Badge>
                         <span className="text-[11px] font-medium text-slate-400">{schedule.course_code}</span>
                         <Badge variant="teal" className="ml-auto">
-                          {schedule.class_name}
+                          {formatClassDisplay(schedule.class_name)}
                         </Badge>
                       </div>
                       <h3 className="mt-2 text-sm font-semibold text-slate-900">{schedule.course_name}</h3>

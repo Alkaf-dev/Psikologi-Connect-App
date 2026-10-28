@@ -1,4 +1,4 @@
-import { CLASS_OPTIONS } from '../../lib/classOptions'
+import { CLASS_OPTIONS, parseClassSelection } from '../../lib/classOptions'
 
 export const roleOptions = [
   { value: 'mahasiswa', label: 'Mahasiswa' },
@@ -37,6 +37,7 @@ export function buildUserFields({ studentOnly = false } = {}) {
       outputString: true,
       colSpan: 2,
       options: CLASS_OPTIONS,
+      parseValue: parseClassSelection,
       required: (values) => values.role === 'mahasiswa',
       help: 'Centang kelas mahasiswa (misal: PSI, 1A).',
     },

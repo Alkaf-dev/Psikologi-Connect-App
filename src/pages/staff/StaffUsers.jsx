@@ -5,6 +5,7 @@ import UserGroupsModal from '../../components/UserGroupsModal'
 import { Avatar, Badge, Button } from '../../components/ui'
 import { formatDate } from '../../lib/utils'
 import { loadProgramOptions } from '../../lib/staffLookups'
+import { formatClassDisplay } from '../../lib/classOptions'
 import { buildUserFields, emptyUserValues, roleOptions, userToForm, userToPayload } from './userFields'
 
 const activeOptions = [
@@ -73,7 +74,7 @@ export default function StaffUsers() {
           {
             key: 'class_name',
             label: 'Kelas',
-            render: (user) => <span className="text-xs text-slate-500">{user.class_name || '-'}</span>,
+            render: (user) => <span className="text-xs text-slate-500">{formatClassDisplay(user.class_name)}</span>,
           },
           {
             key: 'role',
