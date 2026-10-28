@@ -186,7 +186,10 @@ export default function StaffSubmissions() {
           label: 'Jenis Tugas',
           className: 'text-center',
           render: (submission) => (
-            <Badge variant={submission.task_type === 'kelompok' ? 'purple' : 'info'}>
+            <Badge
+              variant={submission.task_type === 'kelompok' ? 'purple' : 'info'}
+              className="w-20 justify-center text-center"
+            >
               {submission.task_type === 'kelompok' ? 'Kelompok' : 'Individu'}
             </Badge>
           ),
@@ -223,7 +226,10 @@ export default function StaffSubmissions() {
           label: 'Status',
           className: 'text-center',
           render: (submission) => (
-            <Badge variant={statusVariants[submission.status] || 'neutral'}>
+            <Badge
+              variant={statusVariants[submission.status] || 'neutral'}
+              className="w-24 justify-center text-center"
+            >
               {statusLabels[submission.status] || submission.status}
             </Badge>
           ),

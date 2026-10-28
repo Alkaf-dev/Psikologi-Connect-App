@@ -84,7 +84,7 @@ export function Badge({ variant = 'neutral', className, children, dot = false })
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none ring-1 ring-inset',
+        'inline-flex h-6 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold leading-none ring-1 ring-inset',
         badgeVariants[variant] || badgeVariants.neutral,
         className,
       )}
@@ -421,10 +421,10 @@ export function FilterChip({ active, children, count, onClick, className }) {
       onClick={onClick}
       aria-current={active ? 'true' : undefined}
       className={cn(
-        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition',
+        'inline-flex h-8 min-w-[4.5rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-xs font-semibold transition',
         active
-          ? 'bg-teal-600 text-white shadow-sm shadow-teal-600/20'
-          : 'border border-slate-200 bg-white text-slate-600 hover:border-teal-200 hover:text-teal-700',
+          ? 'border-teal-600 bg-teal-600 text-white shadow-sm shadow-teal-600/20'
+          : 'border-slate-200 bg-white text-slate-600 hover:border-teal-200 hover:text-teal-700',
         className,
       )}
     >
@@ -432,7 +432,7 @@ export function FilterChip({ active, children, count, onClick, className }) {
       {count !== undefined ? (
         <span
           className={cn(
-            'rounded-full px-1.5 py-0.5 text-[10px] leading-none',
+            'inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold leading-none',
             active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500',
           )}
         >

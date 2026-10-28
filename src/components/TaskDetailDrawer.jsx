@@ -70,10 +70,29 @@ export default function TaskDetailDrawer({ task, open, onClose, onSubmitted }) {
     >
       <div className="space-y-5">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={task.type === 'kelompok' ? 'purple' : 'info'}>{task.type_label}</Badge>
-          <Badge variant={statusTone(task.status)}>{task.status_label}</Badge>
-          <Badge variant={submissionVariant(submission?.status)}>{task.submission_label}</Badge>
-          {task.is_overdue ? <Badge variant="danger">Lewat deadline</Badge> : null}
+          <Badge
+            variant={task.type === 'kelompok' ? 'purple' : 'info'}
+            className="w-20 justify-center text-center"
+          >
+            {task.type_label}
+          </Badge>
+          <Badge
+            variant={statusTone(task.status)}
+            className="w-20 justify-center text-center"
+          >
+            {task.status_label}
+          </Badge>
+          <Badge
+            variant={submissionVariant(submission?.status)}
+            className="min-w-[84px] justify-center text-center"
+          >
+            {task.submission_label}
+          </Badge>
+          {task.is_overdue ? (
+            <Badge variant="danger" className="min-w-[84px] justify-center text-center">
+              Lewat deadline
+            </Badge>
+          ) : null}
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">

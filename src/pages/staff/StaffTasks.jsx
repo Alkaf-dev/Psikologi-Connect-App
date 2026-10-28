@@ -182,7 +182,12 @@ export default function StaffTasks() {
           label: 'Jenis',
           className: 'text-center',
           render: (task) => (
-            <Badge variant={task.type === 'kelompok' ? 'purple' : 'info'}>{task.type_label}</Badge>
+            <Badge
+              variant={task.type === 'kelompok' ? 'purple' : 'info'}
+              className="w-20 justify-center text-center"
+            >
+              {task.type_label}
+            </Badge>
           ),
         },
         {
@@ -224,7 +229,10 @@ export default function StaffTasks() {
           label: 'Status',
           className: 'text-center',
           render: (task) => (
-            <Badge variant={task.status === 'active' ? 'success' : task.status === 'completed' ? 'info' : 'neutral'}>
+            <Badge
+              variant={task.status === 'active' ? 'success' : task.status === 'completed' ? 'info' : 'neutral'}
+              className="w-20 justify-center text-center"
+            >
               {task.status_label}
             </Badge>
           ),

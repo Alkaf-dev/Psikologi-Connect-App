@@ -123,8 +123,18 @@ export default function StudentTasks() {
               />
               <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant={task.type === 'kelompok' ? 'purple' : 'info'}>{task.type_label}</Badge>
-                  <Badge variant={statusTone(task.status)}>{task.status_label}</Badge>
+                  <Badge
+                    variant={task.type === 'kelompok' ? 'purple' : 'info'}
+                    className="w-20 justify-center text-center"
+                  >
+                    {task.type_label}
+                  </Badge>
+                  <Badge
+                    variant={statusTone(task.status)}
+                    className="w-20 justify-center text-center"
+                  >
+                    {task.status_label}
+                  </Badge>
                   <Badge
                     variant={
                       task.submission
@@ -135,6 +145,7 @@ export default function StudentTasks() {
                           ? 'danger'
                           : 'neutral'
                     }
+                    className="min-w-[84px] justify-center text-center"
                   >
                     {task.submission_label}
                   </Badge>
