@@ -1,3 +1,5 @@
+import { CLASS_OPTIONS } from '../../lib/classOptions'
+
 export const roleOptions = [
   { value: 'mahasiswa', label: 'Mahasiswa' },
   { value: 'pjmk', label: 'Admin' },
@@ -31,10 +33,12 @@ export function buildUserFields({ studentOnly = false } = {}) {
     {
       name: 'class_name',
       label: 'Kelas',
-      type: 'text',
-      placeholder: 'mis. Psikologi A',
+      type: 'multiselect',
+      outputString: true,
+      colSpan: 2,
+      options: CLASS_OPTIONS,
       required: (values) => values.role === 'mahasiswa',
-      help: 'Wajib untuk mahasiswa.',
+      help: 'Centang kelas mahasiswa (misal: Psikologi Islam, 1A).',
     },
     {
       name: 'cohort',

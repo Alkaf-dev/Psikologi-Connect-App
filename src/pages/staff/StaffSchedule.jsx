@@ -3,6 +3,7 @@ import CrudPage from '../../components/CrudPage'
 import { Badge } from '../../components/ui'
 import { DAYS } from '../../lib/utils'
 import { courseLabel, loadCourseOptions } from '../../lib/staffLookups'
+import { CLASS_OPTIONS } from '../../lib/classOptions'
 
 function timeLabel(value) {
   return (value || '').slice(0, 5) || '-'
@@ -60,9 +61,12 @@ export default function StaffSchedule() {
         {
           name: 'class_name',
           label: 'Kelas',
-          type: 'text',
+          type: 'multiselect',
+          outputString: true,
           required: true,
-          placeholder: 'mis. Psikologi A',
+          colSpan: 2,
+          options: CLASS_OPTIONS,
+          help: 'Centang kelas atau program studi untuk jadwal ini.',
         },
         { name: 'start_time', label: 'Mulai', type: 'time', required: true },
         { name: 'end_time', label: 'Selesai', type: 'time', required: true },

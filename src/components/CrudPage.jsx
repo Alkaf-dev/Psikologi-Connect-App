@@ -94,38 +94,57 @@ function FormField({ field, values, lookups, errors, onChange }) {
         </Field>
       )
 
-    case 'multiselect':
+    case 'multiselect': {
+      const currentArray = Array.isArray(value)
+        ? value
+        : typeof value === 'string'
+          ? value.split(',').map((s) => s.trim()).filter(Boolean)
+          : []
+
       return (
         <Field label={field.label} required={required} error={errorMessage} help={field.help} className={field.colSpan === 2 ? 'sm:col-span-2' : ''}>
-          <div className="scrollbar-thin grid max-h-48 gap-1.5 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/50 p-2 sm:grid-cols-2">
+          <div className="scrollbar-thin grid max-h-56 gap-1.5 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/50 p-2 sm:grid-cols-2">
             {options.length === 0 ? (
               <p className="col-span-full px-2 py-3 text-xs text-slate-400">{field.emptyLabel || 'Belum ada pilihan.'}</p>
             ) : (
-              options.map((option) => {
-                const selected = Array.isArray(value) && value.includes(option.value)
+              options.map((option, idx) => {
+                if (option.header) {
+                  return (
+                    <div
+                      key={`header-${idx}`}
+                      className="col-span-full mt-1.5 first:mt-0 px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-800/80 bg-teal-50/60 rounded"
+                    >
+                      {option.header}
+                    </div>
+                  )
+                }
+
+                const selected = currentArray.includes(option.value)
                 return (
                   <label
                     key={option.value}
                     className={cn(
-                      'flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 text-xs transition',
+                      'flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 text-xs transition select-none',
                       selected
-                        ? 'border-teal-300 bg-teal-50 text-teal-800'
-                        : 'border-transparent bg-white text-slate-600 hover:border-slate-200',
+                        ? 'border-teal-300 bg-teal-50 text-teal-800 font-medium shadow-xs'
+                        : 'border-transparent bg-white text-slate-600 hover:border-slate-200 hover:bg-slate-50',
                     )}
                   >
                     <input
                       type="checkbox"
                       checked={selected}
                       onChange={(event) => {
-                        const current = Array.isArray(value) ? [...value] : []
-                        if (event.target.checked) current.push(option.value)
-                        else {
-                          const index = current.indexOf(option.value)
-                          if (index >= 0) current.splice(index, 1)
+                        const next = [...currentArray]
+                        if (event.target.checked) {
+                          if (!next.includes(option.value)) next.push(option.value)
+                        } else {
+                          const index = next.indexOf(option.value)
+                          if (index >= 0) next.splice(index, 1)
                         }
-                        onChange(field.name, current)
+                        const finalValue = field.outputString ? next.join(', ') : next
+                        onChange(field.name, finalValue)
                       }}
-                      className="h-3.5 w-3.5 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                      className="h-3.5 w-3.5 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
                     />
                     <span className="min-w-0 truncate">{option.label}</span>
                   </label>
@@ -133,8 +152,15 @@ function FormField({ field, values, lookups, errors, onChange }) {
               })
             )}
           </div>
+          {field.showPreview !== false && currentArray.length > 0 ? (
+            <p className="mt-1 text-[11px] text-teal-700 font-medium">
+              <span className="text-slate-500 font-normal">Terpilih: </span>
+              {currentArray.join(', ')}
+            </p>
+          ) : null}
         </Field>
       )
+    }
 
     case 'checkbox':
       return (

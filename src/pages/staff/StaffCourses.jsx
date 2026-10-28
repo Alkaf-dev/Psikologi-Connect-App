@@ -2,6 +2,7 @@ import { BookOpen, ExternalLink } from 'lucide-react'
 import CrudPage from '../../components/CrudPage'
 import { Badge } from '../../components/ui'
 import { loadProgramOptions } from '../../lib/staffLookups'
+import { CLASS_OPTIONS } from '../../lib/classOptions'
 
 export default function StaffCourses() {
   return (
@@ -22,7 +23,7 @@ export default function StaffCourses() {
         credits: 3,
         lecturer: '',
         semester: 'Ganjil',
-        class_name: 'Psikologi A',
+        class_name: 'Psikologi Islam',
         prodi_ids: [],
         meeting_link: '',
         description: '',
@@ -34,7 +35,16 @@ export default function StaffCourses() {
         { name: 'name', label: 'Nama mata kuliah', type: 'text', required: true, colSpan: 2 },
         { name: 'lecturer', label: 'Dosen pengampu', type: 'text', required: true, placeholder: 'Nama lengkap dosen' },
         { name: 'semester', label: 'Semester', type: 'text', required: true, placeholder: 'mis. Ganjil' },
-        { name: 'class_name', label: 'Kelas', type: 'text', required: true, placeholder: 'mis. Psikologi A' },
+        {
+          name: 'class_name',
+          label: 'Kelas',
+          type: 'multiselect',
+          outputString: true,
+          required: true,
+          colSpan: 2,
+          options: CLASS_OPTIONS,
+          help: 'Centang program studi dan/atau kelas rombel (1A, 1B, 1C) yang mengambil mata kuliah ini.',
+        },
         {
           name: 'prodi_ids',
           label: 'Program studi',
