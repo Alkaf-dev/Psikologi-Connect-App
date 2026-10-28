@@ -8,3 +8,6 @@ dist/
 .DS_Store
 Thumbs.db
 bin/
+demo-sheets.json
+demo-sheets.backup.json
+*.sqlite
