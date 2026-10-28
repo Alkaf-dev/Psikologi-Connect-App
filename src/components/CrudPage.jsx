@@ -618,6 +618,8 @@ export default function CrudPage({
                       ) : null}
                       <FilterChip
                         active={!value}
+                        className={filter.chipClassName}
+                        title={filter.placeholder || filter.label || 'Semua'}
                         onClick={() =>
                           setFilterValues((current) => ({ ...current, [filter.key]: '' }))
                         }
@@ -629,6 +631,8 @@ export default function CrudPage({
                           key={option.value}
                           active={String(value) === String(option.value)}
                           count={option.count}
+                          className={filter.chipClassName}
+                          title={option.label}
                           onClick={() =>
                             setFilterValues((current) => ({
                               ...current,

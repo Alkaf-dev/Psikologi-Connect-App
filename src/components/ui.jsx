@@ -414,25 +414,26 @@ export function Pagination({ currentPage = 1, lastPage = 1, total, perPage, onCh
   )
 }
 
-export function FilterChip({ active, children, count, onClick, className }) {
+export function FilterChip({ active, children, count, onClick, className, title }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      title={title || (typeof children === 'string' ? children : undefined)}
       aria-current={active ? 'true' : undefined}
       className={cn(
-        'inline-flex h-8 min-w-[4.5rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-xs font-semibold transition',
+        'inline-flex h-8 min-w-[4.5rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-xs font-semibold transition',
         active
           ? 'border-teal-600 bg-teal-600 text-white shadow-sm shadow-teal-600/20'
           : 'border-slate-200 bg-white text-slate-600 hover:border-teal-200 hover:text-teal-700',
         className,
       )}
     >
-      {children}
+      <span className="truncate">{children}</span>
       {count !== undefined ? (
         <span
           className={cn(
-            'inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold leading-none',
+            'inline-flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] font-bold leading-none',
             active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500',
           )}
         >

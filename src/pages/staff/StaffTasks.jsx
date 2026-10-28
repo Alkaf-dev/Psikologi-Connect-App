@@ -132,6 +132,7 @@ export default function StaffTasks() {
           label: 'Mata kuliah',
           type: 'chips',
           placeholder: 'Semua mata kuliah',
+          chipClassName: 'w-40 sm:w-44 text-center justify-center',
           options: (values, lookups) => lookups.courses || [],
         },
       ]}
@@ -182,12 +183,7 @@ export default function StaffTasks() {
           label: 'Jenis',
           className: 'text-center',
           render: (task) => (
-            <Badge
-              variant={task.type === 'kelompok' ? 'purple' : 'info'}
-              className="w-20 justify-center text-center"
-            >
-              {task.type_label}
-            </Badge>
+            <Badge variant={task.type === 'kelompok' ? 'purple' : 'info'}>{task.type_label}</Badge>
           ),
         },
         {
@@ -229,10 +225,7 @@ export default function StaffTasks() {
           label: 'Status',
           className: 'text-center',
           render: (task) => (
-            <Badge
-              variant={task.status === 'active' ? 'success' : task.status === 'completed' ? 'info' : 'neutral'}
-              className="w-20 justify-center text-center"
-            >
+            <Badge variant={task.status === 'active' ? 'success' : task.status === 'completed' ? 'info' : 'neutral'}>
               {task.status_label}
             </Badge>
           ),

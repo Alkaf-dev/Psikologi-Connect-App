@@ -63,18 +63,28 @@ export default function StudentTasks() {
             <span className="mr-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Mata kuliah
             </span>
-            <FilterChip active={!courseId} onClick={() => setCourseId('')}>
+            <FilterChip
+              active={!courseId}
+              onClick={() => setCourseId('')}
+              className="w-40 sm:w-44 text-center justify-center"
+              title="Semua mata kuliah"
+            >
               Semua mata kuliah
             </FilterChip>
-            {courses.map((course) => (
-              <FilterChip
-                key={course.id}
-                active={String(courseId) === String(course.id)}
-                onClick={() => setCourseId(String(course.id))}
-              >
-                {[course.code, course.name].filter(Boolean).join(' · ')}
-              </FilterChip>
-            ))}
+            {courses.map((course) => {
+              const label = [course.code, course.name].filter(Boolean).join(' · ')
+              return (
+                <FilterChip
+                  key={course.id}
+                  active={String(courseId) === String(course.id)}
+                  onClick={() => setCourseId(String(course.id))}
+                  className="w-40 sm:w-44 text-center justify-center"
+                  title={label}
+                >
+                  {label}
+                </FilterChip>
+              )
+            })}
           </div>
         ) : null}
       </Card>
@@ -123,18 +133,8 @@ export default function StudentTasks() {
               />
               <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge
-                    variant={task.type === 'kelompok' ? 'purple' : 'info'}
-                    className="w-20 justify-center text-center"
-                  >
-                    {task.type_label}
-                  </Badge>
-                  <Badge
-                    variant={statusTone(task.status)}
-                    className="w-20 justify-center text-center"
-                  >
-                    {task.status_label}
-                  </Badge>
+                  <Badge variant={task.type === 'kelompok' ? 'purple' : 'info'}>{task.type_label}</Badge>
+                  <Badge variant={statusTone(task.status)}>{task.status_label}</Badge>
                   <Badge
                     variant={
                       task.submission
@@ -145,7 +145,6 @@ export default function StudentTasks() {
                           ? 'danger'
                           : 'neutral'
                     }
-                    className="min-w-[84px] justify-center text-center"
                   >
                     {task.submission_label}
                   </Badge>
