@@ -3,6 +3,7 @@ import {
   CalendarDays,
   Clock3,
   DoorOpen,
+  ExternalLink,
   MapPin,
   UserRound,
   Video,
@@ -195,19 +196,36 @@ export default function StudentSchedule() {
                           </span>
                         ) : null}
                       </div>
-                      {schedule.mode === 'online' && schedule.meeting_link ? (
-                        <Button
-                          as="a"
-                          href={schedule.meeting_link}
-                          target="_blank"
-                          rel="noreferrer"
-                          variant="soft"
-                          size="sm"
-                          className="mt-3"
-                        >
-                          <Video className="h-3.5 w-3.5" />
-                          Gabung {schedule.platform_label || 'kelas online'}
-                        </Button>
+                      {(schedule.mode === 'online' && schedule.meeting_link) || schedule.attendance_link ? (
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          {schedule.mode === 'online' && schedule.meeting_link ? (
+                            <Button
+                              as="a"
+                              href={schedule.meeting_link}
+                              target="_blank"
+                              rel="noreferrer"
+                              variant="soft"
+                              size="sm"
+                            >
+                              <Video className="h-3.5 w-3.5" />
+                              Gabung {schedule.platform_label || 'kelas online'}
+                            </Button>
+                          ) : null}
+                          {schedule.attendance_link ? (
+                            <Button
+                              as="a"
+                              href={schedule.attendance_link}
+                              target="_blank"
+                              rel="noreferrer"
+                              variant="secondary"
+                              size="sm"
+                              className="text-emerald-700 hover:text-emerald-800"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              Isi Absensi
+                            </Button>
+                          ) : null}
+                        </div>
                       ) : null}
                     </div>
                   </Card>

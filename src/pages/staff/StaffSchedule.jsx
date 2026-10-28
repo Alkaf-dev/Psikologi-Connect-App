@@ -43,6 +43,7 @@ export default function StaffSchedule() {
         room: '',
         platform: 'zoom',
         meeting_link: '',
+        attendance_link: '',
         class_name: 'PSI',
       }}
       loadLookups={async () => ({ courses: await loadCourseOptions() })}
@@ -97,6 +98,14 @@ export default function StaffSchedule() {
           visible: (values) => values.mode === 'online',
           required: (values) => values.mode === 'online',
         },
+        {
+          name: 'attendance_link',
+          label: 'Tautan absensi',
+          type: 'url',
+          placeholder: 'https://...',
+          colSpan: 2,
+          help: 'Opsional. Tautan presensi/absensi perkuliahan untuk jadwal ini.',
+        },
       ]}
       filters={[
         {
@@ -148,8 +157,8 @@ export default function StaffSchedule() {
         },
         {
           key: 'meeting_link',
-          label: 'Tautan',
-          className: 'w-[112px] text-center',
+          label: 'Tautan Kelas',
+          className: 'w-[100px] text-center',
           render: (schedule) =>
             schedule.meeting_link ? (
               <a
@@ -159,7 +168,26 @@ export default function StaffSchedule() {
                 className="inline-flex items-center justify-center gap-1 whitespace-nowrap text-[11px] font-medium text-teal-600 hover:text-teal-700"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                Buka tautan
+                Kelas
+              </a>
+            ) : (
+              <span className="text-xs text-slate-400">-</span>
+            ),
+        },
+        {
+          key: 'attendance_link',
+          label: 'Absensi',
+          className: 'w-[100px] text-center',
+          render: (schedule) =>
+            schedule.attendance_link ? (
+              <a
+                href={schedule.attendance_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1 whitespace-nowrap text-[11px] font-medium text-emerald-600 hover:text-emerald-700"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Absensi
               </a>
             ) : (
               <span className="text-xs text-slate-400">-</span>
@@ -180,6 +208,7 @@ export default function StaffSchedule() {
         room: schedule.room || '',
         platform: schedule.platform || 'zoom',
         meeting_link: schedule.meeting_link || '',
+        attendance_link: schedule.attendance_link || '',
         class_name: schedule.class_name || '',
       })}
       mapFormToPayload={(payload) => {

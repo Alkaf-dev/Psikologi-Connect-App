@@ -26,6 +26,7 @@ export default function StaffCourses() {
         class_name: 'PSI',
         prodi_ids: [],
         meeting_link: '',
+        attendance_link: '',
         description: '',
       }}
       loadLookups={async () => ({ programs: await loadProgramOptions() })}
@@ -63,6 +64,14 @@ export default function StaffCourses() {
           placeholder: 'https://...',
           colSpan: 2,
           help: 'Opsional. Digunakan sebagai tautan utama kelas daring.',
+        },
+        {
+          name: 'attendance_link',
+          label: 'Tautan absensi',
+          type: 'url',
+          placeholder: 'https://...',
+          colSpan: 2,
+          help: 'Opsional. Tautan presensi/absensi perkuliahan untuk mata kuliah ini.',
         },
         { name: 'description', label: 'Deskripsi', type: 'textarea', rows: 4, colSpan: 2, placeholder: 'Deskripsi singkat mata kuliah...' },
       ]}
@@ -105,7 +114,7 @@ export default function StaffCourses() {
         },
         {
           key: 'meeting_link',
-          label: 'Tautan',
+          label: 'Tautan Kelas',
           className: 'text-center',
           render: (course) =>
             course.meeting_link ? (
@@ -116,7 +125,26 @@ export default function StaffCourses() {
                 className="inline-flex items-center gap-1 text-xs font-medium text-teal-600 hover:text-teal-700"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                Buka tautan
+                Kelas
+              </a>
+            ) : (
+              <span className="text-xs text-slate-400">-</span>
+            ),
+        },
+        {
+          key: 'attendance_link',
+          label: 'Absensi',
+          className: 'text-center',
+          render: (course) =>
+            course.attendance_link ? (
+              <a
+                href={course.attendance_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Absensi
               </a>
             ) : (
               <span className="text-xs text-slate-400">-</span>
