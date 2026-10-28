@@ -45,11 +45,6 @@ VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1
 VITE_API_BASE_URL=/api/v1
 ```
 
-```env
-# API production
-VITE_API_BASE_URL=https://psikologi.abudzargroup.id/api/v1
-```
-
 Jalankan:
 
 ```bash
@@ -65,7 +60,7 @@ Jika memakai `/api/v1`, backend harus berjalan di `http://127.0.0.1:8000` karena
 Frontend ini hanya mengonsumsi REST API. Backend tidak disertakan di repo ini.
 
 - API lokal: `http://127.0.0.1:8000/api/v1`
-- API production: `https://psikologi.abudzargroup.id/api/v1`
+- API publik (opsional): atur lewat `VITE_API_BASE_URL` saat deploy.
 - Dokumentasi API tersedia di project backend terpisah.
 - Backend dan datanya harus tetap berjalan agar login dan data bisa diakses.
 
@@ -134,6 +129,7 @@ Halaman tersedia di `https://alkaf-dev.github.io/Psikologi-Connect-App/`.
 Catatan:
 
 - GitHub Pages hanya menyajikan frontend statis; API tetap harus dapat diakses publik.
+- `http://127.0.0.1:8000/api/v1` hanya bisa diakses dari komputer yang menjalankan backend. Untuk GitHub Pages, set repository variable `VITE_API_BASE_URL` ke URL publik/tunnel.
 - Komputer/backend dan tunnel harus tetap menyala saat halaman dipakai.
 - Quick tunnel bisa mati atau berubah URL. Jika berubah, perbarui `VITE_API_BASE_URL` lalu jalankan ulang workflow.
 - Untuk URL API permanen, gunakan Cloudflare named tunnel dengan domain atau ngrok static domain.
