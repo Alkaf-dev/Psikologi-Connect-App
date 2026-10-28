@@ -198,8 +198,11 @@ export default function CrudPage({
   canCreate = true,
   canEdit = true,
   canDelete = true,
+  canBulkDelete = true,
   deleteTitle = 'Hapus data?',
   deleteMessage = 'Data yang dihapus tidak dapat dikembalikan.',
+  bulkDeleteTitle = 'Hapus data terpilih?',
+  bulkDeleteMessage = (count) => `Yakin ingin menghapus ${count} data terpilih? Tindakan ini tidak dapat dikembalikan.`,
   formSize = 'lg',
   formDescription,
   onDataLoaded,
@@ -225,6 +228,8 @@ export default function CrudPage({
   const [values, setValues] = useState(initialValues)
   const [formErrors, setFormErrors] = useState({})
   const [saving, setSaving] = useState(false)
+  const [selectedIds, setSelectedIds] = useState([])
+  const [bulkDeleting, setBulkDeleting] = useState(false)
   const formLookupsLoadedRef = useRef(false)
   const formLookupsPromiseRef = useRef(null)
   const debouncedSearch = useDebouncedValue(search)
@@ -240,7 +245,7 @@ export default function CrudPage({
     [page, defaultParams, debouncedSearch, filterValues],
   )
 
-  const { data, meta, loading, error, refresh } = useApiData(listPath, queryParams)
+  const { data, meta, loading, error, refresh, setData } = useApiData(listPath, queryParams)
 
   useEffect(() => {
     if (!onDataLoaded || !data) return
@@ -379,6 +384,28 @@ export default function CrudPage({
     }
   }
 
+  useEffect(() => {
+    setSelectedIds([])
+  }, [page])
+
+  const allIdsOnPage = useMemo(() => (Array.isArray(data) ? data.map((item) => item.id) : []), [data])
+  const isAllSelected = allIdsOnPage.length > 0 && allIdsOnPage.every((id) => selectedIds.includes(id))
+  const isSomeSelected = selectedIds.length > 0 && !isAllSelected
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !allIdsOnPage.includes(id)))
+    } else {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...allIdsOnPage])))
+    }
+  }
+
+  const handleToggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    )
+  }
+
   const handleDelete = async (item) => {
     const approved = await confirm({
       title: deleteTitle,
@@ -387,12 +414,78 @@ export default function CrudPage({
     })
     if (!approved) return
 
+    // Optimistic UI update: hilangkan baris seketika tanpa kedip
+    const previousData = data
+    if (setData) {
+      setData((current) => (Array.isArray(current) ? current.filter((i) => i.id !== item.id) : current))
+    }
+    setSelectedIds((prev) => prev.filter((id) => id !== item.id))
+
     try {
       await api.delete(`${writePath || listPath}/${item.id}`)
       toast.success('Data dihapus', 'Data berhasil dihapus dari sistem.')
       refresh()
     } catch (deleteError) {
+      if (setData && previousData) {
+        setData(previousData)
+      }
       toast.error('Gagal menghapus data', errorMessage(deleteError))
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return
+
+    const count = selectedIds.length
+    const approved = await confirm({
+      title: typeof bulkDeleteTitle === 'function' ? bulkDeleteTitle(count) : bulkDeleteTitle,
+      message:
+        typeof bulkDeleteMessage === 'function'
+          ? bulkDeleteMessage(count)
+          : `Yakin ingin menghapus ${count} data terpilih? Tindakan ini tidak dapat dikembalikan.`,
+      confirmLabel: `Hapus (${count})`,
+    })
+    if (!approved) return
+
+    setBulkDeleting(true)
+    const targets = [...selectedIds]
+    const previousData = data
+
+    // Optimistic UI update: hilangkan data terpilih seketika tanpa kedip
+    if (setData) {
+      setData((current) =>
+        Array.isArray(current) ? current.filter((i) => !targets.includes(i.id)) : current,
+      )
+    }
+    setSelectedIds([])
+
+    try {
+      const results = await Promise.allSettled(
+        targets.map((id) => api.delete(`${writePath || listPath}/${id}`)),
+      )
+
+      const successCount = results.filter((r) => r.status === 'fulfilled').length
+      const failedCount = results.filter((r) => r.status === 'rejected').length
+
+      if (failedCount === 0) {
+        toast.success('Data dihapus', `${successCount} data berhasil dihapus dari sistem.`)
+      } else if (successCount > 0) {
+        toast.warning(
+          'Sebagian data terhapus',
+          `${successCount} berhasil dihapus, ${failedCount} gagal.`,
+        )
+      } else {
+        throw new Error('Semua penghapusan data gagal.')
+      }
+
+      refresh()
+    } catch (bulkError) {
+      if (setData && previousData) {
+        setData(previousData)
+      }
+      toast.error('Gagal menghapus data', errorMessage(bulkError))
+    } finally {
+      setBulkDeleting(false)
     }
   }
 
@@ -514,8 +607,44 @@ export default function CrudPage({
         </div>
       </Card>
 
-      <Card className="overflow-hidden">
-        {loading ? (
+      {canDelete && canBulkDelete && selectedIds.length > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-teal-200 bg-teal-50/95 p-3 px-4 text-xs shadow-sm transition-all animate-in fade-in slide-in-from-top-1">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-teal-600 px-1.5 text-[11px] font-bold text-white shadow-sm">
+              {selectedIds.length}
+            </span>
+            <span className="font-semibold text-slate-800">data terpilih</span>
+            <span className="text-slate-300">|</span>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="font-medium text-teal-700 hover:text-teal-900 hover:underline"
+            >
+              Batalkan pilihan
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handleBulkDelete}
+              loading={bulkDeleting}
+              disabled={bulkDeleting}
+              className="gap-1.5 shadow-sm"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Hapus {selectedIds.length} data terpilih</span>
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      <Card className="relative overflow-hidden">
+        {loading && data && data.length > 0 ? (
+          <div className="absolute inset-x-0 top-0 z-10 h-0.5 bg-gradient-to-r from-teal-400 via-teal-600 to-teal-400 animate-pulse" />
+        ) : null}
+
+        {loading && (!data || data.length === 0) ? (
           <div className="space-y-2 p-4">
             {[0, 1, 2, 3, 4].map((item) => (
               <Skeleton key={item} className="h-12" />
@@ -561,6 +690,26 @@ export default function CrudPage({
               <table className="w-full border-collapse text-left" style={{ minWidth: minTableWidth }}>
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] uppercase tracking-wider text-slate-500">
+                    {canDelete && canBulkDelete ? (
+                      <th
+                        className={cn(
+                          'w-11 px-3 py-3 text-center align-middle',
+                          gridLines && 'border-r border-slate-200/80',
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isAllSelected}
+                          ref={(el) => {
+                            if (el) el.indeterminate = isSomeSelected
+                          }}
+                          onChange={handleToggleSelectAll}
+                          className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                          title={isAllSelected ? 'Batalkan pilih semua' : 'Pilih semua di halaman ini'}
+                          aria-label="Pilih semua data di halaman ini"
+                        />
+                      </th>
+                    ) : null}
                     {columns.map((column, index) => (
                       <th
                         key={column.key}
@@ -587,9 +736,34 @@ export default function CrudPage({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {data.map((item) => (
-                    <tr key={item.id} className="group transition hover:bg-slate-50/70">
-                      {columns.map((column, index) => (
+                  {data.map((item) => {
+                    const isSelected = selectedIds.includes(item.id)
+                    return (
+                      <tr
+                        key={item.id}
+                        className={cn(
+                          'group transition hover:bg-slate-50/70',
+                          isSelected && 'bg-teal-50/60 hover:bg-teal-50/80',
+                        )}
+                      >
+                        {canDelete && canBulkDelete ? (
+                          <td
+                            className={cn(
+                              'w-11 px-3 py-3 text-center align-middle',
+                              gridLines && 'border-b border-slate-100',
+                              gridLines && 'border-r border-slate-100',
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleSelect(item.id)}
+                              className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                              aria-label={`Pilih baris ${item.id}`}
+                            />
+                          </td>
+                        ) : null}
+                        {columns.map((column, index) => (
                         <td
                           key={column.key}
                           className={cn(
@@ -637,7 +811,7 @@ export default function CrudPage({
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  )})}
                 </tbody>
               </table>
             </div>
