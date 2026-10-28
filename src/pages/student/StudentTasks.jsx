@@ -59,32 +59,34 @@ export default function StudentTasks() {
         />
 
         {courses?.length ? (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-2.5">
+            <span className="shrink-0 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:w-20">
               Mata kuliah
             </span>
-            <FilterChip
-              active={!courseId}
-              onClick={() => setCourseId('')}
-              className="w-40 sm:w-44 text-center justify-center"
-              title="Semua mata kuliah"
-            >
-              Semua mata kuliah
-            </FilterChip>
-            {courses.map((course) => {
-              const label = [course.code, course.name].filter(Boolean).join(' · ')
-              return (
-                <FilterChip
-                  key={course.id}
-                  active={String(courseId) === String(course.id)}
-                  onClick={() => setCourseId(String(course.id))}
-                  className="w-40 sm:w-44 text-center justify-center"
-                  title={label}
-                >
-                  {label}
-                </FilterChip>
-              )
-            })}
+            <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
+              <FilterChip
+                active={!courseId}
+                onClick={() => setCourseId('')}
+                className="w-40 sm:w-44 text-center justify-center"
+                title="Semua mata kuliah"
+              >
+                Semua mata kuliah
+              </FilterChip>
+              {courses.map((course) => {
+                const label = [course.code, course.name].filter(Boolean).join(' · ')
+                return (
+                  <FilterChip
+                    key={course.id}
+                    active={String(courseId) === String(course.id)}
+                    onClick={() => setCourseId(String(course.id))}
+                    className="w-40 sm:w-44 text-center justify-center"
+                    title={label}
+                  >
+                    {label}
+                  </FilterChip>
+                )
+              })}
+            </div>
           </div>
         ) : null}
       </Card>

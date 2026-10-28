@@ -607,42 +607,44 @@ export default function CrudPage({
                     <div
                       key={filter.key}
                       className={cn(
-                        'flex flex-wrap items-center gap-1.5',
+                        'flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-2.5',
                         filter.fullWidth && 'w-full',
                       )}
                     >
                       {filter.label ? (
-                        <span className="mr-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        <span className="shrink-0 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:w-20">
                           {filter.label}
                         </span>
                       ) : null}
-                      <FilterChip
-                        active={!value}
-                        className={filter.chipClassName}
-                        title={filter.placeholder || filter.label || 'Semua'}
-                        onClick={() =>
-                          setFilterValues((current) => ({ ...current, [filter.key]: '' }))
-                        }
-                      >
-                        {filter.placeholder || filter.label || 'Semua'}
-                      </FilterChip>
-                      {options.map((option) => (
+                      <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
                         <FilterChip
-                          key={option.value}
-                          active={String(value) === String(option.value)}
-                          count={option.count}
+                          active={!value}
                           className={filter.chipClassName}
-                          title={option.label}
+                          title={filter.placeholder || filter.label || 'Semua'}
                           onClick={() =>
-                            setFilterValues((current) => ({
-                              ...current,
-                              [filter.key]: option.value,
-                            }))
+                            setFilterValues((current) => ({ ...current, [filter.key]: '' }))
                           }
                         >
-                          {option.label}
+                          {filter.placeholder || filter.label || 'Semua'}
                         </FilterChip>
-                      ))}
+                        {options.map((option) => (
+                          <FilterChip
+                            key={option.value}
+                            active={String(value) === String(option.value)}
+                            count={option.count}
+                            className={filter.chipClassName}
+                            title={option.label}
+                            onClick={() =>
+                              setFilterValues((current) => ({
+                                ...current,
+                                [filter.key]: option.value,
+                              }))
+                            }
+                          >
+                            {option.label}
+                          </FilterChip>
+                        ))}
+                      </div>
                     </div>
                   )
                 }
