@@ -180,9 +180,18 @@ function FormField({ field, values, lookups, errors, onChange }) {
         <Field label={field.label} htmlFor={id} required={required} error={errorMessage} help={field.help} className={field.colSpan === 2 ? 'sm:col-span-2' : ''}>
           <Input
             id={id}
-            type={field.type || 'text'}
+            type={field.type === 'url' ? 'text' : field.type || 'text'}
+            inputMode={field.type === 'url' ? 'url' : undefined}
             value={value ?? ''}
             onChange={(event) => onChange(field.name, event.target.value)}
+            onBlur={(event) => {
+              if (field.type === 'url') {
+                const raw = (event.target.value || '').trim()
+                if (raw && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(raw)) {
+                  onChange(field.name, `https://${raw}`)
+                }
+              }
+            }}
             placeholder={field.placeholder}
             min={field.min}
             max={field.max}
@@ -380,15 +389,27 @@ export default function CrudPage({
     setSaving(true)
     setFormErrors({})
 
+    const normalizedValues = { ...values }
+    visibleFields.forEach((field) => {
+      if (field.type === 'url' && normalizedValues[field.name]) {
+        const raw = String(normalizedValues[field.name]).trim()
+        if (raw && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(raw)) {
+          normalizedValues[field.name] = `https://${raw}`
+        }
+      }
+    })
+
     const basePayload = preparePayload(
       Object.fromEntries(
         visibleFields.map((field) => [
           field.name,
-          field.type === 'datetime-local' && values[field.name] ? toApiDateTime(values[field.name]) : values[field.name],
+          field.type === 'datetime-local' && normalizedValues[field.name]
+            ? toApiDateTime(normalizedValues[field.name])
+            : normalizedValues[field.name],
         ]),
       ),
     )
-    const payload = mapFormToPayload ? mapFormToPayload(basePayload, { isEdit: Boolean(editing), values, lookups }) : basePayload
+    const payload = mapFormToPayload ? mapFormToPayload(basePayload, { isEdit: Boolean(editing), values: normalizedValues, lookups }) : basePayload
 
     try {
       const response = editing
@@ -871,7 +892,7 @@ export default function CrudPage({
           </>
         }
       >
-        <form id={formId} onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
+        <form id={formId} onSubmit={handleSubmit} noValidate className="grid gap-4 sm:grid-cols-2">
           {formLookupsLoading ? (
             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 sm:col-span-2">
               <RefreshCw className="h-3.5 w-3.5 animate-spin" />
