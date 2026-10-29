@@ -36,13 +36,13 @@ cp .env.example .env
 Pilih salah satu isi `.env`:
 
 ```env
-# Backend lokal langsung
-VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1
+# API publik
+VITE_API_BASE_URL=https://psikologi.abudzargroup.id/api/v1
 ```
 
 ```env
-# Backend lokal lewat proxy Vite
-VITE_API_BASE_URL=/api/v1
+# Backend lokal langsung
+VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1
 ```
 
 Jalankan:
@@ -59,8 +59,8 @@ Jika memakai `/api/v1`, backend harus berjalan di `http://127.0.0.1:8000` karena
 
 Frontend ini hanya mengonsumsi REST API. Backend tidak disertakan di repo ini.
 
-- API lokal: `http://127.0.0.1:8000/api/v1`
-- API publik (opsional): atur lewat `VITE_API_BASE_URL` saat deploy.
+- API publik: `https://psikologi.abudzargroup.id/api/v1`
+- API lokal (opsional): `http://127.0.0.1:8000/api/v1`
 - Dokumentasi API tersedia di project backend terpisah.
 - Backend dan datanya harus tetap berjalan agar login dan data bisa diakses.
 
@@ -102,25 +102,22 @@ npm run build
 
 Hasil build ada di `dist/`.
 
-Jika frontend dan API berada di origin yang sama dan `/api` diproxy ke backend:
+Untuk build production dengan API publik:
 
 ```powershell
-$env:VITE_API_BASE_URL='/api/v1'; npm run build
+$env:VITE_API_BASE_URL='https://psikologi.abudzargroup.id/api/v1'; npm run build
 ```
 
 ```bash
 # macOS/Linux
-VITE_API_BASE_URL=/api/v1 npm run build
+VITE_API_BASE_URL=https://psikologi.abudzargroup.id/api/v1 npm run build
 ```
 
-Sajikan `dist/` sebagai SPA dan arahkan request `/api` ke backend Laravel.
+Sajikan `dist/` sebagai SPA. API publik sudah diakses langsung, jadi tidak perlu proxy `/api`.
 
 ## GitHub Pages
 
-1. Set repository variable `VITE_API_BASE_URL` ke URL API + `/api/v1`, misalnya:
-   ```text
-   https://contoh-tunnel.trycloudflare.com/api/v1
-   ```
+1. API publik sudah menjadi default. Set repository variable `VITE_API_BASE_URL` hanya jika ingin override.
 2. Buka Settings -> Pages -> Source, pilih **GitHub Actions**.
 3. Push ke `main` atau jalankan workflow **Deploy frontend to GitHub Pages**.
 
@@ -129,10 +126,8 @@ Halaman tersedia di `https://alkaf-dev.github.io/Psikologi-Connect-App/`.
 Catatan:
 
 - GitHub Pages hanya menyajikan frontend statis; API tetap harus dapat diakses publik.
-- `http://127.0.0.1:8000/api/v1` hanya bisa diakses dari komputer yang menjalankan backend. Untuk GitHub Pages, set repository variable `VITE_API_BASE_URL` ke URL publik/tunnel.
-- Komputer/backend dan tunnel harus tetap menyala saat halaman dipakai.
-- Quick tunnel bisa mati atau berubah URL. Jika berubah, perbarui `VITE_API_BASE_URL` lalu jalankan ulang workflow.
-- Untuk URL API permanen, gunakan Cloudflare named tunnel dengan domain atau ngrok static domain.
+- `http://127.0.0.1:8000/api/v1` hanya untuk development di komputer yang menjalankan backend; alamat ini tidak bisa dipakai dari GitHub Pages atau HP.
+- Deployment sudah diarahkan ke API publik; pastikan API publik tetap online.
 
 ## Deploy cepat
 

@@ -25,8 +25,8 @@ jobs:
     if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     env:
-      # GitHub Pages memerlukan API publik; set repository variable untuk deployment.
-      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1' }}
+      # GitHub Pages memerlukan API publik; set repository variable untuk override.
+      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://psikologi.abudzargroup.id/api/v1' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

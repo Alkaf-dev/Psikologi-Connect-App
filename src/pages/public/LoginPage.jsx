@@ -21,10 +21,10 @@ import { Button, Field, Input, Select, Spinner } from '../../components/ui'
 import { MascotGif } from '../../components/PsychologyMascot'
 
 export const DEFAULT_PROGRAMS = [
-  { id: '01M60CY00TAFA0HV21NX7JFNDF', code: 'psi', name: 'Psikologi Islam', degree: 'S1', label: 'S1 Psikologi Islam' },
-  { id: '01M60M042VB05KZ8D99P9D6MJE', code: 'hki', name: 'Hukum Keluarga Islam', degree: 'S1', label: 'S1 Hukum Keluarga Islam' },
-  { id: '01M60M043GTP41WPV6GWJ61FHH', code: 'es', name: "Ekonomi Syari'ah", degree: 'S1', label: "S1 Ekonomi Syari'ah" },
-  { id: '01M60M043QTPAWJT4PQJ4HQWE5', code: 'pgmi', name: 'Pendidikan Guru Madrasah Ibtidaiyah', degree: 'S1', label: 'S1 Pendidikan Guru Madrasah Ibtidaiyah' },
+  { id: '01M5V8C4V913P5WE4PQ8TAGQNW', code: 'psi', name: 'Psikologi Islam', degree: 'S1', label: 'S1 Psikologi Islam' },
+  { id: '01M641HHGBEDB4ABM7ANGBF93B', code: 'hki', name: 'Hukum Keluarga Islam', degree: 'S1', label: 'S1 Hukum Keluarga Islam' },
+  { id: '01M641HX8KX4NWVF0RZ9607VFN', code: 'es', name: "Ekonomi Syari'ah", degree: 'S1', label: "S1 Ekonomi Syari'ah" },
+  { id: '01M641JD9ZTCHG1GB5MPQXKBQW', code: 'pgmi', name: 'Pendidikan Guru Madrasah Ibtidaiyah', degree: 'S1', label: 'S1 Pendidikan Guru Madrasah Ibtidaiyah' },
 ]
 
 export default function LoginPage() {
@@ -66,12 +66,15 @@ export default function LoginPage() {
   }, [user])
 
   useEffect(() => {
-    if (!form.prodiId && availablePrograms.length) {
-      const psychology = availablePrograms.find((program) => program.name?.toLowerCase().includes('psikologi'))
-      const active = availablePrograms.filter((program) => program.active !== false)
-      const selected = psychology || active[0] || availablePrograms[0]
-      if (selected) setForm((current) => ({ ...current, prodiId: selected.id }))
-    }
+    if (!availablePrograms.length) return
+
+    const availableIds = new Set(availablePrograms.map((program) => String(program.id)))
+    if (form.prodiId && availableIds.has(String(form.prodiId))) return
+
+    const psychology = availablePrograms.find((program) => program.name?.toLowerCase().includes('psikologi'))
+    const active = availablePrograms.filter((program) => program.active !== false)
+    const selected = psychology || active[0] || availablePrograms[0]
+    if (selected) setForm((current) => ({ ...current, prodiId: selected.id }))
   }, [availablePrograms, form.prodiId])
 
   const update = (key, value) => {
