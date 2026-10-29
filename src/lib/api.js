@@ -1,5 +1,15 @@
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || 'http://127.0.0.1:8000/api/v1'
+const configuredUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
+const publicTunnelUrl = 'https://agree-blocked-cam-sum.trycloudflare.com/api/v1'
+
+export const API_BASE_URL = (() => {
+  if (typeof window !== 'undefined' && window.location.hostname.includes('github.io')) {
+    if (configuredUrl && !configuredUrl.includes('127.0.0.1') && !configuredUrl.includes('localhost')) {
+      return configuredUrl
+    }
+    return publicTunnelUrl
+  }
+  return configuredUrl || 'http://127.0.0.1:8000/api/v1'
+})()
 
 const TOKEN_KEY = 'psikologi_connect_token'
 const USER_KEY = 'psikologi_connect_user'

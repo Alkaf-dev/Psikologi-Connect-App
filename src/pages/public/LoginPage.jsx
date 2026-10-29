@@ -20,6 +20,13 @@ import { APP_NAME, BRAND_SUBTITLE, DEFAULT_SETTINGS } from '../../lib/brand'
 import { Button, Field, Input, Select, Spinner } from '../../components/ui'
 import { MascotGif } from '../../components/PsychologyMascot'
 
+export const DEFAULT_PROGRAMS = [
+  { id: '01M60CY00TAFA0HV21NX7JFNDF', code: 'psi', name: 'Psikologi Islam', degree: 'S1', label: 'S1 Psikologi Islam' },
+  { id: '01M60M042VB05KZ8D99P9D6MJE', code: 'hki', name: 'Hukum Keluarga Islam', degree: 'S1', label: 'S1 Hukum Keluarga Islam' },
+  { id: '01M60M043GTP41WPV6GWJ61FHH', code: 'es', name: "Ekonomi Syari'ah", degree: 'S1', label: "S1 Ekonomi Syari'ah" },
+  { id: '01M60M043QTPAWJT4PQJ4HQWE5', code: 'pgmi', name: 'Pendidikan Guru Madrasah Ibtidaiyah', degree: 'S1', label: 'S1 Pendidikan Guru Madrasah Ibtidaiyah' },
+]
+
 export default function LoginPage() {
   const { user, isStaff, login } = useAuth()
   const navigate = useNavigate()
@@ -30,16 +37,20 @@ export default function LoginPage() {
   const { data: settingsResponse } = useApiData('/settings', undefined, { keepPrevious: false })
   const settings = { ...DEFAULT_SETTINGS, ...(settingsResponse || {}) }
 
+  const availablePrograms = (programs && programs.length > 0) ? programs : DEFAULT_PROGRAMS
+
   const [rememberMe, setRememberMe] = useState(() => {
     return localStorage.getItem('psikologi_remember_me') !== 'false'
   })
 
   const [form, setForm] = useState(() => {
     const isRemembered = localStorage.getItem('psikologi_remember_me') !== 'false'
+    const savedLogin = isRemembered ? localStorage.getItem('psikologi_remember_login') || '' : ''
+    const savedProdi = isRemembered ? localStorage.getItem('psikologi_remember_prodi') || '' : ''
     return {
-      login: isRemembered ? localStorage.getItem('psikologi_remember_login') || '' : '',
+      login: savedLogin,
       password: '',
-      prodiId: isRemembered ? localStorage.getItem('psikologi_remember_prodi') || '' : '',
+      prodiId: savedProdi || DEFAULT_PROGRAMS[0].id,
     }
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -55,13 +66,13 @@ export default function LoginPage() {
   }, [user])
 
   useEffect(() => {
-    if (!form.prodiId && programs?.length) {
-      const psychology = programs.find((program) => program.name?.toLowerCase().includes('psikologi'))
-      const active = programs.filter((program) => program.active !== false)
-      const selected = psychology || active[0] || programs[0]
+    if (!form.prodiId && availablePrograms.length) {
+      const psychology = availablePrograms.find((program) => program.name?.toLowerCase().includes('psikologi'))
+      const active = availablePrograms.filter((program) => program.active !== false)
+      const selected = psychology || active[0] || availablePrograms[0]
       if (selected) setForm((current) => ({ ...current, prodiId: selected.id }))
     }
-  }, [programs, form.prodiId])
+  }, [availablePrograms, form.prodiId])
 
   const update = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }))
@@ -227,12 +238,10 @@ export default function LoginPage() {
                     onChange={(event) => update('prodiId', event.target.value)}
                     className="pl-10"
                     required
-                    disabled={programsLoading}
                   >
-                    <option value="">{programsLoading ? 'Memuat prodi...' : 'Pilih Prodi'}</option>
-                    {(programs || []).map((program) => (
+                    {availablePrograms.map((program) => (
                       <option key={program.id} value={program.id}>
-                        {program.label || `${program.degree} ${program.name}`}
+                        {program.label || `${program.degree || ''} ${program.name || ''}`.trim()}
                       </option>
                     ))}
                   </Select>
