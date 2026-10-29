@@ -67,7 +67,7 @@ export function AuthProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const login = useCallback(async ({ login, password, prodiId }) => {
+  const login = useCallback(async ({ login, password, prodiId, rememberMe = true }) => {
     const response = await api.post(
       '/auth/login',
       {
@@ -75,7 +75,7 @@ export function AuthProvider({ children }) {
         password,
         prodi_id: prodiId,
         device_name: 'Psikologi Connect Web',
-        expires_in_days: 30,
+        expires_in_days: rememberMe ? 30 : 1,
       },
       { auth: false },
     )

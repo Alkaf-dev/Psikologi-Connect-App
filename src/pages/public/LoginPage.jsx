@@ -20,12 +20,6 @@ import { APP_NAME, BRAND_SUBTITLE, DEFAULT_SETTINGS } from '../../lib/brand'
 import { Button, Field, Input, Select, Spinner } from '../../components/ui'
 import { MascotGif } from '../../components/PsychologyMascot'
 
-const demoAccounts = [
-  { label: 'PJMK (eka)', login: 'eka', hint: 'Role pjmk, akses panel admin' },
-  { label: 'PJMK (yusa)', login: 'yusa', hint: 'Role pjmk, akses panel admin' },
-  { label: 'Mahasiswa', login: 'ayu@psikologi.test', hint: 'Portal mahasiswa' },
-]
-
 export default function LoginPage() {
   const { user, isStaff, login } = useAuth()
   const navigate = useNavigate()
@@ -36,7 +30,18 @@ export default function LoginPage() {
   const { data: settingsResponse } = useApiData('/settings', undefined, { keepPrevious: false })
   const settings = { ...DEFAULT_SETTINGS, ...(settingsResponse || {}) }
 
-  const [form, setForm] = useState({ login: '', password: '', prodiId: '' })
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem('psikologi_remember_me') !== 'false'
+  })
+
+  const [form, setForm] = useState(() => {
+    const isRemembered = localStorage.getItem('psikologi_remember_me') !== 'false'
+    return {
+      login: isRemembered ? localStorage.getItem('psikologi_remember_login') || '' : '',
+      password: '',
+      prodiId: isRemembered ? localStorage.getItem('psikologi_remember_prodi') || '' : '',
+    }
+  })
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -64,17 +69,6 @@ export default function LoginPage() {
     setFieldErrors((current) => ({ ...current, [key]: undefined }))
   }
 
-  const fillDemo = (account) => {
-    const psychology = programs?.find((program) => program.name?.toLowerCase().includes('psikologi'))
-    setForm({
-      login: account.login,
-      password: 'password',
-      prodiId: psychology?.id || form.prodiId,
-    })
-    setError('')
-    setFieldErrors({})
-  }
-
   const handleSubmit = async (event) => {
     event.preventDefault()
 
@@ -88,7 +82,21 @@ export default function LoginPage() {
     setFieldErrors({})
 
     try {
-      const signedInUser = await login(form)
+      if (rememberMe) {
+        localStorage.setItem('psikologi_remember_me', 'true')
+        localStorage.setItem('psikologi_remember_login', form.login.trim())
+        localStorage.setItem('psikologi_remember_prodi', form.prodiId)
+      } else {
+        localStorage.setItem('psikologi_remember_me', 'false')
+        localStorage.removeItem('psikologi_remember_login')
+        localStorage.removeItem('psikologi_remember_prodi')
+      }
+
+      const signedInUser = await login({
+        ...form,
+        login: form.login.trim(),
+        rememberMe,
+      })
       const destination = signedInUser.role === 'mahasiswa' ? '/portal' : '/admin'
       const from = location.state?.from
       const allowedFrom =
@@ -269,31 +277,23 @@ export default function LoginPage() {
                 </div>
               </Field>
 
+              <div className="flex items-center justify-between pt-0.5">
+                <label className="flex cursor-pointer select-none items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(event) => setRememberMe(event.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                  />
+                  <span>Ingat saya</span>
+                </label>
+              </div>
+
               <Button type="submit" size="lg" className="w-full" loading={submitting}>
                 {submitting ? 'Memverifikasi...' : 'Masuk Portal'}
                 {!submitting ? <ArrowRight className="h-4 w-4" /> : null}
               </Button>
             </form>
-
-            <div className="mt-5 rounded-xl border border-slate-200 bg-white px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Akun demo</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {demoAccounts.map((account) => (
-                  <button
-                    key={account.login}
-                    type="button"
-                    onClick={() => fillDemo(account)}
-                    className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-left text-[11px] font-medium text-slate-600 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
-                    title={account.hint}
-                  >
-                    {account.label}
-                  </button>
-                ))}
-              </div>
-              <p className="mt-2 text-[11px] leading-5 text-slate-400">
-                Klik salah satu peran untuk mengisi kredensial demo. Password: <span className="font-semibold">password</span>
-              </p>
-            </div>
 
             <div className="mt-6 flex items-center justify-center gap-2 text-[11px] text-slate-400">
               <BookOpenCheck className="h-3.5 w-3.5" />
