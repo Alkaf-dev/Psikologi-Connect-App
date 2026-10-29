@@ -51,11 +51,11 @@ export default function StaffCourses() {
           name: 'prodi_ids',
           label: 'Program studi',
           type: 'multiselect',
-          required: false,
+          required: true,
           colSpan: 2,
           options: (values, lookups) => lookups.programs || [],
           emptyLabel: 'Memuat program studi...',
-          help: 'Pilih minimal satu program studi.',
+          help: 'Centang program studi yang dapat mengakses mata kuliah ini.',
         },
         {
           name: 'meeting_link',
@@ -175,6 +175,29 @@ export default function StaffCourses() {
         meeting_link: course.meeting_link || '',
         attendance_link: course.attendance_link || '',
       })}
+      mapFormToPayload={(payload, { lookups } = {}) => {
+        let prodiIds = Array.isArray(payload.prodi_ids) ? [...payload.prodi_ids] : []
+        if (prodiIds.length === 0 && payload.class_name && lookups?.programs) {
+          const selectedClasses = parseClassSelection(payload.class_name)
+          const matched = lookups.programs.filter((p) => {
+            const label = (p.label || '').toUpperCase()
+            return selectedClasses.some((c) => {
+              if (c === 'PSI') return label.includes('PSIKOLOGI')
+              if (c === 'HKI') return label.includes('HUKUM KELUARGA')
+              if (c === 'ES') return label.includes('EKONOMI')
+              if (c === 'PGMI') return label.includes('GURU MADRASAH') || label.includes('PGMI')
+              return false
+            })
+          })
+          if (matched.length > 0) {
+            prodiIds = matched.map((m) => m.value)
+          }
+        }
+        return {
+          ...payload,
+          prodi_ids: prodiIds,
+        }
+      }}
       deleteTitle="Hapus mata kuliah?"
       deleteMessage="Jadwal, kelompok, dan tugas yang terkait dapat kehilangan referensi. Pastikan data turunan sudah dibersihkan."
       formSize="lg"

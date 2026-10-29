@@ -173,7 +173,12 @@ function FormField({ field, values, lookups, errors, onChange }) {
           {field.showPreview !== false && currentSelected.length > 0 ? (
             <p className="mt-1 text-[11px] text-teal-700 font-medium">
               <span className="text-slate-500 font-normal">Terpilih: </span>
-              {currentSelected.join(', ')}
+              {currentSelected
+                .map((val) => {
+                  const match = validOptions.find((opt) => String(opt.value) === String(val))
+                  return match?.label || val
+                })
+                .join(', ')}
             </p>
           ) : null}
         </Field>

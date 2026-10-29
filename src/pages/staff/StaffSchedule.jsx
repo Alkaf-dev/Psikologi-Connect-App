@@ -2,7 +2,7 @@ import { CalendarDays, ExternalLink } from 'lucide-react'
 import CrudPage from '../../components/CrudPage'
 import { Badge } from '../../components/ui'
 import { DAYS } from '../../lib/utils'
-import { courseLabel, loadCourseOptions } from '../../lib/staffLookups'
+import { courseLabel, loadCourseOptions, loadProgramOptions } from '../../lib/staffLookups'
 import { CLASS_OPTIONS, formatClassDisplay, parseClassSelection } from '../../lib/classOptions'
 
 function timeLabel(value) {
@@ -46,6 +46,7 @@ export default function StaffSchedule() {
         attendance_link: '',
         class_name: 'PSI',
       }}
+      loadFilterLookups={async () => ({ programs: await loadProgramOptions() })}
       loadLookups={async () => ({ courses: await loadCourseOptions() })}
       deferLookups
       fields={[
@@ -57,6 +58,7 @@ export default function StaffSchedule() {
           colSpan: 2,
           placeholder: 'Pilih mata kuliah',
           options: (values, lookups) => lookups.courses || [],
+          help: 'Pilih mata kuliah untuk jadwal ini. Akses prodi mengikuti pengaturan mata kuliah.',
         },
         { name: 'day', label: 'Hari', type: 'select', required: true, options: dayOptions },
         {
@@ -114,6 +116,12 @@ export default function StaffSchedule() {
           type: 'chips',
           placeholder: 'Semua hari',
           options: dayOptions,
+        },
+        {
+          key: 'prodi_id',
+          label: 'Prodi',
+          placeholder: 'Semua prodi',
+          options: (values, lookups) => lookups.programs || [],
         },
       ]}
       columns={[
@@ -198,6 +206,31 @@ export default function StaffSchedule() {
           label: 'Kelas',
           className: 'text-center',
           render: (schedule) => <Badge variant="neutral">{formatClassDisplay(schedule.class_name)}</Badge>,
+        },
+        {
+          key: 'prodi_names',
+          label: 'Prodi',
+          className: 'text-center',
+          render: (schedule) => {
+            const raw = schedule.prodi_names
+            const names = Array.isArray(raw)
+              ? raw
+              : String(raw || '')
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+            if (!names.length) return <span className="text-xs text-slate-400">-</span>
+            return (
+              <div className="mx-auto flex max-w-[200px] flex-wrap justify-center gap-1">
+                {names.slice(0, 2).map((name) => (
+                  <Badge key={name} variant="teal">
+                    {name}
+                  </Badge>
+                ))}
+                {names.length > 2 ? <Badge variant="neutral">+{names.length - 2}</Badge> : null}
+              </div>
+            )
+          },
         },
       ]}
       mapItemToForm={(schedule) => ({
