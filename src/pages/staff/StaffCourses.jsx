@@ -172,6 +172,8 @@ export default function StaffCourses() {
         ...course,
         credits: course.credits ?? 3,
         prodi_ids: course.prodi_ids || [],
+        meeting_link: course.meeting_link || '',
+        attendance_link: course.attendance_link || '',
       })}
       deleteTitle="Hapus mata kuliah?"
       deleteMessage="Jadwal, kelompok, dan tugas yang terkait dapat kehilangan referensi. Pastikan data turunan sudah dibersihkan."
