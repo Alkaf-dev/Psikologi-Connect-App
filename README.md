@@ -37,7 +37,7 @@ Pilih salah satu isi `.env`:
 
 ```env
 # API publik
-VITE_API_BASE_URL=https://psikologi.abudzargroup.id/api/v1
+VITE_API_BASE_URL=https://api.bysherzad.web.id/api/v1
 ```
 
 ```env
@@ -59,7 +59,7 @@ Jika memakai `/api/v1`, backend harus berjalan di `http://127.0.0.1:8000` karena
 
 Frontend ini hanya mengonsumsi REST API. Backend tidak disertakan di repo ini.
 
-- API publik: `https://psikologi.abudzargroup.id/api/v1`
+- API publik: `https://api.bysherzad.web.id/api/v1`
 - API lokal (opsional): `http://127.0.0.1:8000/api/v1`
 - Dokumentasi API tersedia di project backend terpisah.
 - Backend dan datanya harus tetap berjalan agar login dan data bisa diakses.
@@ -105,12 +105,12 @@ Hasil build ada di `dist/`.
 Untuk build production dengan API publik:
 
 ```powershell
-$env:VITE_API_BASE_URL='https://psikologi.abudzargroup.id/api/v1'; npm run build
+$env:VITE_API_BASE_URL='https://api.bysherzad.web.id/api/v1'; npm run build
 ```
 
 ```bash
 # macOS/Linux
-VITE_API_BASE_URL=https://psikologi.abudzargroup.id/api/v1 npm run build
+VITE_API_BASE_URL=https://api.bysherzad.web.id/api/v1 npm run build
 ```
 
 Sajikan `dist/` sebagai SPA. API publik sudah diakses langsung, jadi tidak perlu proxy `/api`.
