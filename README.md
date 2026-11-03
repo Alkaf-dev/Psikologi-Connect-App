@@ -121,7 +121,7 @@ Sajikan `dist/` sebagai SPA. API publik sudah diakses langsung, jadi tidak perlu
 2. Buka Settings -> Pages -> Source, pilih **GitHub Actions**.
 3. Push ke `main` atau jalankan workflow **Deploy frontend to GitHub Pages**.
 
-Halaman tersedia di `https://alkaf-dev.github.io/Psikologi-Connect-App/`.
+Halaman tersedia di `https://psikologi.bysherzad.web.id/`.
 
 Catatan:
 

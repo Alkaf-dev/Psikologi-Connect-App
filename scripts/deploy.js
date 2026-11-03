@@ -43,4 +43,4 @@ run('git push origin main')
 
 console.log('\n✨ Berhasil push ke GitHub!')
 console.log('📡 GitHub Actions sedang otomatis mem-build dan mendeploy ke GitHub Pages.')
-console.log('🌐 Kunjungi: https://alkaf-dev.github.io/Psikologi-Connect-App/\n')
+console.log('🌐 Kunjungi: https://psikologi.bysherzad.web.id/\n')
