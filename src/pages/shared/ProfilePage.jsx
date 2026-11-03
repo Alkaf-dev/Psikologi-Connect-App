@@ -270,40 +270,73 @@ export default function ProfilePage() {
       return ''
     }
   })
-  const [coverPosY, setCoverPosY] = useState(() => {
+  const [coverPosX, setCoverPosX] = useState(() => {
     try {
-      const stored = localStorage.getItem(`psikologi_cover_pos_${user?.id || user?.email}`)
-      return stored !== null && stored !== '' ? Number(stored) : (user?.cover_pos ?? 50)
+      const stored = localStorage.getItem(`psikologi_cover_pos_x_${user?.id || user?.email}`)
+      return stored !== null && stored !== '' ? Number(stored) : (user?.cover_pos_x ?? 50)
     } catch {
       return 50
     }
   })
+  const [coverPosY, setCoverPosY] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`psikologi_cover_pos_${user?.id || user?.email}`)
+      return stored !== null && stored !== '' ? Number(stored) : (user?.cover_pos_y ?? user?.cover_pos ?? 50)
+    } catch {
+      return 50
+    }
+  })
+  const [coverZoom, setCoverZoom] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`psikologi_cover_zoom_${user?.id || user?.email}`)
+      return stored !== null && stored !== '' ? Number(stored) : (user?.cover_zoom ?? 1)
+    } catch {
+      return 1
+    }
+  })
+
   const [isRepositioningCover, setIsRepositioningCover] = useState(false)
+  const [tempCoverPosX, setTempCoverPosX] = useState(50)
   const [tempCoverPosY, setTempCoverPosY] = useState(50)
-  const coverDragRef = useRef({ isDragging: false, startY: 0, startPos: 50 })
+  const [tempCoverZoom, setTempCoverZoom] = useState(1)
+  const coverDragRef = useRef({ isDragging: false, startX: 0, startY: 0, startPosX: 50, startPosY: 50 })
 
   const [uploadingCover, setUploadingCover] = useState(false)
   const [showCoverMenu, setShowCoverMenu] = useState(false)
   const [showCoverGalleryModal, setShowCoverGalleryModal] = useState(false)
 
   const startCoverReposition = () => {
+    setTempCoverPosX(coverPosX)
     setTempCoverPosY(coverPosY)
+    setTempCoverZoom(coverZoom)
     setIsRepositioningCover(true)
     setShowCoverMenu(false)
   }
 
   const cancelCoverReposition = () => {
+    setTempCoverPosX(coverPosX)
     setTempCoverPosY(coverPosY)
+    setTempCoverZoom(coverZoom)
     setIsRepositioningCover(false)
   }
 
   const saveCoverReposition = () => {
+    setCoverPosX(tempCoverPosX)
     setCoverPosY(tempCoverPosY)
+    setCoverZoom(tempCoverZoom)
     setIsRepositioningCover(false)
     try {
+      localStorage.setItem(`psikologi_cover_pos_x_${user?.id || user?.email}`, String(tempCoverPosX))
       localStorage.setItem(`psikologi_cover_pos_${user?.id || user?.email}`, String(tempCoverPosY))
+      localStorage.setItem(`psikologi_cover_zoom_${user?.id || user?.email}`, String(tempCoverZoom))
     } catch {}
-    updateLocalUser({ ...user, cover_pos: tempCoverPosY })
+    updateLocalUser({
+      ...user,
+      cover_pos_x: tempCoverPosX,
+      cover_pos_y: tempCoverPosY,
+      cover_pos: tempCoverPosY,
+      cover_zoom: tempCoverZoom,
+    })
     toast.success('Posisi sampul disimpan', 'Posisi tampilan sampul berhasil diperbarui.')
   }
 
@@ -311,17 +344,25 @@ export default function ProfilePage() {
     if (!isRepositioningCover) return
     coverDragRef.current = {
       isDragging: true,
+      startX: e.clientX ?? e.touches?.[0]?.clientX ?? 0,
       startY: e.clientY ?? e.touches?.[0]?.clientY ?? 0,
-      startPos: tempCoverPosY,
+      startPosX: tempCoverPosX,
+      startPosY: tempCoverPosY,
     }
   }
 
   const handleCoverPointerMove = (e) => {
     if (!isRepositioningCover || !coverDragRef.current.isDragging) return
+    const currentX = e.clientX ?? e.touches?.[0]?.clientX ?? 0
     const currentY = e.clientY ?? e.touches?.[0]?.clientY ?? 0
+    const deltaX = currentX - coverDragRef.current.startX
     const deltaY = currentY - coverDragRef.current.startY
-    const newPos = Math.max(0, Math.min(100, Math.round(coverDragRef.current.startPos - deltaY * 0.4)))
-    setTempCoverPosY(newPos)
+
+    const newPosX = Math.max(0, Math.min(100, Math.round(coverDragRef.current.startPosX - deltaX * 0.35)))
+    const newPosY = Math.max(0, Math.min(100, Math.round(coverDragRef.current.startPosY - deltaY * 0.35)))
+
+    setTempCoverPosX(newPosX)
+    setTempCoverPosY(newPosY)
   }
 
   const handleCoverPointerUp = () => {
@@ -348,10 +389,14 @@ export default function ProfilePage() {
     reader.onload = async () => {
       const dataUrl = reader.result
       setCoverUrl(dataUrl)
+      setCoverPosX(50)
       setCoverPosY(50)
+      setCoverZoom(1)
       try {
         localStorage.setItem(`psikologi_cover_${user?.id || user?.email}`, dataUrl)
+        localStorage.setItem(`psikologi_cover_pos_x_${user?.id || user?.email}`, '50')
         localStorage.setItem(`psikologi_cover_pos_${user?.id || user?.email}`, '50')
+        localStorage.setItem(`psikologi_cover_zoom_${user?.id || user?.email}`, '1')
       } catch {}
 
       const formData = new FormData()
@@ -369,10 +414,14 @@ export default function ProfilePage() {
 
   const handleSelectPresetCover = async (presetUrl) => {
     setCoverUrl(presetUrl)
+    setCoverPosX(50)
     setCoverPosY(50)
+    setCoverZoom(1)
     try {
       localStorage.setItem(`psikologi_cover_${user?.id || user?.email}`, presetUrl)
+      localStorage.setItem(`psikologi_cover_pos_x_${user?.id || user?.email}`, '50')
       localStorage.setItem(`psikologi_cover_pos_${user?.id || user?.email}`, '50')
+      localStorage.setItem(`psikologi_cover_zoom_${user?.id || user?.email}`, '1')
     } catch {}
     setShowCoverGalleryModal(false)
     setShowCoverMenu(false)
@@ -394,11 +443,15 @@ export default function ProfilePage() {
 
     try {
       localStorage.removeItem(`psikologi_cover_${user?.id || user?.email}`)
+      localStorage.removeItem(`psikologi_cover_pos_x_${user?.id || user?.email}`)
       localStorage.removeItem(`psikologi_cover_pos_${user?.id || user?.email}`)
+      localStorage.removeItem(`psikologi_cover_zoom_${user?.id || user?.email}`)
     } catch {}
 
     setCoverUrl('')
+    setCoverPosX(50)
     setCoverPosY(50)
+    setCoverZoom(1)
     try {
       await api.delete('/auth/cover')
     } catch {}
@@ -497,7 +550,7 @@ export default function ProfilePage() {
           <Card className="overflow-hidden">
             {/* Facebook/LinkedIn-style Cover Banner */}
             <div
-              className={`relative h-44 sm:h-52 overflow-hidden bg-gradient-to-br from-slate-900 via-teal-950 to-slate-900 group select-none ${
+              className={`relative h-48 sm:h-56 overflow-hidden bg-gradient-to-br from-slate-900 via-teal-950 to-slate-900 group select-none ${
                 isRepositioningCover ? 'cursor-grab active:cursor-grabbing' : ''
               }`}
               onMouseDown={handleCoverPointerDown}
@@ -514,7 +567,9 @@ export default function ProfilePage() {
                   alt="Foto Sampul"
                   draggable={false}
                   style={{
-                    objectPosition: `center ${isRepositioningCover ? tempCoverPosY : coverPosY}%`,
+                    objectPosition: `${isRepositioningCover ? tempCoverPosX : coverPosX}% ${isRepositioningCover ? tempCoverPosY : coverPosY}%`,
+                    transform: `scale(${isRepositioningCover ? tempCoverZoom : coverZoom})`,
+                    transformOrigin: `${isRepositioningCover ? tempCoverPosX : coverPosX}% ${isRepositioningCover ? tempCoverPosY : coverPosY}%`,
                   }}
                   className="h-full w-full object-cover transition-none pointer-events-none"
                 />
@@ -527,48 +582,98 @@ export default function ProfilePage() {
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
 
-              {/* Reposition Mode Floating Controls */}
+              {/* Reposition Mode Floating Controls (2D: Horizontal & Vertical & Zoom) */}
               {isRepositioningCover ? (
                 <>
-                  <div className="absolute top-3 inset-x-3 z-30 flex items-center justify-center pointer-events-none">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/90 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xl backdrop-blur-md border border-white/20 animate-pulse">
+                  <div className="absolute top-2.5 inset-x-3 z-30 flex items-center justify-center pointer-events-none">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/90 px-3.5 py-1 text-xs font-semibold text-white shadow-xl backdrop-blur-md border border-white/20 animate-pulse">
                       <Move className="h-3.5 w-3.5 text-teal-400" />
-                      Seret gambar naik/turun atau gunakan slider
+                      Seret foto bebas (atas, bawah, kiri, kanan) atau gunakan slider
                     </span>
                   </div>
 
-                  <div className="absolute bottom-3 left-3 right-3 z-30 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-900/95 p-2.5 sm:p-3 text-white backdrop-blur-md shadow-2xl border border-white/20">
-                    <div className="flex flex-1 items-center gap-2.5 min-w-[180px]">
-                      <span className="text-[11px] font-semibold text-slate-300">Atas</span>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={tempCoverPosY}
-                        onChange={(e) => setTempCoverPosY(Number(e.target.value))}
-                        className="w-full accent-teal-400 cursor-pointer h-2 bg-slate-700 rounded-lg"
-                      />
-                      <span className="text-[11px] font-semibold text-slate-300">Bawah</span>
-                      <span className="text-xs font-mono font-bold text-teal-400 min-w-[36px] text-right">
-                        {tempCoverPosY}%
-                      </span>
+                  <div className="absolute bottom-2 left-2 right-2 z-30 flex flex-col gap-2 rounded-2xl bg-slate-900/95 p-3 text-white backdrop-blur-md shadow-2xl border border-white/20">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-center">
+                      {/* Horizontal Slider */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold text-slate-300 min-w-[52px]">Kiri/Kanan</span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={tempCoverPosX}
+                          onChange={(e) => setTempCoverPosX(Number(e.target.value))}
+                          className="w-full accent-teal-400 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-teal-400 min-w-[28px] text-right">
+                          {tempCoverPosX}%
+                        </span>
+                      </div>
+
+                      {/* Vertical Slider */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold text-slate-300 min-w-[52px]">Atas/Bwh</span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={tempCoverPosY}
+                          onChange={(e) => setTempCoverPosY(Number(e.target.value))}
+                          className="w-full accent-teal-400 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-teal-400 min-w-[28px] text-right">
+                          {tempCoverPosY}%
+                        </span>
+                      </div>
+
+                      {/* Zoom Slider */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold text-slate-300 min-w-[40px]">Zoom</span>
+                        <input
+                          type="range"
+                          min="1"
+                          max="2"
+                          step="0.05"
+                          value={tempCoverZoom}
+                          onChange={(e) => setTempCoverZoom(Number(e.target.value))}
+                          className="w-full accent-teal-400 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-teal-400 min-w-[28px] text-right">
+                          {tempCoverZoom.toFixed(1)}x
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
+
+                    <div className="flex items-center justify-between pt-1 border-t border-white/10">
                       <button
                         type="button"
-                        onClick={cancelCoverReposition}
-                        className="rounded-xl border border-white/20 px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 transition"
+                        onClick={() => {
+                          setTempCoverPosX(50)
+                          setTempCoverPosY(50)
+                          setTempCoverZoom(1)
+                        }}
+                        className="inline-flex items-center gap-1 text-[11px] text-teal-300 hover:text-white transition"
                       >
-                        Batal
+                        <RotateCcw className="h-3 w-3" />
+                        Pusatkan (50%)
                       </button>
-                      <button
-                        type="button"
-                        onClick={saveCoverReposition}
-                        className="rounded-xl bg-teal-500 hover:bg-teal-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-md transition flex items-center gap-1.5"
-                      >
-                        <Check className="h-3.5 w-3.5" />
-                        Simpan Posisi
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={cancelCoverReposition}
+                          className="rounded-xl border border-white/20 px-3 py-1 text-xs font-semibold text-white/80 hover:bg-white/10 transition"
+                        >
+                          Batal
+                        </button>
+                        <button
+                          type="button"
+                          onClick={saveCoverReposition}
+                          className="rounded-xl bg-teal-500 hover:bg-teal-600 px-3.5 py-1 text-xs font-bold text-white shadow-md transition flex items-center gap-1.5"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          Simpan Posisi
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </>

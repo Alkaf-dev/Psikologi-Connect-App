@@ -16,9 +16,18 @@ function enrichUser(userData) {
     if (localCover) {
       enriched.cover_url = localCover
     }
-    const localCoverPos = localStorage.getItem('psikologi_cover_pos_' + key)
-    if (localCoverPos !== null && localCoverPos !== '') {
-      enriched.cover_pos = Number(localCoverPos)
+    const localCoverPosX = localStorage.getItem('psikologi_cover_pos_x_' + key)
+    if (localCoverPosX !== null && localCoverPosX !== '') {
+      enriched.cover_pos_x = Number(localCoverPosX)
+    }
+    const localCoverPosY = localStorage.getItem('psikologi_cover_pos_' + key)
+    if (localCoverPosY !== null && localCoverPosY !== '') {
+      enriched.cover_pos = Number(localCoverPosY)
+      enriched.cover_pos_y = Number(localCoverPosY)
+    }
+    const localCoverZoom = localStorage.getItem('psikologi_cover_zoom_' + key)
+    if (localCoverZoom !== null && localCoverZoom !== '') {
+      enriched.cover_zoom = Number(localCoverZoom)
     }
   } catch {}
   return enriched
