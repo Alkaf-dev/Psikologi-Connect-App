@@ -100,6 +100,7 @@ export default function ProfilePage() {
 
   const fileInputRef = useRef(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false)
   const [rawAvatarUrl, setRawAvatarUrl] = useState('')
   const [showAvatarCropModal, setShowAvatarCropModal] = useState(false)
   const [avatarZoom, setAvatarZoom] = useState(1)
@@ -791,9 +792,11 @@ export default function ProfilePage() {
             </div>
 
             <div className="relative z-10 px-5 sm:px-6 pb-6">
-              <div className="-mt-14 sm:-mt-16 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div className="flex items-end gap-3.5">
-                  <div className="relative group">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                {/* Left side: Avatar + User Info */}
+                <div className="flex flex-col sm:flex-row sm:items-end gap-3.5 sm:gap-4 min-w-0">
+                  {/* Avatar wrapper - ONLY THIS overlaps the cover photo! */}
+                  <div className="-mt-16 sm:-mt-20 relative shrink-0">
                     <Avatar
                       name={user?.name}
                       src={user?.avatar_url || user?.avatar}
@@ -801,11 +804,11 @@ export default function ProfilePage() {
                     />
                     <button
                       type="button"
-                      onClick={() => fileInputRef.current?.click()}
+                      onClick={() => setShowAvatarMenu((prev) => !prev)}
                       disabled={uploadingAvatar}
                       className="absolute bottom-1 right-1 flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border-2 border-white dark:border-[#0c0d10] bg-teal-600 hover:bg-teal-700 text-white shadow-lg transition hover:scale-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-500 disabled:opacity-50"
-                      title="Ganti foto profil"
-                      aria-label="Ganti foto profil"
+                      title="Atur foto profil"
+                      aria-label="Atur foto profil"
                     >
                       {uploadingAvatar ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -822,35 +825,17 @@ export default function ProfilePage() {
                     />
                   </div>
 
-                  <div className="mb-2 hidden sm:block">
-                    <h2 className="text-xl font-bold text-slate-900 leading-tight">{user?.name}</h2>
-                    <p className="text-xs text-slate-500">{user?.email}</p>
+                  {/* Name and Email - clearly positioned below the cover photo in the card body */}
+                  <div className="pt-1 sm:pt-0 sm:pb-1.5 min-w-0">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-tight truncate">
+                      {user?.name}
+                    </h2>
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-start sm:self-end">
-                  {(user?.avatar_url || user?.avatar) ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => openAvatarAdjustModal(user?.avatar_url || user?.avatar)}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 transition shadow-xs"
-                        title="Sesuaikan posisi dan zoom foto profil"
-                      >
-                        <Crop className="h-3.5 w-3.5 text-teal-600" />
-                        <span className="hidden sm:inline">Sesuaikan Foto</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={removeAvatar}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 transition shadow-xs"
-                        title="Hapus foto profil"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        <span className="hidden sm:inline">Hapus</span>
-                      </button>
-                    </>
-                  ) : null}
+                {/* Right side: Multi-role badges + "Atur Foto Profil" menu */}
+                <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-end">
                   {isMultiRole ? (
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Badge variant="teal">{user?.role_label || 'Admin'}</Badge>
@@ -859,12 +844,97 @@ export default function ProfilePage() {
                   ) : (
                     <Badge variant="teal">{user?.role_label || user?.role}</Badge>
                   )}
-                </div>
-              </div>
 
-              <div className="mt-3 sm:hidden">
-                <h2 className="text-lg font-bold text-slate-900 leading-tight">{user?.name}</h2>
-                <p className="text-xs text-slate-500">{user?.email}</p>
+                  {/* Clean "Atur Foto Profil" Popover Trigger */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowAvatarMenu((prev) => !prev)}
+                      disabled={uploadingAvatar}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition active:scale-95 disabled:opacity-50"
+                      title="Atur foto profil"
+                    >
+                      {uploadingAvatar ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-600" />
+                      ) : (
+                        <Camera className="h-3.5 w-3.5 text-teal-600" />
+                      )}
+                      <span>Atur Foto Profil</span>
+                      <ChevronDown className="h-3 w-3 opacity-60" />
+                    </button>
+
+                    {showAvatarMenu && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-30"
+                          onClick={() => setShowAvatarMenu(false)}
+                        />
+                        <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-md z-40 animate-scale-in">
+                          {/* 1. Unggah Foto Baru */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowAvatarMenu(false)
+                              fileInputRef.current?.click()
+                            }}
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
+                          >
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
+                              <Upload className="h-3.5 w-3.5" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800 dark:text-slate-100">Unggah Foto Baru</p>
+                              <p className="text-[10px] text-slate-400">Pilih dari HP / Laptop</p>
+                            </div>
+                          </button>
+
+                          {/* 2. Sesuaikan Posisi / Zoom */}
+                          {(user?.avatar_url || user?.avatar) ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowAvatarMenu(false)
+                                openAvatarAdjustModal(user?.avatar_url || user?.avatar)
+                              }}
+                              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
+                            >
+                              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400">
+                                <Crop className="h-3.5 w-3.5" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-slate-800 dark:text-slate-100">Sesuaikan Foto</p>
+                                <p className="text-[10px] text-slate-400">Atur zoom dan posisi foto</p>
+                              </div>
+                            </button>
+                          ) : null}
+
+                          {/* 3. Hapus Foto Profil */}
+                          {(user?.avatar_url || user?.avatar) ? (
+                            <>
+                              <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowAvatarMenu(false)
+                                  removeAvatar()
+                                }}
+                                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition text-left"
+                              >
+                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-500">
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-rose-600 dark:text-rose-400">Hapus Foto Profil</p>
+                                  <p className="text-[10px] text-slate-400">Kembali ke inisial nama</p>
+                                </div>
+                              </button>
+                            </>
+                          ) : null}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-2">
