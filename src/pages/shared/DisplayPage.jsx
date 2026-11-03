@@ -1,57 +1,62 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Bell,
-  BookOpen,
-  Calendar,
   CalendarDays,
   CheckCircle2,
   ChevronRight,
   Clock,
   DoorOpen,
-  ExternalLink,
   Heart,
   Layers,
-  MapPin,
   Maximize2,
   Megaphone,
   Minimize2,
-  Play,
   RotateCcw,
   Sparkles,
   Tv,
   UsersRound,
   Video,
-  Volume2,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useApiData } from '../../hooks/useApiData'
-import { DAYS, dayOrder, formatDate, formatDayDate } from '../../lib/utils'
-import { Badge, Button, Card, EmptyState, Skeleton } from '../../components/ui'
-import { MascotGif } from '../../components/PsychologyMascot'
+import { formatDate } from '../../lib/utils'
+import { Badge, Card, Skeleton } from '../../components/ui'
+import { getMascot } from '../../lib/mascots'
+
+function MascotCharacter({ name, className = 'h-14 w-auto object-contain', alt }) {
+  const asset = getMascot(name)
+  if (!asset) return null
+  return (
+    <img
+      src={asset.gif || asset.poster}
+      alt={alt || asset.alt || 'Maskot Psikologi Connect'}
+      className={className}
+      draggable={false}
+      loading="eager"
+    />
+  )
+}
 
 const PSYCHOLOGY_REMINDERS = [
   {
     id: 1,
     title: 'Teknik Pomodoro & Istirahat',
-    message: 'Fokus belajar 25 menit, lalu istirahat 5 menit. Otak Anda butuh jeda untuk menyerap informasi secara optimal.',
+    message: 'Fokus belajar 25 menit, lalu istirahat 5 menit. Otak Anda butuh jeda berkala untuk menyerap informasi secara optimal.',
     category: 'Manajemen Belajar',
-    tone: 'teal',
     mascot: 'minum',
   },
   {
     id: 2,
     title: 'Pernapasan 4-7-8 untuk Ketenangan',
-    message: 'Tarik napas 4 detik, tahan 7 detik, dan hembuskan perlahan 8 detik. Efektif menurunkan detak jantung dan kecemasan.',
+    message: 'Tarik napas 4 detik, tahan 7 detik, dan hembuskan perlahan 8 detik. Terbukti efektif menurunkan detak jantung dan kecemasan.',
     category: 'Mindfulness',
-    tone: 'sky',
     mascot: 'memeluk-hati',
   },
   {
     id: 3,
     title: 'Hidrasi Cukup Menjaga Fokus',
-    message: 'Dehidrasi ringan 2% bisa menurunkan daya konsentrasi hingga 20%. Pastikan minum air putih secara teratur.',
+    message: 'Dehidrasi ringan 2% bisa menurunkan daya konsentrasi hingga 20%. Pastikan selalu sediakan air minum saat belajar.',
     category: 'Kebugaran',
-    tone: 'amber',
     mascot: 'semangat',
   },
   {
@@ -59,13 +64,12 @@ const PSYCHOLOGY_REMINDERS = [
     title: 'Aturan 20-20-20 untuk Mata',
     message: 'Setiap 20 menit menatap layar laptop/HP, alihkan pandangan sejauh 20 kaki (6 meter) selama 20 detik.',
     category: 'Kesehatan Mata',
-    tone: 'violet',
     mascot: 'laptop',
   },
 ]
 
 export default function DisplayPage() {
-  const { user, isStaff } = useAuth()
+  const { isStaff } = useAuth()
   const [activeTab, setActiveTab] = useState('all') // 'all', 'schedules', 'announcements', 'reminders'
   const [currentTime, setCurrentTime] = useState(new Date())
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -91,11 +95,11 @@ export default function DisplayPage() {
     return () => clearInterval(interval)
   }, [autoRotate])
 
-  // Cycle psychological tips every 15s
+  // Cycle psychological tips every 12s
   useEffect(() => {
     const interval = setInterval(() => {
       setReminderIndex((prev) => (prev + 1) % PSYCHOLOGY_REMINDERS.length)
-    }, 15000)
+    }, 12000)
     return () => clearInterval(interval)
   }, [])
 
@@ -159,21 +163,21 @@ export default function DisplayPage() {
   return (
     <div className={`space-y-6 ${isFullscreen ? 'p-6 sm:p-8 bg-slate-950 text-white min-h-screen overflow-y-auto' : ''}`}>
       {/* Top Banner / Ticker Display */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-teal-900 via-teal-800 to-slate-900 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-teal-900 via-teal-800 to-slate-900 text-white shadow-xl">
         <div className="hero-dots absolute inset-0 opacity-15" />
-        <div className="relative z-10 flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-500/20 text-teal-300 ring-1 ring-teal-400/30">
-              <Tv className="h-5 w-5" />
+        <div className="relative z-10 flex flex-wrap items-center justify-between gap-4 px-6 py-5">
+          <div className="flex items-center gap-3.5">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-500/20 text-teal-300 ring-1 ring-teal-400/30">
+              <Tv className="h-6 w-6" />
             </span>
             <div>
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                 <p className="text-[10px] font-bold uppercase tracking-widest text-teal-300">
-                  Live Smart Display Board
+                  Live Display Board
                 </p>
               </div>
-              <h1 className="text-lg font-bold sm:text-xl text-white">
+              <h1 className="text-xl font-bold sm:text-2xl text-white">
                 Pusat Informasi & Jadwal Terpadu
               </h1>
             </div>
@@ -182,13 +186,13 @@ export default function DisplayPage() {
           {/* Clock & Fullscreen Controls */}
           <div className="flex flex-wrap items-center gap-3">
             {/* Live Clock Card */}
-            <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-black/30 px-3.5 py-1.5 backdrop-blur-md">
+            <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-black/40 px-4 py-2 backdrop-blur-md">
               <Clock className="h-4 w-4 text-teal-400" />
               <div className="text-right">
-                <p className="font-mono text-sm font-bold tracking-wider text-teal-300">
-                  {timeString} <span className="text-[10px] font-normal text-slate-400">WIB</span>
+                <p className="font-mono text-base font-bold tracking-wider text-teal-300 leading-tight">
+                  {timeString} <span className="text-[10px] font-normal text-slate-300">WIB</span>
                 </p>
-                <p className="text-[10px] text-slate-300">{dateString}</p>
+                <p className="text-[10px] text-slate-300 mt-0.5">{dateString}</p>
               </div>
             </div>
 
@@ -196,10 +200,10 @@ export default function DisplayPage() {
             <button
               type="button"
               onClick={() => setAutoRotate((prev) => !prev)}
-              className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold backdrop-blur-md transition ${
+              className={`inline-flex items-center gap-1.5 rounded-2xl border px-3.5 py-2 text-xs font-semibold backdrop-blur-md transition ${
                 autoRotate
                   ? 'border-emerald-400 bg-emerald-500/30 text-emerald-200'
-                  : 'border-white/10 bg-black/20 text-slate-300 hover:bg-black/40'
+                  : 'border-white/15 bg-black/20 text-slate-300 hover:bg-black/40'
               }`}
               title="Putar otomatis tiap 12 detik"
             >
@@ -211,19 +215,19 @@ export default function DisplayPage() {
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-teal-600 hover:bg-teal-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-md transition active:scale-95"
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-white/20 bg-teal-600 hover:bg-teal-500 px-4 py-2 text-xs font-bold text-white shadow-md transition active:scale-95"
               title="Mode Layar Penuh (TV Display)"
             >
-              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-              <span className="hidden sm:inline">{isFullscreen ? 'Keluar Fullscreen' : 'Layar Penuh (TV)'}</span>
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              <span className="hidden sm:inline">{isFullscreen ? 'Keluar Layar Penuh' : 'Layar Penuh (TV)'}</span>
             </button>
           </div>
         </div>
 
         {/* Running Ticker Bar */}
-        <div className="border-t border-white/10 bg-black/40 px-4 py-1.5 text-xs">
-          <div className="flex items-center gap-2 overflow-hidden">
-            <span className="inline-flex shrink-0 items-center gap-1 rounded bg-teal-500 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-950">
+        <div className="border-t border-white/10 bg-black/40 px-6 py-2 text-xs">
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-teal-500 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-950">
               Sekilas Info
             </span>
             <div className="truncate text-slate-200">
@@ -239,7 +243,7 @@ export default function DisplayPage() {
 
       {/* Navigation Filter Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {[
             { id: 'all', label: 'Semua Tampilan', icon: Layers },
             { id: 'schedules', label: `Jadwal Hari Ini (${todaySchedules.length})`, icon: CalendarDays },
@@ -253,10 +257,10 @@ export default function DisplayPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+                className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
                   active
                     ? 'bg-teal-600 text-white shadow-sm'
-                    : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -276,9 +280,9 @@ export default function DisplayPage() {
           {/* SECTION 1: JADWAL KULIAH HARI INI */}
           {(activeTab === 'all' || activeTab === 'schedules') && (
             <Card className="overflow-hidden border border-slate-200/80 dark:border-slate-800">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 px-5 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 px-6 py-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400">
                     <CalendarDays className="h-5 w-5" />
                   </div>
                   <div>
@@ -291,32 +295,31 @@ export default function DisplayPage() {
                   </div>
                 </div>
 
-                {/* Sesuai Permintaan: Maskot Jadwal (Berjalan) */}
-                <div className="hidden sm:flex items-center gap-2 rounded-xl bg-teal-50/80 dark:bg-teal-950/40 px-3 py-1.5 border border-teal-100 dark:border-teal-900/50">
-                  <div className="h-10 w-8 overflow-hidden">
-                    <MascotGif mascot="berjalan" className="h-10 w-auto object-contain" />
+                {/* Maskot Jadwal: Berjalan (Tanpa Teks Menumpuk) */}
+                <div className="hidden sm:flex items-center gap-2.5 rounded-2xl bg-teal-500/10 dark:bg-teal-950/40 px-3.5 py-1.5 border border-teal-500/20">
+                  <MascotCharacter name="berjalan" className="h-10 w-auto object-contain shrink-0" />
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-teal-800 dark:text-teal-300">Maskot Jadwal</p>
+                    <p className="text-[11px] text-teal-600 dark:text-teal-400">Jaga ritme & hadir tepat waktu!</p>
                   </div>
-                  <p className="text-[11px] font-medium text-teal-800 dark:text-teal-300 leading-tight">
-                    Jaga ritme akademik & hadir tepat waktu!
-                  </p>
                 </div>
               </div>
 
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {loadingSchedules ? (
-                  <div className="p-5 space-y-3">
-                    <Skeleton className="h-16 w-full" />
-                    <Skeleton className="h-16 w-full" />
+                  <div className="p-6 space-y-3">
+                    <Skeleton className="h-16 w-full rounded-2xl" />
+                    <Skeleton className="h-16 w-full rounded-2xl" />
                   </div>
                 ) : todaySchedules.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
-                      <MascotGif mascot="tertidur" className="h-12 w-auto object-contain" />
+                  <div className="py-12 px-6 text-center">
+                    <div className="mx-auto mb-3 flex items-center justify-center">
+                      <MascotCharacter name="tertidur" className="h-16 w-auto object-contain" />
                     </div>
                     <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
                       Tidak ada jadwal perkuliahan hari ini
                     </h3>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
                       Waktu yang tepat untuk istirahat, mengulang materi, atau menyelesaikan tugas.
                     </p>
                   </div>
@@ -328,12 +331,12 @@ export default function DisplayPage() {
                     return (
                       <div
                         key={item.id || idx}
-                        className="flex flex-wrap items-center justify-between gap-4 p-4 sm:px-5 transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                        className="flex flex-wrap items-center justify-between gap-4 p-5 transition hover:bg-slate-50/80 dark:hover:bg-slate-800/50"
                       >
                         <div className="flex items-start gap-3.5">
-                          <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-teal-600 text-white shadow-sm font-mono">
+                          <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl bg-teal-600 text-white shadow-sm font-mono">
                             <span className="text-xs font-bold leading-none">{startTime}</span>
-                            <span className="text-[9px] text-teal-200 mt-0.5 leading-none">{endTime}</span>
+                            <span className="text-[9px] text-teal-200 mt-1 leading-none">{endTime}</span>
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
@@ -369,7 +372,7 @@ export default function DisplayPage() {
                             href={item.meeting_link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 px-3 py-1.5 text-xs font-bold text-teal-700 dark:text-teal-300 hover:bg-teal-100 transition shadow-xs"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 px-3.5 py-1.5 text-xs font-bold text-teal-700 dark:text-teal-300 hover:bg-teal-100 transition shadow-xs"
                           >
                             <Video className="h-3.5 w-3.5" />
                             Masuk Kelas
@@ -386,9 +389,9 @@ export default function DisplayPage() {
           {/* SECTION 2: PENGUMUMAN TERBARU */}
           {(activeTab === 'all' || activeTab === 'announcements') && (
             <Card className="overflow-hidden border border-slate-200/80 dark:border-slate-800">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 px-5 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 px-6 py-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
                     <Megaphone className="h-5 w-5" />
                   </div>
                   <div>
@@ -401,22 +404,21 @@ export default function DisplayPage() {
                   </div>
                 </div>
 
-                {/* Sesuai Permintaan: Maskot Pengumuman (Menunjuk) */}
-                <div className="hidden sm:flex items-center gap-2 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 px-3 py-1.5 border border-amber-100 dark:border-amber-900/50">
-                  <div className="h-10 w-8 overflow-hidden">
-                    <MascotGif mascot="menunjuk" className="h-10 w-auto object-contain" />
+                {/* Maskot Pengumuman: Menunjuk (Tanpa Teks Menumpuk) */}
+                <div className="hidden sm:flex items-center gap-2.5 rounded-2xl bg-amber-500/10 dark:bg-amber-950/40 px-3.5 py-1.5 border border-amber-500/20">
+                  <MascotCharacter name="menunjuk" className="h-10 w-auto object-contain shrink-0" />
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-amber-800 dark:text-amber-300">Warta Terkini</p>
+                    <p className="text-[11px] text-amber-600 dark:text-amber-400">Cek info penting terbaru!</p>
                   </div>
-                  <p className="text-[11px] font-medium text-amber-800 dark:text-amber-300 leading-tight">
-                    Cek informasi terbaru di sini!
-                  </p>
                 </div>
               </div>
 
               <div className="grid divide-y divide-slate-100 dark:divide-slate-800 sm:grid-cols-2 sm:divide-y-0 sm:divide-x">
                 {loadingAnnouncements ? (
-                  <div className="p-5 space-y-3 col-span-2">
-                    <Skeleton className="h-20 w-full" />
-                    <Skeleton className="h-20 w-full" />
+                  <div className="p-6 space-y-3 col-span-2">
+                    <Skeleton className="h-20 w-full rounded-2xl" />
+                    <Skeleton className="h-20 w-full rounded-2xl" />
                   </div>
                 ) : (announcements || []).length === 0 ? (
                   <div className="p-8 text-center col-span-2">
@@ -456,27 +458,27 @@ export default function DisplayPage() {
           )}
         </div>
 
-        {/* Right Column: Pengingat, Motivasi & Maskot Interaktif (4 cols / full if tab) */}
-        <div className={`space-y-6 ${activeTab === 'reminders' ? 'col-span-12 max-w-4xl mx-auto' : 'lg:col-span-4'}`}>
-          {/* Sesuai Permintaan: Widget Pengingat & Motivasi Kesehatan Mental */}
-          <Card className="overflow-hidden border border-slate-200/80 dark:border-slate-800 bg-gradient-to-br from-teal-500/10 via-slate-50 to-white dark:from-teal-950/30 dark:via-slate-900 dark:to-slate-900">
-            <div className="p-5">
+        {/* Right Column: Pengingat, Motivasi & Maskot Interaktif (4 cols) */}
+        <div className={`space-y-6 ${activeTab === 'reminders' ? 'col-span-12 max-w-3xl mx-auto' : 'lg:col-span-4'}`}>
+          {/* Card Motivasi & Self-Care yang Bersih dan Elegan */}
+          <Card className="overflow-hidden border border-slate-200/80 dark:border-slate-800">
+            <div className="p-6">
               <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-100 dark:bg-teal-950/80 px-2.5 py-0.5 text-[10px] font-bold text-teal-800 dark:text-teal-300 uppercase tracking-wider">
-                  <Sparkles className="h-3 w-3 text-teal-600" />
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/15 px-3 py-1 text-xs font-bold text-teal-700 dark:text-teal-300 uppercase tracking-wider">
+                  <Sparkles className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
                   {activeReminder.category}
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">
-                  Tips #{reminderIndex + 1}
+                <span className="text-[11px] text-slate-400 font-mono">
+                  Tips #{reminderIndex + 1} / {PSYCHOLOGY_REMINDERS.length}
                 </span>
               </div>
 
-              {/* Animated Mascot Showcase */}
-              <div className="my-4 flex items-center justify-center">
-                <div className="relative flex h-36 w-36 items-center justify-center rounded-full bg-gradient-to-tr from-teal-500/20 to-teal-100/50 dark:from-teal-900/40 dark:to-teal-800/20 p-2 shadow-inner ring-4 ring-white dark:ring-slate-800">
-                  <MascotGif
-                    mascot={activeReminder.mascot}
-                    className="h-28 w-auto object-contain transition duration-500 transform hover:scale-105"
+              {/* Maskot Spotlight (Bersih tanpa teks yang menimpa) */}
+              <div className="my-6 flex items-center justify-center">
+                <div className="flex h-36 w-36 items-center justify-center rounded-3xl bg-teal-500/10 dark:bg-teal-950/40 border border-teal-500/20 p-3 shadow-inner">
+                  <MascotCharacter
+                    name={activeReminder.mascot}
+                    className="h-28 w-auto object-contain transition duration-500 hover:scale-110"
                   />
                 </div>
               </div>
@@ -491,7 +493,7 @@ export default function DisplayPage() {
               </div>
 
               {/* Dot Indicators */}
-              <div className="mt-4 flex items-center justify-center gap-1.5">
+              <div className="mt-5 flex items-center justify-center gap-1.5">
                 {PSYCHOLOGY_REMINDERS.map((_, idx) => (
                   <button
                     key={idx}
@@ -510,36 +512,39 @@ export default function DisplayPage() {
           </Card>
 
           {/* Quick Academic Reminders */}
-          <Card className="p-5 border border-slate-200/80 dark:border-slate-800">
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-600">
-                <Bell className="h-4 w-4" />
+          <Card className="p-6 border border-slate-200/80 dark:border-slate-800">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400">
+                <Bell className="h-4.5 w-4.5" />
               </div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Pengingat Akademik</h3>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Pengingat Akademik</h3>
+                <p className="text-[11px] text-slate-400">Prioritas belajar & perkuliahan</p>
+              </div>
             </div>
 
-            <div className="space-y-2.5 text-xs">
-              <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-3 flex items-start gap-2.5">
+            <div className="space-y-3 text-xs">
+              <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 p-3.5 flex items-start gap-3">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-slate-800 dark:text-slate-200">Presensi & Kehadiran</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">Pastikan mengisi absensi kuliah tepat waktu.</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Pastikan mengisi absensi kuliah tepat waktu setiap sesi perkuliahan.</p>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-3 flex items-start gap-2.5">
+              <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 p-3.5 flex items-start gap-3">
                 <Clock className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-slate-800 dark:text-slate-200">Batas Pengumpulan Tugas</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">Periksa deadline tugas di menu Tugas Saya.</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Periksa tenggat waktu di menu Materi & Tugas agar tidak terlambat.</p>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-3 flex items-start gap-2.5">
+              <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 p-3.5 flex items-start gap-3">
                 <Heart className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-slate-800 dark:text-slate-200">Layanan Konseling</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">Hubungi pembimbing akademik jika membutuhkan konsultasi.</p>
+                  <p className="font-semibold text-slate-800 dark:text-slate-200">Kesehatan Mental & Konseling</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Layanan bimbingan & konseling akademik siap membantu saat Anda membutuhkan teman diskusi.</p>
                 </div>
               </div>
             </div>
