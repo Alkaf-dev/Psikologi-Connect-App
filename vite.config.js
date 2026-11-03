@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  base: process.env.GITHUB_ACTIONS ? '/Psikologi-Connect-App/' : '/',
+  base: '/', // Selalu pakai root '/' karena pakai custom domain utama
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
