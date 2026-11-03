@@ -6,7 +6,7 @@ import { Avatar, Badge, Button } from '../../components/ui'
 import { formatDate } from '../../lib/utils'
 import { loadProgramOptions } from '../../lib/staffLookups'
 import { formatClassDisplay } from '../../lib/classOptions'
-import { buildUserFields, emptyUserValues, roleOptions, userToForm, userToPayload } from './userFields'
+import { buildUserFields, emptyUserValues, parseUserRoles, roleOptions, userToForm, userToPayload } from './userFields'
 
 const activeOptions = [
   { value: '1', label: 'Aktif' },
@@ -17,6 +17,12 @@ const roleVariants = {
   mahasiswa: 'info',
   pjmk: 'warning',
   super_admin: 'danger',
+}
+
+const roleLabels = {
+  mahasiswa: 'Mahasiswa',
+  pjmk: 'Admin',
+  super_admin: 'Super Admin',
 }
 
 export default function StaffUsers() {
@@ -79,9 +85,18 @@ export default function StaffUsers() {
           {
             key: 'role',
             label: 'Role',
-            render: (user) => (
-              <Badge variant={roleVariants[user.role] || 'neutral'}>{user.role_label || user.role}</Badge>
-            ),
+            render: (user) => {
+              const roles = parseUserRoles(user)
+              return (
+                <div className="flex flex-wrap items-center gap-1">
+                  {roles.map((r) => (
+                    <Badge key={r} variant={roleVariants[r] || 'neutral'}>
+                      {roleLabels[r] || r}
+                    </Badge>
+                  ))}
+                </div>
+              )
+            },
           },
           {
             key: 'active',
@@ -100,8 +115,10 @@ export default function StaffUsers() {
         mapFormToPayload={(payload, { lookups }) =>
           userToPayload(payload, { programs: lookups.programs })
         }
-        extraActions={(user, { refresh }) =>
-          user.role === 'mahasiswa' ? (
+        extraActions={(user, { refresh }) => {
+          const roles = parseUserRoles(user)
+          const isStudent = roles.includes('mahasiswa') || user.role === 'mahasiswa'
+          return isStudent ? (
             <Button
               variant="ghost"
               size="icon-sm"
@@ -112,7 +129,7 @@ export default function StaffUsers() {
               <UsersRound className="h-3.5 w-3.5" />
             </Button>
           ) : null
-        }
+        }}
         deleteTitle="Hapus akun pengguna?"
         deleteMessage="Akun akan dihapus permanen dan seluruh sesi login dicabut. Akun sendiri serta admin aktif terakhir tidak dapat dihapus."
         formDescription="Password dapat dikosongkan saat mengedit jika tidak ingin mengubahnya. Mengganti password akan mencabut semua sesi pengguna."

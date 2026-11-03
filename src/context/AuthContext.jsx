@@ -29,6 +29,15 @@ function enrichUser(userData) {
     if (localCoverZoom !== null && localCoverZoom !== '') {
       enriched.cover_zoom = Number(localCoverZoom)
     }
+    const localRoles = localStorage.getItem('psikologi_roles_' + key)
+    if (localRoles) {
+      try {
+        const parsed = JSON.parse(localRoles)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          enriched.roles = parsed
+        }
+      } catch {}
+    }
   } catch {}
   return enriched
 }
@@ -145,9 +154,15 @@ export function AuthProvider({ children }) {
   })
 
   const isStaff = Boolean(
-    user && (user.role === 'super_admin' || user.role === 'pjmk' || user.is_staff || user.is_admin),
+    user && (
+      user.role === 'super_admin' ||
+      user.role === 'pjmk' ||
+      user.is_staff ||
+      user.is_admin ||
+      (Array.isArray(user.roles) && (user.roles.includes('super_admin') || user.roles.includes('pjmk')))
+    ),
   )
-  const isMultiRole = isStaff
+  const isMultiRole = isStaff || (Array.isArray(user?.roles) && user.roles.length > 1)
   const isStudent = true
 
   const switchRole = useCallback((newRole) => {

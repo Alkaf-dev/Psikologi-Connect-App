@@ -38,6 +38,7 @@ import {
   DetailList,
   Field,
   Input,
+  Modal,
   PageHeader,
   Skeleton,
 } from '../../components/ui'
@@ -100,7 +101,7 @@ export default function ProfilePage() {
 
   const fileInputRef = useRef(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
-  const [showAvatarMenu, setShowAvatarMenu] = useState(false)
+  const [showAvatarModal, setShowAvatarModal] = useState(false)
   const [rawAvatarUrl, setRawAvatarUrl] = useState('')
   const [showAvatarCropModal, setShowAvatarCropModal] = useState(false)
   const [avatarZoom, setAvatarZoom] = useState(1)
@@ -794,9 +795,13 @@ export default function ProfilePage() {
             <div className="relative z-10 px-5 sm:px-6 pb-6">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 {/* Left side: Avatar + User Info */}
-                <div className="flex flex-col sm:flex-row sm:items-end gap-3.5 sm:gap-4 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-end gap-3.5 sm:gap-4 min-w-0 flex-1">
                   {/* Avatar wrapper - ONLY THIS overlaps the cover photo! */}
-                  <div className="-mt-16 sm:-mt-20 relative shrink-0">
+                  <div
+                    className="-mt-16 sm:-mt-20 relative shrink-0 cursor-pointer group"
+                    onClick={() => setShowAvatarModal(true)}
+                    title="Klik untuk atur foto profil"
+                  >
                     <Avatar
                       name={user?.name}
                       src={user?.avatar_url || user?.avatar}
@@ -804,7 +809,10 @@ export default function ProfilePage() {
                     />
                     <button
                       type="button"
-                      onClick={() => setShowAvatarMenu((prev) => !prev)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowAvatarModal(true)
+                      }}
                       disabled={uploadingAvatar}
                       className="absolute bottom-1 right-1 flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border-2 border-white dark:border-[#0c0d10] bg-teal-600 hover:bg-teal-700 text-white shadow-lg transition hover:scale-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-500 disabled:opacity-50"
                       title="Atur foto profil"
@@ -825,117 +833,106 @@ export default function ProfilePage() {
                     />
                   </div>
 
-                  {/* Name and Email - clearly positioned below the cover photo in the card body */}
+                  {/* Name and Email - clearly positioned below the cover photo without truncation */}
                   <div className="pt-1 sm:pt-0 sm:pb-1.5 min-w-0">
-                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-tight truncate">
-                      {user?.name}
-                    </h2>
-                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
-                  </div>
-                </div>
-
-                {/* Right side: Multi-role badges + "Atur Foto Profil" menu */}
-                <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-end">
-                  {isMultiRole ? (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge variant="teal">{user?.role_label || 'Admin'}</Badge>
-                      <Badge variant="neutral">Mahasiswa</Badge>
-                    </div>
-                  ) : (
-                    <Badge variant="teal">{user?.role_label || user?.role}</Badge>
-                  )}
-
-                  {/* Clean "Atur Foto Profil" Popover Trigger */}
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setShowAvatarMenu((prev) => !prev)}
-                      disabled={uploadingAvatar}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition active:scale-95 disabled:opacity-50"
-                      title="Atur foto profil"
-                    >
-                      {uploadingAvatar ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-600" />
-                      ) : (
-                        <Camera className="h-3.5 w-3.5 text-teal-600" />
-                      )}
-                      <span>Atur Foto Profil</span>
-                      <ChevronDown className="h-3 w-3 opacity-60" />
-                    </button>
-
-                    {showAvatarMenu && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-30"
-                          onClick={() => setShowAvatarMenu(false)}
-                        />
-                        <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-md z-40 animate-scale-in">
-                          {/* 1. Unggah Foto Baru */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowAvatarMenu(false)
-                              fileInputRef.current?.click()
-                            }}
-                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
-                          >
-                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
-                              <Upload className="h-3.5 w-3.5" />
-                            </div>
-                            <div>
-                              <p className="font-semibold text-slate-800 dark:text-slate-100">Unggah Foto Baru</p>
-                              <p className="text-[10px] text-slate-400">Pilih dari HP / Laptop</p>
-                            </div>
-                          </button>
-
-                          {/* 2. Sesuaikan Posisi / Zoom */}
-                          {(user?.avatar_url || user?.avatar) ? (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowAvatarMenu(false)
-                                openAvatarAdjustModal(user?.avatar_url || user?.avatar)
-                              }}
-                              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
-                            >
-                              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400">
-                                <Crop className="h-3.5 w-3.5" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-slate-800 dark:text-slate-100">Sesuaikan Foto</p>
-                                <p className="text-[10px] text-slate-400">Atur zoom dan posisi foto</p>
-                              </div>
-                            </button>
-                          ) : null}
-
-                          {/* 3. Hapus Foto Profil */}
-                          {(user?.avatar_url || user?.avatar) ? (
-                            <>
-                              <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setShowAvatarMenu(false)
-                                  removeAvatar()
-                                }}
-                                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition text-left"
-                              >
-                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-500">
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </div>
-                                <div>
-                                  <p className="font-semibold text-rose-600 dark:text-rose-400">Hapus Foto Profil</p>
-                                  <p className="text-[10px] text-slate-400">Kembali ke inisial nama</p>
-                                </div>
-                              </button>
-                            </>
-                          ) : null}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-tight break-words">
+                        {user?.name}
+                      </h2>
+                      {isMultiRole ? (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <Badge variant="teal">{user?.role_label || 'Admin'}</Badge>
+                          <Badge variant="neutral">Mahasiswa</Badge>
                         </div>
-                      </>
-                    )}
+                      ) : (
+                        <Badge variant="teal" className="shrink-0">{user?.role_label || user?.role}</Badge>
+                      )}
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 break-all">{user?.email}</p>
                   </div>
                 </div>
               </div>
+
+              {/* Modal Pop-up: Atur Foto Profil */}
+              <Modal
+                open={showAvatarModal}
+                onClose={() => setShowAvatarModal(false)}
+                title="Atur Foto Profil"
+                description="Kelola foto profil akun Anda."
+                size="sm"
+              >
+                <div className="flex flex-col items-center gap-4 py-2">
+                  <Avatar
+                    name={user?.name}
+                    src={user?.avatar_url || user?.avatar}
+                    className="h-24 w-24 border-4 border-slate-100 text-2xl shadow-md ring-1 ring-slate-200"
+                  />
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-slate-800 dark:text-white">{user?.name}</p>
+                    <p className="text-xs text-slate-500">{user?.email}</p>
+                  </div>
+
+                  <div className="w-full space-y-2 mt-2">
+                    {/* 1. Unggah Foto Baru */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAvatarModal(false)
+                        fileInputRef.current?.click()
+                      }}
+                      className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left transition hover:border-teal-300 hover:bg-teal-50/50 shadow-2xs"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+                        <Upload className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-slate-800">Unggah Foto Baru</p>
+                        <p className="text-[11px] text-slate-500">Pilih dari galeri HP atau laptop (JPG, PNG, WebP)</p>
+                      </div>
+                    </button>
+
+                    {/* 2. Sesuaikan Posisi & Zoom */}
+                    {(user?.avatar_url || user?.avatar) ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAvatarModal(false)
+                          openAvatarAdjustModal(user?.avatar_url || user?.avatar)
+                        }}
+                        className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left transition hover:border-sky-300 hover:bg-sky-50/50 shadow-2xs"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+                          <Crop className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-800">Sesuaikan Posisi & Zoom</p>
+                          <p className="text-[11px] text-slate-500">Geser atau ubah perbesaran foto profil Anda</p>
+                        </div>
+                      </button>
+                    ) : null}
+
+                    {/* 3. Hapus Foto Profil */}
+                    {(user?.avatar_url || user?.avatar) ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAvatarModal(false)
+                          removeAvatar()
+                        }}
+                        className="flex w-full items-center gap-3 rounded-2xl border border-rose-200/80 bg-rose-50/30 p-3 text-left transition hover:border-rose-300 hover:bg-rose-50 shadow-2xs"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-100/80 text-rose-600">
+                          <Trash2 className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-rose-700">Hapus Foto Profil</p>
+                          <p className="text-[11px] text-rose-500">Kembalikan tampilan foto ke inisial nama</p>
+                        </div>
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </Modal>
 
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <div className="rounded-xl bg-slate-50 px-3 py-2.5">
