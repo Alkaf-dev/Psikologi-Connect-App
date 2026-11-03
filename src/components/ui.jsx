@@ -1,4 +1,4 @@
-import { useEffect, useId } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
@@ -323,7 +323,13 @@ export function Skeleton({ className }) {
   return <div className={cn('animate-pulse rounded-xl bg-slate-200/80', className)} />
 }
 
-export function Avatar({ name, className, tone = 'teal' }) {
+export function Avatar({ name, src, className, tone = 'teal' }) {
+  const [hasError, setHasError] = useState(false)
+
+  useEffect(() => {
+    setHasError(false)
+  }, [src])
+
   const initials = String(name || 'PC')
     .trim()
     .split(/\s+/)
@@ -340,10 +346,28 @@ export function Avatar({ name, className, tone = 'teal' }) {
     violet: 'bg-violet-100 text-violet-700',
   }
 
+  if (src && !hasError) {
+    return (
+      <span
+        className={cn(
+          'inline-flex shrink-0 items-center justify-center rounded-full overflow-hidden bg-slate-100 shadow-xs',
+          className,
+        )}
+      >
+        <img
+          src={src}
+          alt={name || 'Avatar'}
+          className="h-full w-full object-cover"
+          onError={() => setHasError(true)}
+        />
+      </span>
+    )
+  }
+
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-full text-xs font-bold',
+        'inline-flex shrink-0 items-center justify-center rounded-full text-xs font-bold select-none',
         tones[tone] || tones.teal,
         className,
       )}

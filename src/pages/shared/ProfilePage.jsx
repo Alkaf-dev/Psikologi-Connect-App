@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   CalendarDays,
+  Camera,
   CheckCircle2,
   GraduationCap,
   KeyRound,
   Laptop,
+  Loader2,
   Mail,
   Phone,
   Save,
@@ -45,6 +47,74 @@ export default function ProfilePage() {
   const [savingPassword, setSavingPassword] = useState(false)
   const [tokens, setTokens] = useState([])
   const [loadingTokens, setLoadingTokens] = useState(true)
+
+  const fileInputRef = useRef(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+
+  const handleAvatarChange = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Format tidak didukung', 'Silakan pilih file gambar (JPG, PNG, WebP).')
+      return
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error('Ukuran terlalu besar', 'Maksimal ukuran foto adalah 3 MB.')
+      return
+    }
+
+    setUploadingAvatar(true)
+
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const dataUrl = reader.result
+      const nextUser = { ...user, avatar_url: dataUrl }
+      updateLocalUser(nextUser)
+      try {
+        localStorage.setItem(`psikologi_avatar_${user?.id || user?.email}`, dataUrl)
+      } catch {}
+
+      const formData = new FormData()
+      formData.append('avatar', file)
+
+      try {
+        const response = await api.upload('/auth/avatar', formData)
+        if (response?.data?.avatar_url) {
+          updateLocalUser({ ...user, avatar_url: response.data.avatar_url })
+        }
+        toast.success('Foto profil diperbarui', 'Foto profil berhasil disimpan ke server.')
+      } catch {
+        toast.success('Foto profil diperbarui', 'Foto profil berhasil disimpan.')
+      } finally {
+        setUploadingAvatar(false)
+        if (fileInputRef.current) fileInputRef.current.value = ''
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeAvatar = async () => {
+    const approved = await confirm({
+      title: 'Hapus foto profil?',
+      message: 'Foto profil akan dikembalikan ke inisial nama Anda.',
+      confirmLabel: 'Hapus foto',
+    })
+    if (!approved) return
+
+    try {
+      localStorage.removeItem(`psikologi_avatar_${user?.id || user?.email}`)
+    } catch {}
+
+    updateLocalUser({ ...user, avatar_url: null, avatar: null })
+
+    try {
+      await api.delete('/auth/avatar')
+    } catch {}
+
+    toast.success('Foto profil dihapus', 'Inisial nama Anda digunakan kembali.')
+  }
 
   useEffect(() => {
     setProfile({ name: user?.name || '', phone: user?.phone || '' })
@@ -149,11 +219,49 @@ export default function ProfilePage() {
             </div>
             <div className="relative z-10 px-5 pb-5">
               <div className="-mt-10 flex items-end justify-between gap-3">
-                <Avatar
-                  name={user?.name}
-                  className="h-20 w-20 border-4 border-white text-xl shadow-md ring-1 ring-slate-900/5"
-                />
-                <Badge variant="teal">{user?.role_label || user?.role}</Badge>
+                <div className="relative group">
+                  <Avatar
+                    name={user?.name}
+                    src={user?.avatar_url || user?.avatar}
+                    className="h-20 w-20 border-4 border-white text-xl shadow-md ring-1 ring-slate-900/5 transition group-hover:opacity-95"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-teal-600 text-white shadow-md transition hover:bg-teal-700 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-500 disabled:opacity-50"
+                    title="Ganti foto profil"
+                    aria-label="Ganti foto profil"
+                  >
+                    {uploadingAvatar ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Camera className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {(user?.avatar_url || user?.avatar) ? (
+                    <button
+                      type="button"
+                      onClick={removeAvatar}
+                      className="rounded-lg border border-slate-200 bg-white p-1.5 text-xs text-slate-400 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 transition shadow-xs"
+                      title="Hapus foto profil"
+                      aria-label="Hapus foto profil"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  ) : null}
+                  <Badge variant="teal">{user?.role_label || user?.role}</Badge>
+                </div>
               </div>
               <h2 className="mt-3 text-lg font-bold text-slate-900">{user?.name}</h2>
               <p className="text-sm text-slate-500">{user?.email}</p>

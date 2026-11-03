@@ -3,8 +3,21 @@ import { api, session } from '../lib/api'
 
 const AuthContext = createContext(null)
 
+function enrichUser(userData) {
+  if (!userData) return null
+  if (!userData.avatar_url && !userData.avatar) {
+    try {
+      const localAvatar = localStorage.getItem('psikologi_avatar_' + (userData.id || userData.email))
+      if (localAvatar) {
+        return { ...userData, avatar_url: localAvatar }
+      }
+    } catch {}
+  }
+  return userData
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => session.getUser())
+  const [user, setUser] = useState(() => enrichUser(session.getUser()))
   const [token, setToken] = useState(() => session.getToken())
   const [booting, setBooting] = useState(() => Boolean(session.getToken() && !session.getUser()))
 
@@ -16,7 +29,7 @@ export function AuthProvider({ children }) {
 
   const refreshUser = useCallback(async () => {
     const response = await api.get('/auth/me')
-    const nextUser = response?.data ?? null
+    const nextUser = enrichUser(response?.data ?? null)
     if (nextUser) {
       session.saveUser(nextUser)
       setUser(nextUser)
@@ -46,7 +59,7 @@ export function AuthProvider({ children }) {
       try {
         const response = await api.get('/auth/me')
         if (!active) return
-        const nextUser = response?.data ?? null
+        const nextUser = enrichUser(response?.data ?? null)
         if (nextUser) {
           session.saveUser(nextUser)
           setUser(nextUser)
@@ -81,10 +94,11 @@ export function AuthProvider({ children }) {
     )
 
     if (response?.access_token && response?.user) {
-      session.save(response.access_token, response.user)
+      const enriched = enrichUser(response.user)
+      session.save(response.access_token, enriched)
       setToken(response.access_token)
-      setUser(response.user)
-      return response.user
+      setUser(enriched)
+      return enriched
     }
 
     throw new Error('Respons login tidak valid.')
@@ -100,8 +114,9 @@ export function AuthProvider({ children }) {
   }, [clearSession])
 
   const updateLocalUser = useCallback((nextUser) => {
-    session.saveUser(nextUser)
-    setUser(nextUser)
+    const enriched = enrichUser(nextUser)
+    session.saveUser(enriched)
+    setUser(enriched)
   }, [])
 
   const value = useMemo(

@@ -249,7 +249,7 @@ export default function PortalLayout() {
           Lihat situs publik
         </Link>
         <div className="mt-1 flex items-center gap-2.5 rounded-xl bg-slate-50 px-3 py-2.5">
-          <Avatar name={user?.name} className="h-8 w-8" />
+          <Avatar name={user?.name} src={user?.avatar_url || user?.avatar} className="h-8 w-8" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-semibold text-slate-800">{user?.name}</p>
             <p className="truncate text-[10px] text-slate-500">{user?.role_label || user?.role}</p>
@@ -325,7 +325,7 @@ export default function PortalLayout() {
                   onClick={() => setUserMenuOpen((open) => !open)}
                   className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white py-1.5 pl-1.5 pr-2.5 transition hover:border-slate-300"
                 >
-                  <Avatar name={user?.name} className="h-7 w-7 text-[10px]" />
+                  <Avatar name={user?.name} src={user?.avatar_url || user?.avatar} className="h-7 w-7 text-[10px]" />
                   <span className="hidden max-w-[120px] truncate text-xs font-semibold text-slate-700 sm:block">
                     {user?.name}
                   </span>

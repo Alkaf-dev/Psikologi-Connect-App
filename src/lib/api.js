@@ -83,12 +83,14 @@ export async function request(path, options = {}) {
   } = options
 
   const token = session.getToken()
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
+
   const requestHeaders = {
     Accept: 'application/json',
     ...headers,
   }
 
-  if (body !== undefined) {
+  if (body !== undefined && !isFormData) {
     requestHeaders['Content-Type'] = 'application/json'
   }
 
@@ -102,7 +104,7 @@ export async function request(path, options = {}) {
     response = await fetch(buildUrl(path, params), {
       method,
       headers: requestHeaders,
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      ...(body !== undefined ? { body: isFormData ? body : JSON.stringify(body) } : {}),
     })
   } catch {
     throw new ApiError(
@@ -145,6 +147,9 @@ export const api = {
   },
   delete(path, options = {}) {
     return request(path, { ...options, method: 'DELETE' })
+  },
+  upload(path, formData, options = {}) {
+    return request(path, { ...options, method: 'POST', body: formData })
   },
 }
 
