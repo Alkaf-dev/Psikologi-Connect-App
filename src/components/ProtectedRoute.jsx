@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { Spinner } from './ui'
 
 export default function ProtectedRoute({ role }) {
-  const { user, booting } = useAuth()
+  const { user, booting, isStaff } = useAuth()
   const location = useLocation()
 
   if (booting) {
@@ -21,11 +21,10 @@ export default function ProtectedRoute({ role }) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
 
-  if (role === 'student' && user.role !== 'mahasiswa') {
-    return <Navigate to="/admin" replace />
-  }
-
-  if (role === 'staff' && user.role === 'mahasiswa') {
+  // Admin users are also students (multi-role).
+  // Therefore, all authenticated users (including admins) have access to the student portal (/portal/*).
+  // Only non-staff users are blocked from staff/admin routes (/admin/*).
+  if (role === 'staff' && !isStaff) {
     return <Navigate to="/portal" replace />
   }
 

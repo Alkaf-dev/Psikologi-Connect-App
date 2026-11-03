@@ -82,7 +82,7 @@ const COVER_PRESETS = [
 ]
 
 export default function ProfilePage() {
-  const { user, token, updateLocalUser } = useAuth()
+  const { user, token, updateLocalUser, isMultiRole } = useAuth()
   const { toast, confirm } = useToast()
   const [profile, setProfile] = useState({ name: '', phone: '' })
   const [profileErrors, setProfileErrors] = useState({})
@@ -851,7 +851,14 @@ export default function ProfilePage() {
                       </button>
                     </>
                   ) : null}
-                  <Badge variant="teal">{user?.role_label || user?.role}</Badge>
+                  {isMultiRole ? (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <Badge variant="teal">{user?.role_label || 'Admin'}</Badge>
+                      <Badge variant="neutral">Mahasiswa</Badge>
+                    </div>
+                  ) : (
+                    <Badge variant="teal">{user?.role_label || user?.role}</Badge>
+                  )}
                 </div>
               </div>
 
@@ -905,7 +912,17 @@ export default function ProfilePage() {
             <div className="px-5 py-2">
               <DetailList
                 items={[
-                  { label: 'Role', value: user?.role_label || user?.role },
+                  {
+                    label: 'Role',
+                    value: isMultiRole ? (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge variant="teal">{user?.role_label || 'Admin'}</Badge>
+                        <Badge variant="neutral">Mahasiswa (Multi-Role)</Badge>
+                      </div>
+                    ) : (
+                      user?.role_label || user?.role
+                    ),
+                  },
                   { label: 'Prodi', value: user?.prodi_name },
                   { label: 'Status', value: <Badge variant={user?.active ? 'success' : 'danger'}>{user?.active ? 'Aktif' : 'Nonaktif'}</Badge> },
                 ]}

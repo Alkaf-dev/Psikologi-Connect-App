@@ -1,6 +1,7 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
+  ArrowRightLeft,
   Bell,
   BookOpen,
   Building2,
@@ -14,6 +15,7 @@ import {
   Megaphone,
   Menu,
   Settings,
+  ShieldCheck,
   Tv,
   UserCircle,
   Users,
@@ -101,7 +103,7 @@ const studentNavigation = [
 ]
 
 export default function PortalLayout() {
-  const { user, logout, isStaff } = useAuth()
+  const { user, logout, isStaff, isMultiRole, switchRole } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -112,7 +114,8 @@ export default function PortalLayout() {
   const [notificationsLoading, setNotificationsLoading] = useState(false)
   const menuRef = useRef(null)
 
-  const navigation = isStaff ? staffNavigation : studentNavigation
+  const isStaffPortal = location.pathname.startsWith('/admin')
+  const navigation = isStaffPortal ? staffNavigation : studentNavigation
   const flatItems = navigation.flatMap((group) => group.items)
   const notificationsPage = location.pathname.endsWith('/notifikasi')
   const currentItem = [...flatItems]
@@ -152,8 +155,8 @@ export default function PortalLayout() {
   useEffect(() => {
     document.title = currentItem
       ? `${currentItem.label} - ${APP_NAME}`
-      : `${isStaff ? 'Panel Admin' : 'Portal Mahasiswa'} - ${APP_NAME}`
-  }, [currentItem, isStaff])
+      : `${isStaffPortal ? 'Panel Admin' : 'Portal Mahasiswa'} - ${APP_NAME}`
+  }, [currentItem, isStaffPortal])
 
   useEffect(() => {
     const handleOutside = (event) => {
@@ -185,14 +188,14 @@ export default function PortalLayout() {
   const SidebarContent = (
     <div className="flex h-full flex-col">
       <div className="flex h-[68px] shrink-0 items-center justify-between border-b border-slate-100 px-4">
-        <Link to={isStaff ? '/admin' : '/portal'} className="flex items-center gap-2.5">
+        <Link to={isStaffPortal ? '/admin' : '/portal'} className="flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-sm">
             <GraduationCap className="h-5 w-5" />
           </span>
           <span className="min-w-0">
             <span className="block truncate text-sm font-bold text-slate-900">{APP_NAME}</span>
             <span className="block truncate text-[10px] font-medium uppercase tracking-wider text-teal-600">
-              {isStaff ? 'Panel Admin' : 'Portal Mahasiswa'}
+              {isStaffPortal ? 'Panel Admin' : 'Portal Mahasiswa'}
             </span>
           </span>
         </Link>
@@ -205,6 +208,51 @@ export default function PortalLayout() {
           <X className="h-4 w-4" />
         </button>
       </div>
+
+      {/* Multi-role Switcher Card in Sidebar */}
+      {isMultiRole && (
+        <div className="mx-3 mt-3 rounded-2xl border border-teal-200/80 bg-gradient-to-br from-teal-50/90 via-emerald-50/50 to-white p-3 shadow-xs">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-teal-800">
+                Multi-Role Aktif
+              </span>
+            </div>
+            <span className="rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold text-teal-700 border border-teal-200/70 shadow-2xs">
+              {isStaffPortal ? 'Mode Admin' : 'Mode Mahasiswa'}
+            </span>
+          </div>
+          <p className="mt-1.5 text-[11px] leading-snug text-slate-600">
+            {isStaffPortal
+              ? 'Admin juga mahasiswa. Ingin lihat tugas, jadwal, atau kelompok kuliah?'
+              : 'Anda juga memiliki akses admin untuk kelola mata kuliah & data sistem.'}
+          </p>
+          <Link
+            to={isStaffPortal ? '/portal' : '/admin'}
+            onClick={() => {
+              setSidebarOpen(false)
+              switchRole(isStaffPortal ? 'student' : 'staff')
+            }}
+            className="mt-2.5 flex w-full items-center justify-between rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-2.5 py-1.5 text-xs font-semibold shadow-xs transition active:scale-98"
+          >
+            <span className="flex items-center gap-1.5">
+              {isStaffPortal ? (
+                <>
+                  <GraduationCap className="h-3.5 w-3.5" />
+                  <span>Buka Portal Mahasiswa</span>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <span>Buka Panel Admin</span>
+                </>
+              )}
+            </span>
+            <ArrowRightLeft className="h-3 w-3 text-teal-200" />
+          </Link>
+        </div>
+      )}
 
       <nav className="scrollbar-thin flex-1 overflow-y-auto px-3 py-4">
         {navigation.map((group, groupIndex) => (
@@ -259,7 +307,11 @@ export default function PortalLayout() {
           <Avatar name={user?.name} src={user?.avatar_url || user?.avatar} className="h-8 w-8" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-semibold text-slate-800">{user?.name}</p>
-            <p className="truncate text-[10px] text-slate-500">{user?.role_label || user?.role}</p>
+            <p className="truncate text-[10px] text-slate-500">
+              {isMultiRole
+                ? `${user?.role_label || 'Admin'} & Mahasiswa`
+                : (user?.role_label || user?.role)}
+            </p>
           </div>
         </div>
       </div>
@@ -307,6 +359,44 @@ export default function PortalLayout() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Multi-role Topbar Pill Switcher */}
+              {isMultiRole && (
+                <div className="flex items-center rounded-xl bg-slate-100 p-0.5 border border-slate-200/80 shadow-2xs">
+                  <Link
+                    to="/admin"
+                    onClick={() => switchRole('staff')}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition',
+                      isStaffPortal
+                        ? 'bg-white text-teal-700 shadow-xs ring-1 ring-slate-900/5'
+                        : 'text-slate-500 hover:text-slate-900',
+                    )}
+                    title="Beralih ke Panel Admin"
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5 text-teal-600" />
+                    <span className="hidden sm:inline">Admin</span>
+                    <span className="sm:hidden">Admin</span>
+                    {isStaffPortal && <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />}
+                  </Link>
+                  <Link
+                    to="/portal"
+                    onClick={() => switchRole('student')}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition',
+                      !isStaffPortal
+                        ? 'bg-white text-teal-700 shadow-xs ring-1 ring-slate-900/5'
+                        : 'text-slate-500 hover:text-slate-900',
+                    )}
+                    title="Beralih ke Portal Mahasiswa"
+                  >
+                    <GraduationCap className="h-3.5 w-3.5 text-emerald-600" />
+                    <span className="hidden sm:inline">Mahasiswa</span>
+                    <span className="sm:hidden">Mhs</span>
+                    {!isStaffPortal && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+                  </Link>
+                </div>
+              )}
+
               <ThemeSelector />
 
               <button
@@ -340,17 +430,50 @@ export default function PortalLayout() {
                 </button>
 
                 {userMenuOpen ? (
-                  <div className="absolute right-0 mt-2 w-60 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl animate-scale-in">
+                  <div className="absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl animate-scale-in">
                     <div className="border-b border-slate-100 bg-slate-50/70 px-4 py-3">
                       <p className="truncate text-sm font-semibold text-slate-900">{user?.name}</p>
                       <p className="truncate text-xs text-slate-500">{user?.email}</p>
-                      <Badge variant="teal" className="mt-2">
-                        {user?.prodi_name} · {user?.role_label || user?.role}
-                      </Badge>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <Badge variant="teal">{user?.prodi_name || 'Psikologi'}</Badge>
+                        {isMultiRole ? (
+                          <>
+                            <Badge variant="teal">{user?.role_label || 'Admin'}</Badge>
+                            <Badge variant="neutral">Mahasiswa</Badge>
+                          </>
+                        ) : (
+                          <Badge variant="teal">{user?.role_label || user?.role}</Badge>
+                        )}
+                      </div>
                     </div>
-                    <div className="p-1.5">
+                    <div className="p-1.5 space-y-0.5">
+                      {isMultiRole && (
+                        <Link
+                          to={isStaffPortal ? '/portal' : '/admin'}
+                          onClick={() => {
+                            setUserMenuOpen(false)
+                            switchRole(isStaffPortal ? 'student' : 'staff')
+                          }}
+                          className="flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold text-teal-700 bg-teal-50/70 hover:bg-teal-50 transition"
+                        >
+                          <span className="flex items-center gap-2">
+                            {isStaffPortal ? (
+                              <>
+                                <GraduationCap className="h-4 w-4 text-emerald-600" />
+                                <span>Beralih ke Mahasiswa</span>
+                              </>
+                            ) : (
+                              <>
+                                <ShieldCheck className="h-4 w-4 text-teal-600" />
+                                <span>Beralih ke Admin</span>
+                              </>
+                            )}
+                          </span>
+                          <ArrowRightLeft className="h-3.5 w-3.5 text-teal-500" />
+                        </Link>
+                      )}
                       <Link
-                        to={isStaff ? '/admin/profil' : '/portal/profil'}
+                        to={isStaffPortal ? '/admin/profil' : '/portal/profil'}
                         className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                       >
                         <UserCircle className="h-4 w-4" />

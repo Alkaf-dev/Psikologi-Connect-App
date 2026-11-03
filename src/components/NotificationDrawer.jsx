@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Bell,
   CalendarClock,
@@ -24,14 +24,17 @@ const toneClasses = {
 
 export default function NotificationDrawer({ open, onClose, notifications, loading, unread, onUpdate }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { isStaff } = useAuth()
   const { toast } = useToast()
 
+  const isPortalMode = location.pathname.startsWith('/portal')
+
   const fallbackPath = (notification) => {
     if (notification.type === 'schedule' || notification.group === 'today' || notification.group === 'tomorrow') {
-      return isStaff ? '/admin/jadwal' : '/portal/jadwal'
+      return isPortalMode ? '/portal/jadwal' : (isStaff ? '/admin/jadwal' : '/portal/jadwal')
     }
-    return isStaff ? '/admin/tugas' : '/portal/tugas'
+    return isPortalMode ? '/portal/tugas' : (isStaff ? '/admin/tugas' : '/portal/tugas')
   }
 
   const handleOpen = async (notification) => {
@@ -91,7 +94,7 @@ export default function NotificationDrawer({ open, onClose, notifications, loadi
             size="sm"
             onClick={() => {
               onClose?.()
-              navigate(isStaff ? '/admin/notifikasi' : '/portal/notifikasi')
+              navigate(isPortalMode ? '/portal/notifikasi' : (isStaff ? '/admin/notifikasi' : '/portal/notifikasi'))
             }}
           >
             Halaman notifikasi

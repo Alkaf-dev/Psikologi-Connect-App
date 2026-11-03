@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Bell,
   CalendarClock,
@@ -36,8 +36,11 @@ export default function NotificationsPage() {
   const { isStaff } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
+  const location = useLocation()
   const [filter, setFilter] = useState('all')
   const [marking, setMarking] = useState(false)
+
+  const isPortalMode = location.pathname.startsWith('/portal')
 
   const { data: notifications, meta, loading, setData, refresh } = useApiData('/notifications')
 
@@ -62,10 +65,10 @@ export default function NotificationsPage() {
 
   const goToDestination = (notification) => {
     if (notification.type === 'schedule' || notification.group === 'today' || notification.group === 'tomorrow') {
-      navigate(isStaff ? '/admin/jadwal' : '/portal/jadwal')
+      navigate(isPortalMode ? '/portal/jadwal' : (isStaff ? '/admin/jadwal' : '/portal/jadwal'))
       return
     }
-    navigate(isStaff ? '/admin/tugas' : '/portal/tugas')
+    navigate(isPortalMode ? '/portal/tugas' : (isStaff ? '/admin/tugas' : '/portal/tugas'))
   }
 
   const markRead = async (notification) => {

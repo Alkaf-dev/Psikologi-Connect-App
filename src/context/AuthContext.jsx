@@ -136,20 +136,46 @@ export function AuthProvider({ children }) {
     setUser(enriched)
   }, [])
 
+  const [activeRole, setActiveRoleState] = useState(() => {
+    try {
+      return localStorage.getItem('psikologi_active_role') || 'staff'
+    } catch {
+      return 'staff'
+    }
+  })
+
+  const isStaff = Boolean(
+    user && (user.role === 'super_admin' || user.role === 'pjmk' || user.is_staff || user.is_admin),
+  )
+  const isMultiRole = isStaff
+  const isStudent = true
+
+  const switchRole = useCallback((newRole) => {
+    try {
+      localStorage.setItem('psikologi_active_role', newRole)
+    } catch {}
+    setActiveRoleState(newRole)
+    return newRole === 'staff' ? '/admin' : '/portal'
+  }, [])
+
   const value = useMemo(
     () => ({
       user,
       token,
       booting,
       isAuthenticated: Boolean(user && token),
-      isStaff: user?.role === 'super_admin' || user?.role === 'pjmk',
-      isStudent: user?.role === 'mahasiswa',
+      isStaff,
+      isStudent,
+      isMultiRole,
+      roles: isStaff ? ['admin', 'mahasiswa'] : ['mahasiswa'],
+      activeRole: isMultiRole ? activeRole : 'student',
+      switchRole,
       login,
       logout,
       refreshUser,
       updateLocalUser,
     }),
-    [user, token, booting, login, logout, refreshUser, updateLocalUser],
+    [user, token, booting, isStaff, isStudent, isMultiRole, activeRole, switchRole, login, logout, refreshUser, updateLocalUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

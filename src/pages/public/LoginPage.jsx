@@ -112,12 +112,16 @@ export default function LoginPage() {
         login: form.login.trim(),
         rememberMe,
       })
-      const destination = signedInUser.role === 'mahasiswa' ? '/portal' : '/admin'
+      const isStaffUser =
+        signedInUser.role === 'super_admin' ||
+        signedInUser.role === 'pjmk' ||
+        Boolean(signedInUser.is_staff || signedInUser.is_admin)
+      const destination = isStaffUser ? '/admin' : '/portal'
       const from = location.state?.from
       const allowedFrom =
         from &&
-        ((signedInUser.role === 'mahasiswa' && from.startsWith('/portal')) ||
-          (signedInUser.role !== 'mahasiswa' && from.startsWith('/admin')))
+        ((!isStaffUser && from.startsWith('/portal')) ||
+          (isStaffUser && (from.startsWith('/admin') || from.startsWith('/portal'))))
       navigate(allowedFrom ? from : destination, { replace: true })
     } catch (loginError) {
       if (loginError instanceof ApiError) {
