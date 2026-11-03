@@ -5,19 +5,25 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  Crop,
   GraduationCap,
   KeyRound,
   Laptop,
   Loader2,
   Mail,
+  Move,
   Phone,
+  RotateCcw,
   Save,
   ShieldCheck,
+  Sliders,
   Sparkles,
   Trash2,
   Upload,
   UserRound,
   X,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -94,8 +100,15 @@ export default function ProfilePage() {
 
   const fileInputRef = useRef(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [rawAvatarUrl, setRawAvatarUrl] = useState('')
+  const [showAvatarCropModal, setShowAvatarCropModal] = useState(false)
+  const [avatarZoom, setAvatarZoom] = useState(1)
+  const [avatarOffsetX, setAvatarOffsetX] = useState(0)
+  const [avatarOffsetY, setAvatarOffsetY] = useState(0)
+  const [savingAvatarCrop, setSavingAvatarCrop] = useState(false)
+  const avatarDragRef = useRef({ isDragging: false, startX: 0, startY: 0, initX: 0, initY: 0 })
 
-  const handleAvatarChange = async (event) => {
+  const handleAvatarFileSelect = (event) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -104,39 +117,124 @@ export default function ProfilePage() {
       return
     }
 
-    if (file.size > 3 * 1024 * 1024) {
-      toast.error('Ukuran terlalu besar', 'Maksimal ukuran foto adalah 3 MB.')
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ukuran terlalu besar', 'Maksimal ukuran foto adalah 5 MB.')
       return
     }
 
-    setUploadingAvatar(true)
-
     const reader = new FileReader()
-    reader.onload = async () => {
-      const dataUrl = reader.result
-      const nextUser = { ...user, avatar_url: dataUrl }
-      updateLocalUser(nextUser)
-      try {
-        localStorage.setItem(`psikologi_avatar_${user?.id || user?.email}`, dataUrl)
-      } catch {}
-
-      const formData = new FormData()
-      formData.append('avatar', file)
-
-      try {
-        const response = await api.upload('/auth/avatar', formData)
-        if (response?.data?.avatar_url) {
-          updateLocalUser({ ...user, avatar_url: response.data.avatar_url })
-        }
-        toast.success('Foto profil diperbarui', 'Foto profil berhasil disimpan ke server.')
-      } catch {
-        toast.success('Foto profil diperbarui', 'Foto profil berhasil disimpan.')
-      } finally {
-        setUploadingAvatar(false)
-        if (fileInputRef.current) fileInputRef.current.value = ''
-      }
+    reader.onload = () => {
+      setRawAvatarUrl(reader.result)
+      setAvatarZoom(1)
+      setAvatarOffsetX(0)
+      setAvatarOffsetY(0)
+      setShowAvatarCropModal(true)
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
     reader.readAsDataURL(file)
+  }
+
+  const openAvatarAdjustModal = (existingUrl) => {
+    if (!existingUrl) return
+    setRawAvatarUrl(existingUrl)
+    setAvatarZoom(1)
+    setAvatarOffsetX(0)
+    setAvatarOffsetY(0)
+    setShowAvatarCropModal(true)
+  }
+
+  const handleAvatarPointerDown = (e) => {
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX ?? 0
+    const clientY = e.clientY ?? e.touches?.[0]?.clientY ?? 0
+    avatarDragRef.current = {
+      isDragging: true,
+      startX: clientX,
+      startY: clientY,
+      initX: avatarOffsetX,
+      initY: avatarOffsetY,
+    }
+  }
+
+  const handleAvatarPointerMove = (e) => {
+    if (!avatarDragRef.current.isDragging) return
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX ?? 0
+    const clientY = e.clientY ?? e.touches?.[0]?.clientY ?? 0
+    const deltaX = clientX - avatarDragRef.current.startX
+    const deltaY = clientY - avatarDragRef.current.startY
+    const maxOffset = 160 * avatarZoom
+    setAvatarOffsetX(Math.max(-maxOffset, Math.min(maxOffset, avatarDragRef.current.initX + deltaX)))
+    setAvatarOffsetY(Math.max(-maxOffset, Math.min(maxOffset, avatarDragRef.current.initY + deltaY)))
+  }
+
+  const handleAvatarPointerUp = () => {
+    avatarDragRef.current.isDragging = false
+  }
+
+  const applyCroppedAvatar = async () => {
+    if (!rawAvatarUrl) return
+    setSavingAvatarCrop(true)
+
+    try {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      await new Promise((resolve, reject) => {
+        img.onload = resolve
+        img.onerror = reject
+        img.src = rawAvatarUrl
+      })
+
+      const canvas = document.createElement('canvas')
+      const targetSize = 512
+      canvas.width = targetSize
+      canvas.height = targetSize
+      const ctx = canvas.getContext('2d')
+
+      const previewBoxSize = 256
+      const scaleMultiplier = targetSize / previewBoxSize
+
+      const naturalAspect = img.naturalWidth / img.naturalHeight
+      let drawW, drawH
+      if (naturalAspect >= 1) {
+        drawH = targetSize * avatarZoom
+        drawW = drawH * naturalAspect
+      } else {
+        drawW = targetSize * avatarZoom
+        drawH = drawW / naturalAspect
+      }
+
+      const drawX = (targetSize - drawW) / 2 + (avatarOffsetX * scaleMultiplier)
+      const drawY = (targetSize - drawH) / 2 + (avatarOffsetY * scaleMultiplier)
+
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, targetSize, targetSize)
+      ctx.drawImage(img, drawX, drawY, drawW, drawH)
+
+      const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.92)
+
+      updateLocalUser({ ...user, avatar_url: croppedDataUrl })
+      try {
+        localStorage.setItem(`psikologi_avatar_${user?.id || user?.email}`, croppedDataUrl)
+      } catch {}
+
+      setShowAvatarCropModal(false)
+      toast.success('Foto profil disimpan', 'Foto profil berhasil disesuaikan dan diterapkan.')
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) return
+        const formData = new FormData()
+        formData.append('avatar', blob, 'avatar.jpg')
+        try {
+          const res = await api.upload('/auth/avatar', formData)
+          if (res?.data?.avatar_url) {
+            updateLocalUser({ ...user, avatar_url: res.data.avatar_url })
+          }
+        } catch {}
+      }, 'image/jpeg', 0.92)
+    } catch {
+      toast.error('Gagal memproses foto', 'Terjadi kesalahan saat memotong foto.')
+    } finally {
+      setSavingAvatarCrop(false)
+    }
   }
 
   const removeAvatar = async () => {
@@ -172,9 +270,63 @@ export default function ProfilePage() {
       return ''
     }
   })
+  const [coverPosY, setCoverPosY] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`psikologi_cover_pos_${user?.id || user?.email}`)
+      return stored !== null && stored !== '' ? Number(stored) : (user?.cover_pos ?? 50)
+    } catch {
+      return 50
+    }
+  })
+  const [isRepositioningCover, setIsRepositioningCover] = useState(false)
+  const [tempCoverPosY, setTempCoverPosY] = useState(50)
+  const coverDragRef = useRef({ isDragging: false, startY: 0, startPos: 50 })
+
   const [uploadingCover, setUploadingCover] = useState(false)
   const [showCoverMenu, setShowCoverMenu] = useState(false)
   const [showCoverGalleryModal, setShowCoverGalleryModal] = useState(false)
+
+  const startCoverReposition = () => {
+    setTempCoverPosY(coverPosY)
+    setIsRepositioningCover(true)
+    setShowCoverMenu(false)
+  }
+
+  const cancelCoverReposition = () => {
+    setTempCoverPosY(coverPosY)
+    setIsRepositioningCover(false)
+  }
+
+  const saveCoverReposition = () => {
+    setCoverPosY(tempCoverPosY)
+    setIsRepositioningCover(false)
+    try {
+      localStorage.setItem(`psikologi_cover_pos_${user?.id || user?.email}`, String(tempCoverPosY))
+    } catch {}
+    updateLocalUser({ ...user, cover_pos: tempCoverPosY })
+    toast.success('Posisi sampul disimpan', 'Posisi tampilan sampul berhasil diperbarui.')
+  }
+
+  const handleCoverPointerDown = (e) => {
+    if (!isRepositioningCover) return
+    coverDragRef.current = {
+      isDragging: true,
+      startY: e.clientY ?? e.touches?.[0]?.clientY ?? 0,
+      startPos: tempCoverPosY,
+    }
+  }
+
+  const handleCoverPointerMove = (e) => {
+    if (!isRepositioningCover || !coverDragRef.current.isDragging) return
+    const currentY = e.clientY ?? e.touches?.[0]?.clientY ?? 0
+    const deltaY = currentY - coverDragRef.current.startY
+    const newPos = Math.max(0, Math.min(100, Math.round(coverDragRef.current.startPos - deltaY * 0.4)))
+    setTempCoverPosY(newPos)
+  }
+
+  const handleCoverPointerUp = () => {
+    coverDragRef.current.isDragging = false
+  }
 
   const handleCoverChange = (event) => {
     const file = event.target.files?.[0]
@@ -196,8 +348,10 @@ export default function ProfilePage() {
     reader.onload = async () => {
       const dataUrl = reader.result
       setCoverUrl(dataUrl)
+      setCoverPosY(50)
       try {
         localStorage.setItem(`psikologi_cover_${user?.id || user?.email}`, dataUrl)
+        localStorage.setItem(`psikologi_cover_pos_${user?.id || user?.email}`, '50')
       } catch {}
 
       const formData = new FormData()
@@ -215,8 +369,10 @@ export default function ProfilePage() {
 
   const handleSelectPresetCover = async (presetUrl) => {
     setCoverUrl(presetUrl)
+    setCoverPosY(50)
     try {
       localStorage.setItem(`psikologi_cover_${user?.id || user?.email}`, presetUrl)
+      localStorage.setItem(`psikologi_cover_pos_${user?.id || user?.email}`, '50')
     } catch {}
     setShowCoverGalleryModal(false)
     setShowCoverMenu(false)
@@ -238,9 +394,11 @@ export default function ProfilePage() {
 
     try {
       localStorage.removeItem(`psikologi_cover_${user?.id || user?.email}`)
+      localStorage.removeItem(`psikologi_cover_pos_${user?.id || user?.email}`)
     } catch {}
 
     setCoverUrl('')
+    setCoverPosY(50)
     try {
       await api.delete('/auth/cover')
     } catch {}
@@ -338,12 +496,27 @@ export default function ProfilePage() {
         <div className="space-y-5">
           <Card className="overflow-hidden">
             {/* Facebook/LinkedIn-style Cover Banner */}
-            <div className="relative h-44 sm:h-52 overflow-hidden bg-gradient-to-br from-slate-900 via-teal-950 to-slate-900 group">
+            <div
+              className={`relative h-44 sm:h-52 overflow-hidden bg-gradient-to-br from-slate-900 via-teal-950 to-slate-900 group select-none ${
+                isRepositioningCover ? 'cursor-grab active:cursor-grabbing' : ''
+              }`}
+              onMouseDown={handleCoverPointerDown}
+              onMouseMove={handleCoverPointerMove}
+              onMouseUp={handleCoverPointerUp}
+              onMouseLeave={handleCoverPointerUp}
+              onTouchStart={handleCoverPointerDown}
+              onTouchMove={handleCoverPointerMove}
+              onTouchEnd={handleCoverPointerUp}
+            >
               {coverUrl ? (
                 <img
                   src={coverUrl}
                   alt="Foto Sampul"
-                  className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                  draggable={false}
+                  style={{
+                    objectPosition: `center ${isRepositioningCover ? tempCoverPosY : coverPosY}%`,
+                  }}
+                  className="h-full w-full object-cover transition-none pointer-events-none"
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-teal-900 via-teal-800 to-slate-900">
@@ -354,89 +527,150 @@ export default function ProfilePage() {
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
 
-              {/* Facebook-style Cover Button with Popover Menu */}
-              <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-20">
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowCoverMenu((prev) => !prev)}
-                    disabled={uploadingCover}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-slate-900/80 hover:bg-slate-900 px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold text-white shadow-xl backdrop-blur-md transition active:scale-95 disabled:opacity-50"
-                    title="Edit foto sampul"
-                  >
-                    {uploadingCover ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-400" />
-                    ) : (
-                      <Camera className="h-3.5 w-3.5 text-white" />
-                    )}
-                    <span className="font-medium">{coverUrl ? 'Ganti Sampul' : 'Tambahkan Sampul'}</span>
-                    <ChevronDown className="h-3 w-3 opacity-70" />
-                  </button>
+              {/* Reposition Mode Floating Controls */}
+              {isRepositioningCover ? (
+                <>
+                  <div className="absolute top-3 inset-x-3 z-30 flex items-center justify-center pointer-events-none">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/90 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xl backdrop-blur-md border border-white/20 animate-pulse">
+                      <Move className="h-3.5 w-3.5 text-teal-400" />
+                      Seret gambar naik/turun atau gunakan slider
+                    </span>
+                  </div>
 
-                  {showCoverMenu && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-30"
-                        onClick={() => setShowCoverMenu(false)}
+                  <div className="absolute bottom-3 left-3 right-3 z-30 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-900/95 p-2.5 sm:p-3 text-white backdrop-blur-md shadow-2xl border border-white/20">
+                    <div className="flex flex-1 items-center gap-2.5 min-w-[180px]">
+                      <span className="text-[11px] font-semibold text-slate-300">Atas</span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={tempCoverPosY}
+                        onChange={(e) => setTempCoverPosY(Number(e.target.value))}
+                        className="w-full accent-teal-400 cursor-pointer h-2 bg-slate-700 rounded-lg"
                       />
-                      <div className="absolute right-0 bottom-full mb-2 w-56 rounded-2xl border border-slate-200/80 bg-white/95 dark:bg-slate-900/95 dark:border-slate-800 p-1.5 shadow-2xl backdrop-blur-md z-40">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowCoverMenu(false)
-                            coverInputRef.current?.click()
-                          }}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
-                        >
-                          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
-                            <Upload className="h-3.5 w-3.5" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-slate-800 dark:text-slate-100">Unggah Foto</p>
-                            <p className="text-[10px] text-slate-400">Pilih dari HP / Laptop</p>
-                          </div>
-                        </button>
+                      <span className="text-[11px] font-semibold text-slate-300">Bawah</span>
+                      <span className="text-xs font-mono font-bold text-teal-400 min-w-[36px] text-right">
+                        {tempCoverPosY}%
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={cancelCoverReposition}
+                        className="rounded-xl border border-white/20 px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 transition"
+                      >
+                        Batal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveCoverReposition}
+                        className="rounded-xl bg-teal-500 hover:bg-teal-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-md transition flex items-center gap-1.5"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        Simpan Posisi
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Standard Facebook-style Cover Button with Popover Menu */
+                <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-20">
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowCoverMenu((prev) => !prev)}
+                      disabled={uploadingCover}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-slate-900/80 hover:bg-slate-900 px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold text-white shadow-xl backdrop-blur-md transition active:scale-95 disabled:opacity-50"
+                      title="Edit foto sampul"
+                    >
+                      {uploadingCover ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-400" />
+                      ) : (
+                        <Camera className="h-3.5 w-3.5 text-white" />
+                      )}
+                      <span className="font-medium">{coverUrl ? 'Ganti Sampul' : 'Tambahkan Sampul'}</span>
+                      <ChevronDown className="h-3 w-3 opacity-70" />
+                    </button>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowCoverMenu(false)
-                            setShowCoverGalleryModal(true)
-                          }}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
-                        >
-                          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-500">
-                            <Sparkles className="h-3.5 w-3.5" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-slate-800 dark:text-slate-100">Tema Estetik</p>
-                            <p className="text-[10px] text-slate-400">Koleksi pemandangan & seni</p>
-                          </div>
-                        </button>
+                    {showCoverMenu && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-30"
+                          onClick={() => setShowCoverMenu(false)}
+                        />
+                        <div className="absolute right-0 bottom-full mb-2 w-56 rounded-2xl border border-slate-200/80 bg-white/95 dark:bg-slate-900/95 dark:border-slate-800 p-1.5 shadow-2xl backdrop-blur-md z-40">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowCoverMenu(false)
+                              coverInputRef.current?.click()
+                            }}
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
+                          >
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
+                              <Upload className="h-3.5 w-3.5" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800 dark:text-slate-100">Unggah Foto</p>
+                              <p className="text-[10px] text-slate-400">Pilih dari HP / Laptop</p>
+                            </div>
+                          </button>
 
-                        {coverUrl && (
-                          <>
-                            <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
-                            <button
-                              type="button"
-                              onClick={removeCover}
-                              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition text-left"
-                            >
-                              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-500">
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </div>
-                              <div>
-                                <p className="font-semibold">Hapus Sampul</p>
-                                <p className="text-[10px] text-rose-400/80">Kembali ke tampilan awal</p>
-                              </div>
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </>
-                  )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowCoverMenu(false)
+                              setShowCoverGalleryModal(true)
+                            }}
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
+                          >
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-500">
+                              <Sparkles className="h-3.5 w-3.5" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800 dark:text-slate-100">Tema Estetik</p>
+                              <p className="text-[10px] text-slate-400">Koleksi pemandangan & seni</p>
+                            </div>
+                          </button>
+
+                          {coverUrl && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={startCoverReposition}
+                                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
+                              >
+                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400">
+                                  <Move className="h-3.5 w-3.5" />
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-slate-800 dark:text-slate-100">Atur Posisi Sampul</p>
+                                  <p className="text-[10px] text-slate-400">Geser vertikal foto sampul</p>
+                                </div>
+                              </button>
+
+                              <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                              <button
+                                type="button"
+                                onClick={removeCover}
+                                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition text-left"
+                              >
+                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-500">
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </div>
+                                <div>
+                                  <p className="font-semibold">Hapus Sampul</p>
+                                  <p className="text-[10px] text-rose-400/80">Kembali ke tampilan awal</p>
+                                </div>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <input
                 ref={coverInputRef}
@@ -475,7 +709,7 @@ export default function ProfilePage() {
                       type="file"
                       accept="image/png,image/jpeg,image/webp,image/gif"
                       className="hidden"
-                      onChange={handleAvatarChange}
+                      onChange={handleAvatarFileSelect}
                     />
                   </div>
 
@@ -487,15 +721,26 @@ export default function ProfilePage() {
 
                 <div className="flex items-center gap-2 self-start sm:self-end">
                   {(user?.avatar_url || user?.avatar) ? (
-                    <button
-                      type="button"
-                      onClick={removeAvatar}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 transition shadow-xs"
-                      title="Hapus foto profil"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                      <span className="hidden sm:inline">Hapus Foto</span>
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => openAvatarAdjustModal(user?.avatar_url || user?.avatar)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 transition shadow-xs"
+                        title="Sesuaikan posisi dan zoom foto profil"
+                      >
+                        <Crop className="h-3.5 w-3.5 text-teal-600" />
+                        <span className="hidden sm:inline">Sesuaikan Foto</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={removeAvatar}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 transition shadow-xs"
+                        title="Hapus foto profil"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        <span className="hidden sm:inline">Hapus</span>
+                      </button>
+                    </>
                   ) : null}
                   <Badge variant="teal">{user?.role_label || user?.role}</Badge>
                 </div>
@@ -785,6 +1030,144 @@ export default function ProfilePage() {
                 className="rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
               >
                 Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Avatar Crop & Adjust Modal */}
+      {showAvatarCropModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
+                  <Crop className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Atur Foto Profil</h3>
+                  <p className="text-[11px] text-slate-400">Geser dan perbesar agar pas di lingkaran profil.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAvatarCropModal(false)}
+                className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Circular Crop Viewport */}
+            <div className="my-5 flex flex-col items-center">
+              <div
+                className="relative h-64 w-64 sm:h-72 sm:w-72 rounded-full overflow-hidden border-4 border-teal-500 shadow-2xl bg-slate-950 cursor-grab active:cursor-grabbing select-none"
+                onMouseDown={handleAvatarPointerDown}
+                onMouseMove={handleAvatarPointerMove}
+                onMouseUp={handleAvatarPointerUp}
+                onMouseLeave={handleAvatarPointerUp}
+                onTouchStart={handleAvatarPointerDown}
+                onTouchMove={handleAvatarPointerMove}
+                onTouchEnd={handleAvatarPointerUp}
+              >
+                {rawAvatarUrl ? (
+                  <img
+                    src={rawAvatarUrl}
+                    alt="Preview Penyesuaian Foto"
+                    draggable={false}
+                    className="h-full w-full object-cover pointer-events-none select-none transition-none"
+                    style={{
+                      transform: `translate(${avatarOffsetX}px, ${avatarOffsetY}px) scale(${avatarZoom})`,
+                      transformOrigin: 'center center',
+                    }}
+                  />
+                ) : null}
+
+                {/* Circular Framing Overlay Guide */}
+                <div className="absolute inset-0 pointer-events-none rounded-full ring-1 ring-white/30" />
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 border-t border-dashed border-white/20 pointer-events-none" />
+                <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 border-l border-dashed border-white/20 pointer-events-none" />
+              </div>
+
+              <p className="mt-3 text-center text-xs text-slate-400">
+                ✋ Klik & seret foto di dalam lingkaran untuk menggeser posisi
+              </p>
+            </div>
+
+            {/* Zoom Slider and Controls */}
+            <div className="space-y-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 p-3.5 border border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <span className="flex items-center gap-1.5">
+                  <Sliders className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
+                  Perbesar (Zoom)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAvatarZoom(1)
+                    setAvatarOffsetX(0)
+                    setAvatarOffsetY(0)
+                  }}
+                  className="inline-flex items-center gap-1 text-[11px] text-teal-600 dark:text-teal-400 hover:underline font-medium"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Reset ke Tengah
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setAvatarZoom((z) => Math.max(1, +(z - 0.1).toFixed(2)))}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </button>
+                <input
+                  type="range"
+                  min="1"
+                  max="2.5"
+                  step="0.05"
+                  value={avatarZoom}
+                  onChange={(e) => setAvatarZoom(Number(e.target.value))}
+                  className="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg"
+                />
+                <button
+                  type="button"
+                  onClick={() => setAvatarZoom((z) => Math.min(2.5, +(z + 0.1).toFixed(2)))}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </button>
+                <span className="text-xs font-mono font-bold text-teal-600 dark:text-teal-400 min-w-[36px] text-right">
+                  {avatarZoom.toFixed(1)}x
+                </span>
+              </div>
+            </div>
+
+            {/* Modal Action Buttons */}
+            <div className="mt-5 flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowAvatarCropModal(false)}
+                disabled={savingAvatarCrop}
+                className="rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={applyCroppedAvatar}
+                disabled={savingAvatarCrop}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 px-4 py-2 text-xs font-bold text-white shadow-md transition disabled:opacity-50"
+              >
+                {savingAvatarCrop ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
+                Terapkan & Simpan
               </button>
             </div>
           </div>

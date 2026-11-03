@@ -5,15 +5,23 @@ const AuthContext = createContext(null)
 
 function enrichUser(userData) {
   if (!userData) return null
-  if (!userData.avatar_url && !userData.avatar) {
-    try {
-      const localAvatar = localStorage.getItem('psikologi_avatar_' + (userData.id || userData.email))
-      if (localAvatar) {
-        return { ...userData, avatar_url: localAvatar }
-      }
-    } catch {}
-  }
-  return userData
+  const key = userData.id || userData.email
+  let enriched = { ...userData }
+  try {
+    const localAvatar = localStorage.getItem('psikologi_avatar_' + key)
+    if (localAvatar) {
+      enriched.avatar_url = localAvatar
+    }
+    const localCover = localStorage.getItem('psikologi_cover_' + key)
+    if (localCover) {
+      enriched.cover_url = localCover
+    }
+    const localCoverPos = localStorage.getItem('psikologi_cover_pos_' + key)
+    if (localCoverPos !== null && localCoverPos !== '') {
+      enriched.cover_pos = Number(localCoverPos)
+    }
+  } catch {}
+  return enriched
 }
 
 export function AuthProvider({ children }) {
