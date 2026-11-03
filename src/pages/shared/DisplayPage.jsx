@@ -234,12 +234,22 @@ export default function DisplayPage() {
     })
   }, [rawSchedules, rawCourses, rawGroups, rawTasks])
 
-  // STRICTLY FILTER ONLY TODAY'S SCHEDULES (HANYA HARI ITU SAJA)
-  const todaySchedules = useMemo(() => {
+  // STRICTLY DEFAULT TO TODAY'S SCHEDULE, WITH OPTION TO VIEW OTHER DAYS
+  const [selectedDay, setSelectedDay] = useState('today')
+
+  const displayedSchedules = useMemo(() => {
+    if (selectedDay === 'today') {
+      return allSchedules.filter(
+        (item) => (item.day || '').toLowerCase() === currentDayName.toLowerCase(),
+      )
+    }
+    if (selectedDay === 'all') {
+      return allSchedules
+    }
     return allSchedules.filter(
-      (item) => (item.day || '').toLowerCase() === currentDayName.toLowerCase(),
+      (item) => (item.day || '').toLowerCase() === selectedDay.toLowerCase(),
     )
-  }, [allSchedules, currentDayName])
+  }, [allSchedules, selectedDay, currentDayName])
 
   const timeString = currentTime.toLocaleTimeString('id-ID', {
     hour: '2-digit',
@@ -392,7 +402,7 @@ export default function DisplayPage() {
         <nav aria-label="Menu Tab Display" className="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
           <div className="flex items-center gap-2">
             {[
-              { id: 'schedules', title: `Jadwal Hari Ini (${currentDayName})`, icon: CalendarDays },
+              { id: 'schedules', title: 'Jadwal Kuliah', icon: CalendarDays },
               { id: 'announcements', title: 'Pengumuman', icon: Megaphone },
               { id: 'tips', title: 'Tips Belajar', icon: Sparkles },
               { id: 'guidelines', title: 'Ketentuan Studi', icon: Bell },
@@ -418,28 +428,56 @@ export default function DisplayPage() {
           </div>
 
           <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 shrink-0">
-            {todaySchedules.length} Sesi Hari Ini
+            {displayedSchedules.length} Sesi Terjadwal
           </span>
         </nav>
 
         {/* ============================================================== */}
-        {/* 3. TAB 1: JADWAL KULIAH HARI INI (HANYA HARI ITU SAJA)         */}
+        {/* 3. TAB 1: JADWAL KULIAH (DEFAULT HARI INI + FILTER HARI LAIN)  */}
         {/* ============================================================== */}
         {activeTab === 'schedules' && (
           <div className="space-y-4">
+            {/* Pilihan Hari: Default Hari Ini, Tapi Bisa Melihat Hari Lain */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              <span className="font-semibold text-slate-500 mr-1 shrink-0">Pilih Hari:</span>
+              {[
+                { id: 'today', label: `Hari Ini (${currentDayName})` },
+                { id: 'Senin', label: 'Senin' },
+                { id: 'Selasa', label: 'Selasa' },
+                { id: 'Rabu', label: 'Rabu' },
+                { id: 'Kamis', label: 'Kamis' },
+                { id: 'Jumat', label: 'Jumat' },
+                { id: 'Sabtu', label: 'Sabtu' },
+                { id: 'all', label: 'Semua Hari' },
+              ].map((d) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => setSelectedDay(d.id)}
+                  className={`rounded-lg px-2.5 py-1 font-semibold transition ${
+                    selectedDay === d.id
+                      ? 'bg-teal-800 text-white shadow-2xs'
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50'
+                  }`}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+
             {loadingSchedules ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 <Skeleton className="h-36 rounded-2xl" />
                 <Skeleton className="h-36 rounded-2xl" />
               </div>
-            ) : todaySchedules.length === 0 ? (
+            ) : displayedSchedules.length === 0 ? (
               <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center max-w-lg mx-auto">
                 <MascotCharacter name="tertidur" className="h-16 w-auto mx-auto mb-3" />
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Tidak Ada Jadwal Kuliah Hari Ini ({currentDayName})
+                  Tidak Ada Jadwal Kuliah pada {selectedDay === 'today' ? `Hari Ini (${currentDayName})` : `Hari ${selectedDay}`}
                 </h3>
                 <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                  Tidak ada sesi perkuliahan aktif yang dijadwalkan pada hari ini di sistem. Gunakan waktu untuk mengulang materi atau menyelesaikan tugas kelompok.
+                  Tidak ada sesi perkuliahan aktif yang dijadwalkan pada hari ini di sistem. Anda dapat memilih hari lain di atas untuk melihat materi dan presensi.
                 </p>
               </div>
             ) : (
@@ -448,7 +486,7 @@ export default function DisplayPage() {
                   isMobileView ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
                 }`}
               >
-                {todaySchedules.map((item, idx) => {
+                {displayedSchedules.map((item, idx) => {
                   const isOnline = item.mode === 'online'
                   const groupCount = item.groups ? item.groups.length : 0
 
@@ -668,37 +706,31 @@ export default function DisplayPage() {
         )}
 
         {/* ============================================================== */}
-        {/* 6. TAB 4: KETENTUAN STUDI & PENGINGAT                           */}
+        {/* 6. TAB 4: KETENTUAN STUDI (PENGINGAT ABSENSI & TUGAS)          */}
         {/* ============================================================== */}
         {activeTab === 'guidelines' && (
-          <div className={`grid gap-3 ${isMobileView ? 'grid-cols-1' : 'grid-cols-3'}`}>
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-teal-700" />
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Presensi Kuliah (Min. 75%)</h4>
+          <div className={`grid gap-3.5 ${isMobileView ? 'grid-cols-1' : 'grid-cols-2'}`}>
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-2">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-400">
+                  <CheckCircle2 className="h-4.5 w-4.5" />
+                </span>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white">Pengingat Presensi Kuliah</h4>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                Syarat mutlak untuk mengikuti Ujian Akhir Semester adalah kehadiran kuliah minimal 75%. Isi link absensi pada tiap mata kuliah yang berlangsung.
+                Pastikan Anda selalu mengisi tautan presensi/absensi yang tertera pada tiap mata kuliah yang berlangsung setiap minggunya tepat waktu.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-teal-700" />
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Tenggat Tugas Kuliah</h4>
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-2">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-400">
+                  <Clock className="h-4.5 w-4.5" />
+                </span>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white">Pengingat Tugas Kuliah</h4>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                Kumpulkan tugas kelompok maupun individu sebelum batas akhir sistem agar tidak terkena pengurangan nilai keterlambatan.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <GraduationCap className="h-4 w-4 text-teal-700" />
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Etika & Ketertiban</h4>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                Jaga orisinalitas karya ilmiah, hindari plagiarisme, serta berbusana rapi dan sopan sesuai pedoman kampus STIT Muhammadiyah Kediri.
+                Kumpulkan tugas perkuliahan (baik tugas individu maupun laporan kelompok) sebelum batas tenggat waktu yang ditentukan oleh dosen pengampu.
               </p>
             </div>
           </div>
