@@ -43,6 +43,26 @@ export const THEMES = [
     previewBg: '#f4ecd8',
     previewCard: '#fdf8ee',
   },
+  {
+    id: 'emerald',
+    name: 'Zamrud Gold',
+    label: 'Khas Kampus',
+    desc: 'Hijau zamrud islami mewah & emas',
+    icon: 'Sparkles',
+    accentColor: '#10b981',
+    previewBg: '#03170e',
+    previewCard: '#082618',
+  },
+  {
+    id: 'ocean',
+    name: 'Midnight Sapphire',
+    label: 'Fokus Belajar',
+    desc: 'Biru samudra malam & electric cyan',
+    icon: 'Compass',
+    accentColor: '#38bdf8',
+    previewBg: '#060b17',
+    previewCard: '#0d172e',
+  },
 ]
 
 const ThemeContext = createContext({
@@ -71,7 +91,14 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     const root = document.documentElement
     root.setAttribute('data-theme', theme)
-    root.classList.remove('theme-light', 'theme-dark', 'theme-soft', 'theme-sepia')
+    root.classList.remove(
+      'theme-light',
+      'theme-dark',
+      'theme-soft',
+      'theme-sepia',
+      'theme-emerald',
+      'theme-ocean',
+    )
     root.classList.add(`theme-${theme}`)
 
     // Update meta theme-color for mobile address bar
@@ -86,6 +113,8 @@ export function ThemeProvider({ children }) {
       dark: '#000000',
       soft: '#eef3f0',
       sepia: '#f4ecd8',
+      emerald: '#03170e',
+      ocean: '#060b17',
     }
     themeMeta.content = colors[theme] || '#0d9488'
   }, [theme])

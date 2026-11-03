@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { BookOpen, Check, Leaf, Moon, Palette, Sun } from 'lucide-react'
+import { BookOpen, Check, Compass, Leaf, Moon, Palette, Sparkles, Sun } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { cn } from '../lib/utils'
 
@@ -8,6 +8,8 @@ const ICON_MAP = {
   Moon,
   Leaf,
   BookOpen,
+  Sparkles,
+  Compass,
 }
 
 export default function ThemeSelector({ className, compact = false }) {

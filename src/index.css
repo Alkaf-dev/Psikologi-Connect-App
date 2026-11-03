@@ -21,6 +21,14 @@
   color-scheme: light;
 }
 
+[data-theme="emerald"] {
+  color-scheme: dark;
+}
+
+[data-theme="ocean"] {
+  color-scheme: dark;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -303,6 +311,227 @@ body {
   background-color: #faf4e4 !important;
   color: #2c1e11 !important;
   border-color: #d6c6a4 !important;
+}
+
+/* ==========================================================================
+   THEME: ZAMRUD GOLD (Islamic Emerald & Gold)
+   ========================================================================== */
+[data-theme="emerald"] body,
+[data-theme="emerald"] .portal-layout-wrapper {
+  background-color: #03170e !important;
+  color: #f0fdf4;
+}
+
+[data-theme="emerald"] ::selection {
+  background: #10b981;
+  color: #03170e;
+}
+
+[data-theme="emerald"] .psy-mascot-greeting,
+[data-theme="emerald"] .psy-mascot-gif {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, #082618 65%) !important;
+  border-color: #12452c !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="emerald"] .psy-mascot-greeting__title,
+[data-theme="emerald"] .psy-mascot-gif__title {
+  color: #ffffff !important;
+}
+
+[data-theme="emerald"] .psy-mascot-greeting__message,
+[data-theme="emerald"] .psy-mascot-gif__message {
+  color: #a7f3d0 !important;
+}
+
+[data-theme="emerald"] .bg-white {
+  background-color: #082618 !important;
+}
+
+[data-theme="emerald"] .bg-white\/90 {
+  background-color: rgb(8 38 24 / 0.94) !important;
+}
+
+[data-theme="emerald"] .bg-white\/80 {
+  background-color: rgb(8 38 24 / 0.88) !important;
+}
+
+[data-theme="emerald"] .bg-slate-50,
+[data-theme="emerald"] .bg-slate-50\/70,
+[data-theme="emerald"] .bg-slate-50\/80 {
+  background-color: #041a11 !important;
+}
+
+[data-theme="emerald"] .bg-slate-100 {
+  background-color: #0f3d27 !important;
+}
+
+[data-theme="emerald"] .text-slate-900,
+[data-theme="emerald"] .text-slate-800 {
+  color: #f0fdf4 !important;
+}
+
+[data-theme="emerald"] .text-slate-700 {
+  color: #d1fae5 !important;
+}
+
+[data-theme="emerald"] .text-slate-600,
+[data-theme="emerald"] .text-slate-500 {
+  color: #a7f3d0 !important;
+}
+
+[data-theme="emerald"] .text-slate-400 {
+  color: #6ee7b7 !important;
+}
+
+[data-theme="emerald"] .border-slate-100,
+[data-theme="emerald"] .border-slate-200,
+[data-theme="emerald"] .border-slate-200\/80 {
+  border-color: #12452c !important;
+}
+
+[data-theme="emerald"] .border-slate-300 {
+  border-color: #1d5f3e !important;
+}
+
+[data-theme="emerald"] .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+[data-theme="emerald"] .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #12452c !important;
+}
+
+[data-theme="emerald"] input:not([type="checkbox"]):not([type="radio"]),
+[data-theme="emerald"] select,
+[data-theme="emerald"] textarea {
+  background-color: #041a11 !important;
+  color: #f0fdf4 !important;
+  border-color: #185235 !important;
+}
+
+[data-theme="emerald"] input:disabled,
+[data-theme="emerald"] select:disabled,
+[data-theme="emerald"] textarea:disabled {
+  background-color: #092e1e !important;
+  color: #6ee7b7 !important;
+  border-color: #12452c !important;
+}
+
+[data-theme="emerald"] .bg-teal-50,
+[data-theme="emerald"] .bg-teal-50\/30,
+[data-theme="emerald"] .bg-teal-50\/70,
+[data-theme="emerald"] .bg-teal-50\/80,
+[data-theme="emerald"] .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  color: #34d399 !important;
+}
+
+/* ==========================================================================
+   THEME: MIDNIGHT SAPPHIRE (Ocean Focus & Electric Cyan)
+   ========================================================================== */
+[data-theme="ocean"] body,
+[data-theme="ocean"] .portal-layout-wrapper {
+  background-color: #060b17 !important;
+  color: #f0f9ff;
+}
+
+[data-theme="ocean"] ::selection {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+[data-theme="ocean"] .psy-mascot-greeting,
+[data-theme="ocean"] .psy-mascot-gif {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, #0d172e 65%) !important;
+  border-color: #1a2f5a !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="ocean"] .psy-mascot-greeting__title,
+[data-theme="ocean"] .psy-mascot-gif__title {
+  color: #ffffff !important;
+}
+
+[data-theme="ocean"] .psy-mascot-greeting__message,
+[data-theme="ocean"] .psy-mascot-gif__message {
+  color: #93c5fd !important;
+}
+
+[data-theme="ocean"] .bg-white {
+  background-color: #0d172e !important;
+}
+
+[data-theme="ocean"] .bg-white\/90 {
+  background-color: rgb(13 23 46 / 0.94) !important;
+}
+
+[data-theme="ocean"] .bg-white\/80 {
+  background-color: rgb(13 23 46 / 0.88) !important;
+}
+
+[data-theme="ocean"] .bg-slate-50,
+[data-theme="ocean"] .bg-slate-50\/70,
+[data-theme="ocean"] .bg-slate-50\/80 {
+  background-color: #081021 !important;
+}
+
+[data-theme="ocean"] .bg-slate-100 {
+  background-color: #152447 !important;
+}
+
+[data-theme="ocean"] .text-slate-900,
+[data-theme="ocean"] .text-slate-800 {
+  color: #f0f9ff !important;
+}
+
+[data-theme="ocean"] .text-slate-700 {
+  color: #e0f2fe !important;
+}
+
+[data-theme="ocean"] .text-slate-600,
+[data-theme="ocean"] .text-slate-500 {
+  color: #93c5fd !important;
+}
+
+[data-theme="ocean"] .text-slate-400 {
+  color: #60a5fa !important;
+}
+
+[data-theme="ocean"] .border-slate-100,
+[data-theme="ocean"] .border-slate-200,
+[data-theme="ocean"] .border-slate-200\/80 {
+  border-color: #1a2f5a !important;
+}
+
+[data-theme="ocean"] .border-slate-300 {
+  border-color: #264380 !important;
+}
+
+[data-theme="ocean"] .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+[data-theme="ocean"] .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1a2f5a !important;
+}
+
+[data-theme="ocean"] input:not([type="checkbox"]):not([type="radio"]),
+[data-theme="ocean"] select,
+[data-theme="ocean"] textarea {
+  background-color: #070e1c !important;
+  color: #f0f9ff !important;
+  border-color: #1e3768 !important;
+}
+
+[data-theme="ocean"] input:disabled,
+[data-theme="ocean"] select:disabled,
+[data-theme="ocean"] textarea:disabled {
+  background-color: #0f1c38 !important;
+  color: #60a5fa !important;
+  border-color: #1a2f5a !important;
+}
+
+[data-theme="ocean"] .bg-sky-50,
+[data-theme="ocean"] .bg-teal-50,
+[data-theme="ocean"] .bg-teal-50\/30,
+[data-theme="ocean"] .bg-teal-50\/80 {
+  background-color: rgba(56, 189, 248, 0.2) !important;
+  color: #38bdf8 !important;
 }
 
 .scrollbar-thin {
