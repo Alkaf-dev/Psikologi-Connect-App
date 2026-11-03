@@ -283,129 +283,132 @@ export default function DisplayPage() {
         }
       >
         {/* ============================================================== */}
-        {/* 1. PROFESSIONAL EXECUTIVE HEADER                               */}
+        {/* 1. LARAVEL FILAMENT V5 STYLE PAGE HEADER                      */}
         {/* ============================================================== */}
-        <header className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-teal-600 animate-pulse" />
-                <p className="text-[11px] font-bold uppercase tracking-wider text-teal-800 dark:text-teal-400">
-                  STIT Muhammadiyah Kediri
-                </p>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">
-                Display Informasi Akademik
-              </h1>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                Program Studi Psikologi Islam • Pusat Jadwal, Presensi & Materi Perkuliahan
-              </p>
+        <header className="fi-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-5 border-b border-gray-200 dark:border-white/10">
+          <div>
+            {/* Filament Breadcrumbs */}
+            <nav className="fi-breadcrumbs mb-1.5 flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+              <span>Beranda</span>
+              <span>/</span>
+              <span>Akademik</span>
+              <span>/</span>
+              <span className="text-teal-700 dark:text-teal-400 font-semibold">Display Informasi</span>
+            </nav>
+
+            <h1 className="fi-header-heading text-2xl sm:text-3xl font-bold tracking-tight text-gray-950 dark:text-white">
+              Display Informasi Akademik
+            </h1>
+            <p className="fi-header-subheading text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Program Studi Psikologi Islam • STIT Muhammadiyah Kediri
+            </p>
+          </div>
+
+          {/* Filament Header Action Group */}
+          <div className="fi-header-actions flex flex-wrap items-center gap-2.5">
+            {/* Filament Status Pill */}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 ring-1 ring-inset ring-emerald-600/20">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
+              <span>Hari Ini: {currentDayName}</span>
+            </span>
+
+            {/* Filament Digital Clock Pill */}
+            <div className="inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs font-mono font-medium text-gray-700 dark:text-gray-300 shadow-xs">
+              <Clock className="h-3.5 w-3.5 text-gray-400" />
+              <span>{timeString} WIB</span>
             </div>
 
-            {/* Controls: Clock, Device Mode Switcher, Sync */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              {/* Clock Widget */}
-              <div className="flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs">
-                <Clock className="h-3.5 w-3.5 text-teal-700 dark:text-teal-400" />
-                <span className="font-mono font-bold text-slate-900 dark:text-slate-200">{timeString} WIB</span>
-                <span className="text-slate-500 hidden sm:inline">• {dateString}</span>
-              </div>
-
-              {/* Mode Switcher: Auto | Web | HP */}
-              <div
-                className="flex items-center rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700"
-                title="Pilih mode tampilan layar"
+            {/* Filament Segmented Button (Auto | Web | HP) */}
+            <div className="inline-flex rounded-lg bg-gray-100 dark:bg-gray-800 p-0.5 border border-gray-200 dark:border-gray-700/60 shadow-xs">
+              <button
+                type="button"
+                onClick={() => setDeviceMode('auto')}
+                className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                  deviceMode === 'auto'
+                    ? 'bg-white dark:bg-gray-900 text-gray-950 dark:text-white shadow-xs font-semibold'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-950'
+                }`}
+                title="Otomatis mengikuti ukuran layar"
               >
-                <button
-                  type="button"
-                  onClick={() => setDeviceMode('auto')}
-                  className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
-                    deviceMode === 'auto'
-                      ? 'bg-white dark:bg-slate-700 text-teal-800 dark:text-teal-300 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                  title="Otomatis mengikuti ukuran layar"
-                >
-                  <Sparkles className="h-3 w-3" />
-                  <span className="hidden sm:inline">Auto</span>
-                </button>
+                <Sparkles className="h-3 w-3 text-teal-600" />
+                <span className="hidden sm:inline">Auto</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => setDeviceMode('web')}
-                  className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
-                    deviceMode === 'web'
-                      ? 'bg-white dark:bg-slate-700 text-teal-800 dark:text-teal-300 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                  title="Tampilan Desktop / Web"
-                >
-                  <Laptop className="h-3 w-3" />
-                  <span>Web</span>
-                </button>
+              <button
+                type="button"
+                onClick={() => setDeviceMode('web')}
+                className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                  deviceMode === 'web'
+                    ? 'bg-white dark:bg-gray-900 text-gray-950 dark:text-white shadow-xs font-semibold'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-950'
+                }`}
+                title="Tampilan Desktop / Web"
+              >
+                <Laptop className="h-3 w-3" />
+                <span>Web</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => setDeviceMode('mobile')}
-                  className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
-                    deviceMode === 'mobile'
-                      ? 'bg-white dark:bg-slate-700 text-teal-800 dark:text-teal-300 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                  title="Tampilan Ponsel / HP"
-                >
-                  <Smartphone className="h-3 w-3" />
-                  <span>HP</span>
-                </button>
-              </div>
-
-              {/* Sync Database Button */}
-              {user && (
-                <button
-                  type="button"
-                  onClick={refreshAll}
-                  disabled={isSyncing}
-                  className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition disabled:opacity-50"
-                  title="Sinkronkan data dari tabel database"
-                >
-                  <RotateCcw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-                </button>
-              )}
-
-              {/* Standalone Route Portal Button */}
-              {isStandaloneRoute ? (
-                user ? (
-                  <Link
-                    to={isStaff ? '/admin' : '/portal'}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-teal-800 hover:bg-teal-700 text-white px-3.5 py-1.5 text-xs font-semibold transition"
-                  >
-                    <GraduationCap className="h-3.5 w-3.5" />
-                    <span>Portal</span>
-                  </Link>
-                ) : (
-                  <Link
-                    to="/login"
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-teal-800 hover:bg-teal-700 text-white px-3.5 py-1.5 text-xs font-semibold transition"
-                  >
-                    <LogIn className="h-3.5 w-3.5" />
-                    <span>Masuk</span>
-                  </Link>
-                )
-              ) : null}
+              <button
+                type="button"
+                onClick={() => setDeviceMode('mobile')}
+                className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                  deviceMode === 'mobile'
+                    ? 'bg-white dark:bg-gray-900 text-gray-950 dark:text-white shadow-xs font-semibold'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-950'
+                }`}
+                title="Tampilan Ponsel / HP"
+              >
+                <Smartphone className="h-3 w-3" />
+                <span>HP</span>
+              </button>
             </div>
+
+            {/* Sync Database Button */}
+            {user && (
+              <button
+                type="button"
+                onClick={refreshAll}
+                disabled={isSyncing}
+                className="inline-flex items-center justify-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-xs font-medium text-gray-700 dark:text-gray-200 shadow-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50"
+                title="Sinkronkan data dari tabel database"
+              >
+                <RotateCcw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              </button>
+            )}
+
+            {/* Standalone Route Portal Button */}
+            {isStandaloneRoute ? (
+              user ? (
+                <Link
+                  to={isStaff ? '/admin' : '/portal'}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white px-3 py-1.5 text-xs font-medium shadow-xs transition"
+                >
+                  <GraduationCap className="h-3.5 w-3.5" />
+                  <span>Portal</span>
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white px-3 py-1.5 text-xs font-medium shadow-xs transition"
+                >
+                  <LogIn className="h-3.5 w-3.5" />
+                  <span>Masuk</span>
+                </Link>
+              )
+            ) : null}
           </div>
         </header>
 
         {/* ============================================================== */}
-        {/* 2. TAB NAVIGATION (PROFESIONAL & BERSIH)                       */}
+        {/* 2. LARAVEL FILAMENT V5 STYLE TABS                             */}
         {/* ============================================================== */}
-        <nav aria-label="Menu Tab Display" className="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
-          <div className="flex items-center gap-2">
+        <div className="fi-tabs border-b border-gray-200 dark:border-white/10 flex items-center justify-between gap-4 overflow-x-auto">
+          <nav className="-mb-px flex gap-x-6">
             {[
-              { id: 'schedules', title: 'Jadwal Kuliah', icon: CalendarDays },
-              { id: 'announcements', title: 'Pengumuman', icon: Megaphone },
-              { id: 'tips', title: 'Tips Belajar', icon: Sparkles },
-              { id: 'guidelines', title: 'Ketentuan Studi', icon: Bell },
+              { id: 'schedules', title: 'Jadwal Kuliah', count: displayedSchedules.length, icon: CalendarDays },
+              { id: 'announcements', title: 'Pengumuman', count: (announcements || []).length, icon: Megaphone },
+              { id: 'tips', title: 'Tips Belajar', count: null, icon: Sparkles },
+              { id: 'guidelines', title: 'Ketentuan Studi', count: null, icon: Bell },
             ].map((tab) => {
               const Icon = tab.icon
               const isActive = activeTab === tab.id
@@ -414,23 +417,30 @@ export default function DisplayPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
+                  className={`flex items-center gap-2 pb-3 text-xs sm:text-sm font-medium border-b-2 transition ${
                     isActive
-                      ? 'bg-teal-800 text-white shadow-xs'
-                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                      ? 'border-teal-600 text-teal-700 dark:text-teal-400 font-semibold'
+                      : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
                   }`}
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon className="h-4 w-4" />
                   <span>{tab.title}</span>
+                  {tab.count !== null && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        isActive
+                          ? 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300'
+                          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  )}
                 </button>
               )
             })}
-          </div>
-
-          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 shrink-0">
-            {displayedSchedules.length} Sesi Terjadwal
-          </span>
-        </nav>
+          </nav>
+        </div>
 
         {/* ============================================================== */}
         {/* 3. TAB 1: JADWAL KULIAH (DEFAULT HARI INI + FILTER HARI LAIN)  */}
