@@ -260,7 +260,7 @@ export default function PortalLayout() {
   )
 
   return (
-    <div className="min-h-screen bg-[#f6f8fb]">
+    <div className="min-h-screen portal-layout-wrapper transition-colors duration-200">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[264px] border-r border-slate-200 bg-white lg:block">
         {SidebarContent}
       </aside>

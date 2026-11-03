@@ -123,6 +123,55 @@ body {
   border-color: #1e2129 !important;
 }
 
+[data-theme="dark"] .portal-layout-wrapper {
+  background-color: #000000 !important;
+}
+
+[data-theme="dark"] .psy-mascot-greeting,
+[data-theme="dark"] .psy-mascot-gif {
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.2) 0%, #0c0d10 65%) !important;
+  border-color: #1e2129 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="dark"] .psy-mascot-greeting__title,
+[data-theme="dark"] .psy-mascot-gif__title {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .psy-mascot-greeting__message,
+[data-theme="dark"] .psy-mascot-gif__message {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .bg-teal-50,
+[data-theme="dark"] .bg-teal-50\/30,
+[data-theme="dark"] .bg-teal-50\/70,
+[data-theme="dark"] .bg-teal-50\/80 {
+  background-color: rgba(13, 148, 136, 0.2) !important;
+}
+
+[data-theme="dark"] .bg-sky-50 {
+  background-color: rgba(14, 165, 233, 0.2) !important;
+}
+
+[data-theme="dark"] .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+[data-theme="dark"] .bg-violet-50 {
+  background-color: rgba(139, 92, 246, 0.2) !important;
+}
+
+[data-theme="dark"] .bg-rose-50,
+[data-theme="dark"] .bg-rose-50\/80 {
+  background-color: rgba(244, 63, 94, 0.2) !important;
+}
+
+[data-theme="dark"] .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+}
+
 [data-theme="dark"] .shadow-sm {
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.8) !important;
 }
@@ -137,9 +186,16 @@ body {
 /* ==========================================================================
    THEME: SOFT SAGE (Teduh & Relaksasi)
    ========================================================================== */
-[data-theme="soft"] body {
-  background-color: #eef3f0;
+[data-theme="soft"] body,
+[data-theme="soft"] .portal-layout-wrapper {
+  background-color: #eef3f0 !important;
   color: #1b2e23;
+}
+
+[data-theme="soft"] .psy-mascot-greeting,
+[data-theme="soft"] .psy-mascot-gif {
+  background: linear-gradient(135deg, rgba(59, 122, 87, 0.15) 0%, #f7faf8 65%) !important;
+  border-color: #cfdcd4 !important;
 }
 
 [data-theme="soft"] .bg-white {
@@ -191,9 +247,16 @@ body {
 /* ==========================================================================
    THEME: WARM SEPIA (Mode Baca Kertas Hangat)
    ========================================================================== */
-[data-theme="sepia"] body {
-  background-color: #f5eed9;
+[data-theme="sepia"] body,
+[data-theme="sepia"] .portal-layout-wrapper {
+  background-color: #f5eed9 !important;
   color: #352618;
+}
+
+[data-theme="sepia"] .psy-mascot-greeting,
+[data-theme="sepia"] .psy-mascot-gif {
+  background: linear-gradient(135deg, rgba(160, 90, 44, 0.12) 0%, #fcf8ee 65%) !important;
+  border-color: #ded0b4 !important;
 }
 
 [data-theme="sepia"] .bg-white {
