@@ -6,6 +6,7 @@ import { APP_NAME, BRAND_SUBTITLE } from '../lib/brand'
 import { cn } from '../lib/utils'
 import { Logo } from './Logo'
 import { Spinner } from './ui'
+import ThemeSelector from './ThemeSelector'
 
 const navLinks = [
   { to: '/', label: 'Beranda', end: true },
@@ -66,16 +67,23 @@ export default function PublicLayout() {
                 Masuk Portal
               </Link>
             )}
+
+            <div className="ml-1 pl-2 border-l border-slate-200">
+              <ThemeSelector />
+            </div>
           </nav>
 
-          <button
-            type="button"
-            onClick={() => setMobileOpen((open) => !open)}
-            className="rounded-xl border border-slate-200 p-2 text-slate-600 sm:hidden"
-            aria-label="Buka menu"
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          <div className="flex items-center gap-2 sm:hidden">
+            <ThemeSelector compact />
+            <button
+              type="button"
+              onClick={() => setMobileOpen((open) => !open)}
+              className="rounded-xl border border-slate-200 p-2 text-slate-600"
+              aria-label="Buka menu"
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
 
         {mobileOpen ? (

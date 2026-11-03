@@ -6,6 +6,19 @@
 
 :root {
   color-scheme: light;
+  --theme-transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme="soft"] {
+  color-scheme: light;
+}
+
+[data-theme="sepia"] {
+  color-scheme: light;
 }
 
 html {
@@ -18,11 +31,212 @@ body {
   color: #1e293b;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  transition: var(--theme-transition);
 }
 
 ::selection {
   background: #99f6e4;
   color: #134e4a;
+}
+
+/* ==========================================================================
+   THEME: DARK (Midnight Slate)
+   ========================================================================== */
+[data-theme="dark"] body {
+  background-color: #0b1120;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] ::selection {
+  background: #0d9488;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .bg-white {
+  background-color: #131c2e !important;
+}
+
+[data-theme="dark"] .bg-white\/90 {
+  background-color: rgb(19 28 46 / 0.92) !important;
+}
+
+[data-theme="dark"] .bg-white\/80 {
+  background-color: rgb(19 28 46 / 0.85) !important;
+}
+
+[data-theme="dark"] .bg-slate-50,
+[data-theme="dark"] .bg-slate-50\/70,
+[data-theme="dark"] .bg-slate-50\/80 {
+  background-color: #0f172a !important;
+}
+
+[data-theme="dark"] .bg-slate-100 {
+  background-color: #1e293b !important;
+}
+
+[data-theme="dark"] .text-slate-900,
+[data-theme="dark"] .text-slate-800 {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .text-slate-700 {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .text-slate-600,
+[data-theme="dark"] .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .text-slate-400 {
+  color: #64748b !important;
+}
+
+[data-theme="dark"] .border-slate-100,
+[data-theme="dark"] .border-slate-200,
+[data-theme="dark"] .border-slate-200\/80 {
+  border-color: #243048 !important;
+}
+
+[data-theme="dark"] .border-slate-300 {
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+[data-theme="dark"] .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #243048 !important;
+}
+
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: #0c1424 !important;
+  color: #f8fafc !important;
+  border-color: #2e3e5c !important;
+}
+
+[data-theme="dark"] input:disabled,
+[data-theme="dark"] select:disabled,
+[data-theme="dark"] textarea:disabled {
+  background-color: #182234 !important;
+  color: #64748b !important;
+  border-color: #243048 !important;
+}
+
+[data-theme="dark"] .shadow-sm {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.35) !important;
+}
+
+[data-theme="dark"] .shadow-md {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.4) !important;
+}
+
+/* ==========================================================================
+   THEME: SOFT SAGE (Teduh & Relaksasi)
+   ========================================================================== */
+[data-theme="soft"] body {
+  background-color: #eef3f0;
+  color: #1b2e23;
+}
+
+[data-theme="soft"] .bg-white {
+  background-color: #f7faf8 !important;
+}
+
+[data-theme="soft"] .bg-white\/90 {
+  background-color: rgb(247 250 248 / 0.92) !important;
+}
+
+[data-theme="soft"] .bg-slate-50,
+[data-theme="soft"] .bg-slate-50\/70,
+[data-theme="soft"] .bg-slate-50\/80 {
+  background-color: #e5ede8 !important;
+}
+
+[data-theme="soft"] .bg-slate-100 {
+  background-color: #dbe5df !important;
+}
+
+[data-theme="soft"] .text-slate-900,
+[data-theme="soft"] .text-slate-800 {
+  color: #14271c !important;
+}
+
+[data-theme="soft"] .text-slate-700 {
+  color: #223c2d !important;
+}
+
+[data-theme="soft"] .text-slate-600,
+[data-theme="soft"] .text-slate-500 {
+  color: #486354 !important;
+}
+
+[data-theme="soft"] .border-slate-100,
+[data-theme="soft"] .border-slate-200,
+[data-theme="soft"] .border-slate-200\/80 {
+  border-color: #cfdcd4 !important;
+}
+
+[data-theme="soft"] input:not([type="checkbox"]):not([type="radio"]),
+[data-theme="soft"] select,
+[data-theme="soft"] textarea {
+  background-color: #f2f7f4 !important;
+  color: #14271c !important;
+  border-color: #c7d7ce !important;
+}
+
+/* ==========================================================================
+   THEME: WARM SEPIA (Mode Baca Kertas Hangat)
+   ========================================================================== */
+[data-theme="sepia"] body {
+  background-color: #f5eed9;
+  color: #352618;
+}
+
+[data-theme="sepia"] .bg-white {
+  background-color: #fcf8ee !important;
+}
+
+[data-theme="sepia"] .bg-white\/90 {
+  background-color: rgb(252 248 238 / 0.92) !important;
+}
+
+[data-theme="sepia"] .bg-slate-50,
+[data-theme="sepia"] .bg-slate-50\/70,
+[data-theme="sepia"] .bg-slate-50\/80 {
+  background-color: #ece1c8 !important;
+}
+
+[data-theme="sepia"] .bg-slate-100 {
+  background-color: #e4d6b8 !important;
+}
+
+[data-theme="sepia"] .text-slate-900,
+[data-theme="sepia"] .text-slate-800 {
+  color: #2c1e11 !important;
+}
+
+[data-theme="sepia"] .text-slate-700 {
+  color: #423120 !important;
+}
+
+[data-theme="sepia"] .text-slate-600,
+[data-theme="sepia"] .text-slate-500 {
+  color: #6e553e !important;
+}
+
+[data-theme="sepia"] .border-slate-100,
+[data-theme="sepia"] .border-slate-200,
+[data-theme="sepia"] .border-slate-200\/80 {
+  border-color: #ded0b4 !important;
+}
+
+[data-theme="sepia"] input:not([type="checkbox"]):not([type="radio"]),
+[data-theme="sepia"] select,
+[data-theme="sepia"] textarea {
+  background-color: #faf4e4 !important;
+  color: #2c1e11 !important;
+  border-color: #d6c6a4 !important;
 }
 
 .scrollbar-thin {

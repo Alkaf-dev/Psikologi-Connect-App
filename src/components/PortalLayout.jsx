@@ -25,6 +25,7 @@ import { APP_NAME, BRAND_SUBTITLE } from '../lib/brand'
 import { cn } from '../lib/utils'
 import { Avatar, Badge, Spinner } from './ui'
 import NotificationDrawer from './NotificationDrawer'
+import ThemeSelector from './ThemeSelector'
 
 const iconClass = 'h-4.5 w-4.5'
 
@@ -299,6 +300,8 @@ export default function PortalLayout() {
             </div>
 
             <div className="flex items-center gap-2">
+              <ThemeSelector />
+
               <button
                 type="button"
                 onClick={() => {

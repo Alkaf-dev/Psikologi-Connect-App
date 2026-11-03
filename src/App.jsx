@@ -2,6 +2,7 @@ import { lazy, useEffect } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
+import { ThemeProvider } from './context/ThemeContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicLayout from './components/PublicLayout'
 import PortalLayout from './components/PortalLayout'
@@ -45,8 +46,9 @@ export default function App() {
 
   return (
     <BrowserRouter basename={basename}>
-      <AuthProvider>
-        <ToastProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastProvider>
           <ScrollToTop />
           <Routes>
             <Route element={<PublicLayout />}>
@@ -92,6 +94,7 @@ export default function App() {
           </Routes>
         </ToastProvider>
       </AuthProvider>
-    </BrowserRouter>
+    </ThemeProvider>
+  </BrowserRouter>
   )
 }

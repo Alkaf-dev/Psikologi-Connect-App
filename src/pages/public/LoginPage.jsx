@@ -19,6 +19,7 @@ import { ApiError, errorMessage } from '../../lib/api'
 import { APP_NAME, BRAND_SUBTITLE, DEFAULT_SETTINGS } from '../../lib/brand'
 import { Button, Field, Input, Select, Spinner } from '../../components/ui'
 import { MascotGif } from '../../components/PsychologyMascot'
+import ThemeSelector from '../../components/ThemeSelector'
 
 export const DEFAULT_PROGRAMS = [
   { id: '01M5V8C4V913P5WE4PQ8TAGQNW', code: 'psi', name: 'Psikologi Islam', degree: 'S1', label: 'S1 Psikologi Islam' },
@@ -199,14 +200,17 @@ export default function LoginPage() {
               <span className="block text-[10px] text-slate-500">{BRAND_SUBTITLE}</span>
             </span>
           </Link>
-          <Link to="/" className="rounded-lg p-2 text-slate-500 hover:bg-white">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <ThemeSelector compact />
+            <Link to="/" className="rounded-lg p-2 text-slate-500 hover:bg-white" aria-label="Kembali ke beranda">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          </div>
         </div>
 
         <div className="flex flex-1 items-center justify-center px-5 py-8 sm:px-8">
           <div className="w-full max-w-md">
-            <div className="hidden lg:block">
+            <div className="hidden lg:flex lg:items-center lg:justify-between">
               <Link
                 to="/"
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-teal-700"
@@ -214,6 +218,7 @@ export default function LoginPage() {
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Kembali ke beranda
               </Link>
+              <ThemeSelector compact />
             </div>
 
             <h2 className="mt-5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
