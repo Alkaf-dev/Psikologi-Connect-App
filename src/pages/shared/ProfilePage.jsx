@@ -549,38 +549,41 @@ export default function ProfilePage() {
         <div className="space-y-5">
           <Card className="overflow-hidden">
             {/* Facebook/LinkedIn-style Cover Banner */}
-            <div
-              className={`relative h-48 sm:h-56 overflow-hidden bg-gradient-to-br from-slate-900 via-teal-950 to-slate-900 group select-none ${
-                isRepositioningCover ? 'cursor-grab active:cursor-grabbing' : ''
-              }`}
-              onMouseDown={handleCoverPointerDown}
-              onMouseMove={handleCoverPointerMove}
-              onMouseUp={handleCoverPointerUp}
-              onMouseLeave={handleCoverPointerUp}
-              onTouchStart={handleCoverPointerDown}
-              onTouchMove={handleCoverPointerMove}
-              onTouchEnd={handleCoverPointerUp}
-            >
-              {coverUrl ? (
-                <img
-                  src={coverUrl}
-                  alt="Foto Sampul"
-                  draggable={false}
-                  style={{
-                    objectPosition: `${isRepositioningCover ? tempCoverPosX : coverPosX}% ${isRepositioningCover ? tempCoverPosY : coverPosY}%`,
-                    transform: `scale(${isRepositioningCover ? tempCoverZoom : coverZoom})`,
-                    transformOrigin: `${isRepositioningCover ? tempCoverPosX : coverPosX}% ${isRepositioningCover ? tempCoverPosY : coverPosY}%`,
-                  }}
-                  className="h-full w-full object-cover transition-none pointer-events-none"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-teal-900 via-teal-800 to-slate-900">
-                  <div className="hero-dots absolute inset-0 opacity-20" />
-                  <div className="absolute -right-8 -top-12 h-44 w-44 rounded-full bg-teal-400/20 blur-2xl" />
-                  <div className="absolute -left-8 -bottom-10 h-36 w-36 rounded-full bg-emerald-400/20 blur-xl" />
-                </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
+            <div className="relative h-48 sm:h-56 select-none">
+              {/* Inner viewport with overflow-hidden for image only */}
+              <div
+                className={`absolute inset-0 overflow-hidden bg-gradient-to-br from-slate-900 via-teal-950 to-slate-900 ${
+                  isRepositioningCover ? 'cursor-grab active:cursor-grabbing' : ''
+                }`}
+                onMouseDown={handleCoverPointerDown}
+                onMouseMove={handleCoverPointerMove}
+                onMouseUp={handleCoverPointerUp}
+                onMouseLeave={handleCoverPointerUp}
+                onTouchStart={handleCoverPointerDown}
+                onTouchMove={handleCoverPointerMove}
+                onTouchEnd={handleCoverPointerUp}
+              >
+                {coverUrl ? (
+                  <img
+                    src={coverUrl}
+                    alt="Foto Sampul"
+                    draggable={false}
+                    style={{
+                      objectPosition: `${isRepositioningCover ? tempCoverPosX : coverPosX}% ${isRepositioningCover ? tempCoverPosY : coverPosY}%`,
+                      transform: `scale(${isRepositioningCover ? tempCoverZoom : coverZoom})`,
+                      transformOrigin: `${isRepositioningCover ? tempCoverPosX : coverPosX}% ${isRepositioningCover ? tempCoverPosY : coverPosY}%`,
+                    }}
+                    className="h-full w-full object-cover transition-none pointer-events-none"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-teal-900 via-teal-800 to-slate-900">
+                    <div className="hero-dots absolute inset-0 opacity-20" />
+                    <div className="absolute -right-8 -top-12 h-44 w-44 rounded-full bg-teal-400/20 blur-2xl" />
+                    <div className="absolute -left-8 -bottom-10 h-36 w-36 rounded-full bg-emerald-400/20 blur-xl" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
+              </div>
 
               {/* Reposition Mode Floating Controls (2D: Horizontal & Vertical & Zoom) */}
               {isRepositioningCover ? (
@@ -679,7 +682,7 @@ export default function ProfilePage() {
                 </>
               ) : (
                 /* Standard Facebook-style Cover Button with Popover Menu */
-                <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-20">
+                <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-30">
                   <div className="relative">
                     <button
                       type="button"
@@ -703,7 +706,8 @@ export default function ProfilePage() {
                           className="fixed inset-0 z-30"
                           onClick={() => setShowCoverMenu(false)}
                         />
-                        <div className="absolute right-0 bottom-full mb-2 w-56 rounded-2xl border border-slate-200/80 bg-white/95 dark:bg-slate-900/95 dark:border-slate-800 p-1.5 shadow-2xl backdrop-blur-md z-40">
+                        {/* Opens downwards into the card with ample room and zero clipping */}
+                        <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-slate-200/80 bg-white/95 dark:bg-slate-900/95 dark:border-slate-800 p-1.5 shadow-2xl backdrop-blur-md z-40">
                           <button
                             type="button"
                             onClick={() => {
@@ -750,7 +754,7 @@ export default function ProfilePage() {
                                 </div>
                                 <div>
                                   <p className="font-semibold text-slate-800 dark:text-slate-100">Atur Posisi Sampul</p>
-                                  <p className="text-[10px] text-slate-400">Geser vertikal foto sampul</p>
+                                  <p className="text-[10px] text-slate-400">Geser foto (2D & Zoom)</p>
                                 </div>
                               </button>
 
