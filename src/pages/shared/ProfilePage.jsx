@@ -135,12 +135,24 @@ export default function ProfilePage() {
       <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
         <div className="space-y-5">
           <Card className="overflow-hidden">
-            <div className="relative h-24 bg-gradient-to-br from-teal-700 via-teal-600 to-emerald-500">
-              <div className="hero-dots absolute inset-0 opacity-20" />
+            <div className="relative h-28 overflow-hidden bg-gradient-to-br from-teal-800 via-teal-700 to-emerald-600">
+              <div className="hero-dots absolute inset-0 opacity-25" />
+              <div className="absolute -right-6 -top-10 h-32 w-32 rounded-full bg-emerald-400/20 blur-xl" />
+              <div className="absolute -left-6 -bottom-8 h-24 w-24 rounded-full bg-white/10 blur-lg" />
+              <div className="absolute right-3 -bottom-1 flex items-end pointer-events-none select-none">
+                <img
+                  src="/images/psychology/mascot/greeting.png"
+                  alt="Maskot Psikologi Connect"
+                  className="h-24 w-auto object-contain drop-shadow-md opacity-95"
+                />
+              </div>
             </div>
-            <div className="px-5 pb-5">
-              <div className="-mt-8 flex items-end justify-between gap-3">
-                <Avatar name={user?.name} className="h-16 w-16 border-4 border-white text-lg shadow-sm" />
+            <div className="relative z-10 px-5 pb-5">
+              <div className="-mt-10 flex items-end justify-between gap-3">
+                <Avatar
+                  name={user?.name}
+                  className="h-20 w-20 border-4 border-white text-xl shadow-md ring-1 ring-slate-900/5"
+                />
                 <Badge variant="teal">{user?.role_label || user?.role}</Badge>
               </div>
               <h2 className="mt-3 text-lg font-bold text-slate-900">{user?.name}</h2>
