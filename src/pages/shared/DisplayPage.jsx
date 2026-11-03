@@ -349,38 +349,174 @@ export default function DisplayPage() {
     return () => clearInterval(interval)
   }, [])
 
-  // Fetch announcements
-  const { data: announcements, loading: loadingAnnouncements } = useApiData('/announcements', {
-    per_page: 8,
+  // --------------------------------------------------------------------------
+  // LIVE DATABASE TABLES INTEGRATION:
+  // Fetches from Schedules, Courses, Groups, and Tasks tables in the database
+  // --------------------------------------------------------------------------
+  const schedulePath = user ? (isStaff ? '/staff/schedules' : '/student/schedules') : null
+  const coursePath = user ? (isStaff ? '/staff/courses' : '/student/courses') : null
+  const groupPath = user ? (isStaff ? '/staff/groups' : '/student/groups') : null
+  const taskPath = user ? (isStaff ? '/staff/tasks' : '/student/tasks') : null
+
+  // 1. Table: Schedules
+  const {
+    data: rawSchedules,
+    loading: loadingSchedules,
+    refresh: refreshSchedules,
+  } = useApiData(schedulePath, { per_page: 100 }, { allPages: true, enabled: Boolean(user && schedulePath) })
+
+  // 2. Table: Courses (Mata Kuliah)
+  const {
+    data: rawCourses,
+    loading: loadingCourses,
+    refresh: refreshCourses,
+  } = useApiData(coursePath, { per_page: 500 }, { allPages: true, enabled: Boolean(user && coursePath) })
+
+  // 3. Table: Groups (Kelompok & Anggota)
+  const {
+    data: rawGroups,
+    loading: loadingGroups,
+    refresh: refreshGroups,
+  } = useApiData(groupPath, { per_page: 500, with_members: 1 }, { allPages: true, enabled: Boolean(user && groupPath) })
+
+  // 4. Table: Tasks & Materials (Materi Perkuliahan)
+  const {
+    data: rawTasks,
+    loading: loadingTasks,
+    refresh: refreshTasks,
+  } = useApiData(taskPath, { per_page: 200 }, { allPages: true, enabled: Boolean(user && taskPath) })
+
+  // 5. Table: Announcements (Pengumuman Kampus)
+  const {
+    data: announcements,
+    loading: loadingAnnouncements,
+    refresh: refreshAnnouncements,
+  } = useApiData('/announcements', {
+    per_page: 12,
     sort: 'published_at',
     direction: 'desc',
   })
 
-  // Fetch schedules if authenticated; fallback cleanly to curated datasets if unauthenticated
-  const schedulePath = user ? (isStaff ? '/staff/schedules' : '/student/schedules') : null
-  const { data: rawSchedules, loading: loadingSchedules } = useApiData(
-    schedulePath,
-    { per_page: 50 },
-    { enabled: Boolean(user && schedulePath) },
-  )
+  // Refresh all tables handler
+  const refreshAllTables = () => {
+    refreshSchedules()
+    refreshCourses()
+    refreshGroups()
+    refreshTasks()
+    refreshAnnouncements()
+  }
 
-  // Combined master schedules list (enriched with attendance and material links)
+  const isSyncing = loadingSchedules || loadingCourses || loadingGroups || loadingTasks || loadingAnnouncements
+
+  // Read cached database tables for unauthenticated / smart TV display
+  const cachedDbSchedules = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('psikologi_display_synced_tables')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      }
+    } catch {}
+    return null
+  }, [])
+
+  // Combined master schedules list synthesized across the 4 database tables
   const masterSchedules = useMemo(() => {
-    if (Array.isArray(rawSchedules) && rawSchedules.length > 0) {
-      return rawSchedules.map((item, idx) => {
-        const fallback = DEFAULT_ACADEMIC_SCHEDULES[idx % DEFAULT_ACADEMIC_SCHEDULES.length]
-        return {
-          ...fallback,
-          ...item,
-          attendance_link: item.attendance_link || fallback.attendance_link,
-          material_link: item.material_link || fallback.material_link,
-          meeting_link: item.meeting_link || (item.mode === 'online' ? fallback.meeting_link : ''),
-          groups: item.groups || fallback.groups,
-        }
-      })
+    const rawList = Array.isArray(rawSchedules) && rawSchedules.length > 0 ? rawSchedules : []
+
+    // If no live schedule records from API, check cached database records or fallback
+    if (rawList.length === 0) {
+      if (cachedDbSchedules && cachedDbSchedules.length > 0) {
+        return cachedDbSchedules
+      }
+      return DEFAULT_ACADEMIC_SCHEDULES
     }
-    return DEFAULT_ACADEMIC_SCHEDULES
-  }, [rawSchedules])
+
+    // Index courses by ID
+    const coursesMap = new Map((rawCourses || []).map((c) => [String(c.id), c]))
+
+    // Index groups by course_id
+    const groupsMap = new Map()
+    ;(rawGroups || []).forEach((g) => {
+      const cId = String(g.course_id || '')
+      if (!cId) return
+      if (!groupsMap.has(cId)) groupsMap.set(cId, [])
+      groupsMap.get(cId).push(g)
+    })
+
+    // Index tasks & material attachments by course_id
+    const tasksMap = new Map()
+    ;(rawTasks || []).forEach((t) => {
+      const cId = String(t.course_id || '')
+      if (!cId) return
+      if (!tasksMap.has(cId)) tasksMap.set(cId, [])
+      tasksMap.get(cId).push(t)
+    })
+
+    // Synthesize schedule item with its course, groups, and materials
+    const synthesized = rawList.map((sch, idx) => {
+      const course = coursesMap.get(String(sch.course_id)) || sch.course || {}
+      const groupsForCourse = groupsMap.get(String(sch.course_id)) || []
+      const tasksForCourse = tasksMap.get(String(sch.course_id)) || []
+      const taskWithMaterial = tasksForCourse.find((t) => t.attachment_url || t.materials || t.attachment)
+
+      // Fallback template for styling if any field is missing
+      const fallback = DEFAULT_ACADEMIC_SCHEDULES[idx % DEFAULT_ACADEMIC_SCHEDULES.length]
+
+      // Format groups with members from the real database groups table
+      const formattedGroups =
+        groupsForCourse.length > 0
+          ? groupsForCourse.map((g, gIdx) => ({
+              name: g.name || `Kelompok ${gIdx + 1}`,
+              topic: g.topic || g.title || 'Tugas Kelompok',
+              leader:
+                g.members?.find((m) => m.role === 'ketua')?.name ||
+                g.leader_name ||
+                g.members?.[0]?.name ||
+                'Ketua Tim',
+              members: (g.members || []).map((m) => m.name || m),
+            }))
+          : fallback.groups
+
+      return {
+        id: sch.id || `sch-${idx}`,
+        day: sch.day || fallback.day,
+        start_time: sch.start_time || fallback.start_time,
+        end_time: sch.end_time || fallback.end_time,
+        mode: sch.mode || fallback.mode,
+        room: sch.room || course.room || fallback.room,
+        class_name: sch.class_name || course.class_name || fallback.class_name,
+        course_code: sch.course_code || course.code || fallback.course_code,
+        course_name: sch.course_name || course.name || fallback.course_name,
+        lecturer_name: sch.lecturer_name || sch.course_lecturer || course.lecturer || fallback.lecturer_name,
+        credits: sch.credits || course.credits || fallback.credits,
+        // Link Absensi from schedule table or course table
+        attendance_link: sch.attendance_link || course.attendance_link || fallback.attendance_link,
+        // Link Materi from tasks/materials table, schedule, or course
+        material_link:
+          taskWithMaterial?.attachment_url ||
+          sch.material_link ||
+          course.material_link ||
+          fallback.material_link,
+        // Link Meeting Daring
+        meeting_link: sch.meeting_link || course.meeting_link || (sch.mode === 'online' ? fallback.meeting_link : ''),
+        // Groups from groups table
+        groups: formattedGroups,
+        isFromLiveDatabase: true,
+      }
+    })
+
+    return synthesized
+  }, [rawSchedules, rawCourses, rawGroups, rawTasks, cachedDbSchedules])
+
+  // Cache live assembled tables into localStorage for public TV display
+  useEffect(() => {
+    if (Array.isArray(rawSchedules) && rawSchedules.length > 0) {
+      try {
+        localStorage.setItem('psikologi_display_synced_tables', JSON.stringify(masterSchedules))
+      } catch {}
+    }
+  }, [masterSchedules, rawSchedules])
 
   // Detect current day in Indonesian
   const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
@@ -522,6 +658,20 @@ export default function DisplayPage() {
                 <p className="text-[11px] font-medium text-slate-300 mt-1 leading-none">{dateString}</p>
               </div>
             </div>
+
+            {/* Sync Database Button */}
+            {user && (
+              <button
+                type="button"
+                onClick={refreshAllTables}
+                disabled={isSyncing}
+                className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-700 bg-black/40 hover:bg-black/60 px-3 py-2.5 text-xs font-bold text-slate-200 transition shadow-sm disabled:opacity-60"
+                title="Sinkronkan data terbaru dari tabel Jadwal, Mata Kuliah, Kelompok, dan Materi"
+              >
+                <RotateCcw className={`h-4 w-4 text-teal-300 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span className="hidden md:inline">{isSyncing ? 'Sinkron...' : 'Sinkron Data'}</span>
+              </button>
+            )}
 
             {/* Auto-Slide Toggle */}
             <button
