@@ -15,13 +15,13 @@ export const THEMES = [
   },
   {
     id: 'dark',
-    name: 'Dark',
-    label: 'Gelap',
-    desc: 'Nyaman di mata saat malam',
+    name: 'Full Dark',
+    label: 'AMOLED',
+    desc: 'Hitam pekat murni, sangat hemat baterai',
     icon: 'Moon',
     accentColor: '#14b8a6',
-    previewBg: '#0b1120',
-    previewCard: '#1e293b',
+    previewBg: '#000000',
+    previewCard: '#0c0d10',
   },
   {
     id: 'soft',
@@ -83,7 +83,7 @@ export function ThemeProvider({ children }) {
     }
     const colors = {
       light: '#f6f8fb',
-      dark: '#0b1120',
+      dark: '#000000',
       soft: '#eef3f0',
       sepia: '#f4ecd8',
     }
