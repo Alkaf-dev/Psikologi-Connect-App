@@ -14,6 +14,7 @@ import {
   Megaphone,
   Menu,
   Settings,
+  Tv,
   UserCircle,
   Users,
   UsersRound,
@@ -51,8 +52,11 @@ const staffNavigation = [
     ],
   },
   {
-    label: 'Konten',
-    items: [{ to: '/admin/pengumuman', label: 'Pengumuman', icon: Megaphone }],
+    label: 'Konten & Display',
+    items: [
+      { to: '/admin/display', label: 'Display Informasi', icon: Tv },
+      { to: '/admin/pengumuman', label: 'Pengumuman', icon: Megaphone },
+    ],
   },
   {
     label: 'Akun',
@@ -81,8 +85,11 @@ const studentNavigation = [
     ],
   },
   {
-    label: 'Informasi',
-    items: [{ to: '/portal/pengumuman', label: 'Pengumuman', icon: Megaphone }],
+    label: 'Informasi & Display',
+    items: [
+      { to: '/portal/display', label: 'Display Informasi', icon: Tv },
+      { to: '/portal/pengumuman', label: 'Pengumuman', icon: Megaphone },
+    ],
   },
   {
     label: 'Akun',

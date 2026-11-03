@@ -19,6 +19,7 @@ const StudentGroups = lazy(() => import('./pages/student/StudentGroups'))
 const StudentAnnouncements = lazy(() => import('./pages/student/StudentAnnouncements'))
 const ProfilePage = lazy(() => import('./pages/shared/ProfilePage'))
 const NotificationsPage = lazy(() => import('./pages/shared/NotificationsPage'))
+const DisplayPage = lazy(() => import('./pages/shared/DisplayPage'))
 const StaffDashboard = lazy(() => import('./pages/staff/StaffDashboard'))
 const StaffCourses = lazy(() => import('./pages/staff/StaffCourses'))
 const StaffSchedule = lazy(() => import('./pages/staff/StaffSchedule'))
@@ -58,11 +59,13 @@ export default function App() {
             </Route>
 
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/display" element={<DisplayPage />} />
             <Route path="/app" element={<Navigate to="/portal" replace />} />
 
             <Route element={<ProtectedRoute role="student" />}>
               <Route path="/portal" element={<PortalLayout />}>
                 <Route index element={<StudentDashboard />} />
+                <Route path="display" element={<DisplayPage />} />
                 <Route path="tugas" element={<StudentTasks />} />
                 <Route path="jadwal" element={<StudentSchedule />} />
                 <Route path="kelompok" element={<StudentGroups />} />
@@ -75,6 +78,7 @@ export default function App() {
             <Route element={<ProtectedRoute role="staff" />}>
               <Route path="/admin" element={<PortalLayout />}>
                 <Route index element={<StaffDashboard />} />
+                <Route path="display" element={<DisplayPage />} />
                 <Route path="mata-kuliah" element={<StaffCourses />} />
                 <Route path="jadwal" element={<StaffSchedule />} />
                 <Route path="kelompok" element={<StaffGroups />} />
