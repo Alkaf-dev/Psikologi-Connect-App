@@ -37,7 +37,7 @@ export default function StaffGroups() {
 
   const [studentsRequested, setStudentsRequested] = useState(false)
   const studentsState = useApiData(
-    '/staff/students',
+    '/staff/users',
     { per_page: 500, active: true, sort: 'name', direction: 'asc' },
     { allPages: true, enabled: studentsRequested },
   )

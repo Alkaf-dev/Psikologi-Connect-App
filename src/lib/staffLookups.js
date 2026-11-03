@@ -21,7 +21,7 @@ export async function loadCourseOptions(params = {}) {
 }
 
 export async function loadStudentOptions(params = {}) {
-  const students = await fetchAll('/staff/students', {
+  const students = await fetchAll('/staff/users', {
     active: true,
     sort: 'name',
     direction: 'asc',

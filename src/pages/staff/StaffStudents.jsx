@@ -6,7 +6,7 @@ import { Badge, Button } from '../../components/ui'
 import { formatDate } from '../../lib/utils'
 import { loadProgramOptions } from '../../lib/staffLookups'
 import { formatClassDisplay } from '../../lib/classOptions'
-import { buildUserFields, emptyUserValues, userToForm, userToPayload } from './userFields'
+import { buildUserFields, emptyUserValues, parseUserRoles, userToForm, userToPayload } from './userFields'
 
 const activeOptions = [
   { value: '1', label: 'Aktif' },
@@ -21,8 +21,8 @@ export default function StaffStudents() {
       <CrudPage
         eyebrow="Administrasi"
         title="Mahasiswa"
-        description="Kelola akun mahasiswa, kelas, angkatan, program studi, serta keanggotaan kelompok mereka."
-        listPath="/staff/students"
+        description="Kelola akun mahasiswa dan staf admin, kelas, angkatan, program studi, serta keanggotaan kelompok mereka."
+        listPath="/staff/users"
         writePath="/staff/users"
         searchPlaceholder="Cari nama, NIM, email, no HP, kelas, atau angkatan..."
         createLabel="Tambah mahasiswa"
@@ -34,6 +34,16 @@ export default function StaffStudents() {
         loadLookups={async () => ({ programs: await loadProgramOptions() })}
         fields={buildUserFields({ studentOnly: true })}
         filters={[
+          {
+            key: 'role',
+            label: 'Role',
+            placeholder: 'Semua role',
+            options: [
+              { value: 'mahasiswa', label: 'Mahasiswa' },
+              { value: 'pjmk', label: 'Admin (Mahasiswa)' },
+              { value: 'super_admin', label: 'Super Admin (Mahasiswa)' },
+            ],
+          },
           { key: 'active', label: 'Status', placeholder: 'Semua status', options: activeOptions },
           {
             key: 'prodi_id',
@@ -48,11 +58,25 @@ export default function StaffStudents() {
           {
             key: 'name',
             label: 'Mahasiswa',
-            render: (student) => (
-              <div className="min-w-[220px]">
-                <p className="truncate text-sm font-semibold text-slate-800">{student.name}</p>
-              </div>
-            ),
+            render: (student) => {
+              const roles = parseUserRoles(student)
+              const isStaff = roles.includes('pjmk') || roles.includes('super_admin') || student.role === 'pjmk' || student.role === 'super_admin'
+              return (
+                <div className="min-w-[220px]">
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-sm font-semibold text-slate-800">{student.name}</p>
+                    {isStaff && (
+                      <Badge
+                        variant={roles.includes('super_admin') || student.role === 'super_admin' ? 'danger' : 'warning'}
+                        className="text-[10px] py-0 px-1.5 shrink-0"
+                      >
+                        {roles.includes('super_admin') || student.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )
+            },
           },
           {
             key: 'npm',
@@ -114,21 +138,19 @@ export default function StaffStudents() {
         ]}
         mapItemToForm={userToForm}
         mapFormToPayload={(payload, { lookups }) =>
-          userToPayload(payload, { forcedRole: 'mahasiswa', programs: lookups.programs })
+          userToPayload(payload, { forcedRole: payload.id ? undefined : 'mahasiswa', programs: lookups.programs })
         }
-        extraActions={(student, { refresh }) =>
-          student.role === 'mahasiswa' ? (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              title="Atur kelompok"
-              aria-label="Atur kelompok mahasiswa"
-              onClick={() => setGroupTarget({ user: student, refresh })}
-            >
-              <UsersRound className="h-3.5 w-3.5" />
-            </Button>
-          ) : null
-        }
+        extraActions={(student, { refresh }) => (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            title="Atur kelompok"
+            aria-label="Atur kelompok mahasiswa"
+            onClick={() => setGroupTarget({ user: student, refresh })}
+          >
+            <UsersRound className="h-3.5 w-3.5" />
+          </Button>
+        )}
         deleteTitle="Hapus akun mahasiswa?"
         deleteMessage="Akun akan dihapus permanen dan seluruh sesi login dicabut. Pengumpulan tugas atas nama mahasiswa ini dapat ikut terdampak."
         formDescription="Akun mahasiswa memakai NIM atau email untuk login sesuai program studi."
