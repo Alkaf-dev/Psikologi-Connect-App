@@ -264,8 +264,8 @@ export default function ProfilePage() {
   const [coverUrl, setCoverUrl] = useState(() => {
     try {
       return (
-        localStorage.getItem(`psikologi_cover_${user?.id || user?.email}`) ||
         user?.cover_url ||
+        localStorage.getItem(`psikologi_cover_${user?.id || user?.email}`) ||
         ''
       )
     } catch {
@@ -404,7 +404,11 @@ export default function ProfilePage() {
       const formData = new FormData()
       formData.append('cover', file)
       try {
-        await api.upload('/auth/cover', formData)
+        const res = await api.upload('/auth/cover', formData)
+        if (res?.data?.cover_url) {
+          setCoverUrl(res.data.cover_url)
+          updateLocalUser({ ...user, cover_url: res.data.cover_url })
+        }
       } catch {}
 
       toast.success('Sampul diperbarui', 'Foto sampul berhasil dipasang.')
@@ -430,7 +434,11 @@ export default function ProfilePage() {
     toast.success('Sampul diperbarui', 'Foto sampul berhasil diterapkan.')
 
     try {
-      await api.patch('/auth/profile', { cover_url: presetUrl })
+      const res = await api.post('/auth/cover/preset', { cover_url: presetUrl })
+      if (res?.data?.cover_url) {
+        setCoverUrl(res.data.cover_url)
+        updateLocalUser({ ...user, cover_url: res.data.cover_url })
+      }
     } catch {}
   }
 
@@ -454,6 +462,7 @@ export default function ProfilePage() {
     setCoverPosX(50)
     setCoverPosY(50)
     setCoverZoom(1)
+    updateLocalUser({ ...user, cover_url: null })
     try {
       await api.delete('/auth/cover')
     } catch {}

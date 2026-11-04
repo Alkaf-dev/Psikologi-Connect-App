@@ -9,11 +9,11 @@ function enrichUser(userData) {
   let enriched = { ...userData }
   try {
     const localAvatar = localStorage.getItem('psikologi_avatar_' + key)
-    if (localAvatar) {
+    if (localAvatar && !enriched.avatar_url) {
       enriched.avatar_url = localAvatar
     }
     const localCover = localStorage.getItem('psikologi_cover_' + key)
-    if (localCover) {
+    if (localCover && !enriched.cover_url) {
       enriched.cover_url = localCover
     }
     const localCoverPosX = localStorage.getItem('psikologi_cover_pos_x_' + key)
