@@ -144,9 +144,16 @@ export default function GroupMembersTable({
                         {(currentPage - 1) * PAGE_SIZE + index + 1}
                       </td>
                       <td className="border-b border-r border-slate-100 px-4 py-3">
-                        <p className="text-sm font-semibold text-slate-800">
-                          {member.name || 'Tanpa nama'}
-                        </p>
+                        <a
+                          href={`/profil/${member.user_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-teal-600 hover:underline"
+                        >
+                          <p className="text-sm font-semibold text-slate-800">
+                            {member.name || 'Tanpa nama'}
+                          </p>
+                        </a>
                         <p className="mt-0.5 text-[11px] text-slate-400">
                           {[member.npm ? `NIM ${member.npm}` : '', roleLabel]
                             .filter(Boolean)

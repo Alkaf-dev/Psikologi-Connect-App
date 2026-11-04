@@ -18,6 +18,7 @@ const StudentSchedule = lazy(() => import('./pages/student/StudentSchedule'))
 const StudentGroups = lazy(() => import('./pages/student/StudentGroups'))
 const StudentAnnouncements = lazy(() => import('./pages/student/StudentAnnouncements'))
 const ProfilePage = lazy(() => import('./pages/shared/ProfilePage'))
+const ProfileView = lazy(() => import('./pages/shared/ProfileView'))
 const NotificationsPage = lazy(() => import('./pages/shared/NotificationsPage'))
 const DisplayPage = lazy(() => import('./pages/shared/DisplayPage'))
 const StaffDashboard = lazy(() => import('./pages/staff/StaffDashboard'))
@@ -56,6 +57,7 @@ export default function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/pengumuman" element={<AnnouncementsPage />} />
               <Route path="/pengumuman/:id" element={<AnnouncementDetailPage />} />
+              <Route path="/profil/:id" element={<ProfileView />} />
             </Route>
 
             <Route path="/login" element={<LoginPage />} />

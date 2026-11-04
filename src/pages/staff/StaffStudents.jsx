@@ -141,15 +141,26 @@ export default function StaffStudents() {
           userToPayload(payload, { forcedRole: payload.id ? undefined : 'mahasiswa', programs: lookups.programs })
         }
         extraActions={(student, { refresh }) => (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            title="Atur kelompok"
-            aria-label="Atur kelompok mahasiswa"
-            onClick={() => setGroupTarget({ user: student, refresh })}
-          >
-            <UsersRound className="h-3.5 w-3.5" />
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              title="Atur kelompok"
+              aria-label="Atur kelompok mahasiswa"
+              onClick={() => setGroupTarget({ user: student, refresh })}
+            >
+              <UsersRound className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              title="Lihat Profil"
+              aria-label="Lihat profil mahasiswa"
+              onClick={() => window.location.href = `/profil/${student.id}`}
+            >
+              <UserRound className="h-3.5 w-3.5" />
+            </Button>
+          </>
         )}
         deleteTitle="Hapus akun mahasiswa?"
         deleteMessage="Akun akan dihapus permanen dan seluruh sesi login dicabut. Pengumpulan tugas atas nama mahasiswa ini dapat ikut terdampak."

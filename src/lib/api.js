@@ -145,11 +145,14 @@ export const api = {
   patch(path, body, options = {}) {
     return request(path, { ...options, method: 'PATCH', body })
   },
-  delete(path, options = {}) {
+  delete(path, options = { }) {
     return request(path, { ...options, method: 'DELETE' })
   },
-  upload(path, formData, options = {}) {
+  upload(path, formData, options = { }) {
     return request(path, { ...options, method: 'POST', body: formData })
+  },
+  getUserProfile(id) {
+    return this.get(`/auth/profile/${id}`)
   },
 }
 

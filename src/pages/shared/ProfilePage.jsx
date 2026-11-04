@@ -1144,6 +1144,22 @@ export default function ProfilePage() {
         Perubahan data akademik hanya dapat dilakukan oleh admin program studi.
       </p>
 
+      <div className="mt-4 text-center">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+          <strong>Profil Publik:</strong> <a
+            href={`/profil/${user?.id || user?.email}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-teal-600 hover:underline"
+          >
+            Lihat Profil Publik
+          </a>
+        </p>
+        <p className="text-xs text-slate-400">
+          Bagikan link ini kepada orang lain untuk melihat profil Anda.
+        </p>
+      </div>
+
       {/* Preset Cover Gallery Modal */}
       {showCoverGalleryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">

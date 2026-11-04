@@ -301,7 +301,9 @@ export default function StudentDashboard() {
                       {group.course_code} · {group.course_name}
                     </p>
                     <p className="mt-1 text-[11px] text-slate-400">
-                      Ketua: {group.leader_name || '-'} · {group.members_count} anggota
+                      Ketua: <a href={`/profil/${group.leader_id}`} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:underline">
+                        {group.leader_name || '-'}
+                      </a> · {group.members_count} anggota
                     </p>
                   </div>
                   <div className="flex -space-x-2">
