@@ -155,18 +155,17 @@ export default function ProfileView() {
           </div>
         )}
 
-        <div
-          className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 rounded-full bg-white/90 backdrop-blur-md p-2"
-        >
+        {/* Foto Profil: HANYA Foto dan Border Putih Tipis (Semua warna abu-abu & padding tebal di luar stroke dihilangkan) */}
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10">
           {avatarSrc ? (
             <Avatar
               name={user?.name}
               src={avatarSrc}
-              className="h-20 w-20 sm:h-24 sm:w-24 border-2 border-white dark:border-[#0c0d10]"
+              className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border-2 border-white shadow-xl"
             />
           ) : (
             <div
-              className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-slate-300 flex items-center justify-center text-2xl font-bold text-slate-600"
+              className="flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-teal-600 text-2xl font-bold text-white border-2 border-white shadow-xl"
             >
               {user.name?.[0]?.toUpperCase() || '?'}
             </div>
@@ -185,33 +184,33 @@ export default function ProfileView() {
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div>
             <p className="text-[10px] font-medium text-slate-400">NIM / NIP</p>
-            <p className="mt-0.5 text-xs font-semibold text-slate-700">{npm}</p>
+            <p className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200">{npm}</p>
           </div>
           <div>
             <p className="text-[10px] font-medium text-slate-400">Prodi</p>
-            <p className="mt-0.5 text-xs font-semibold text-slate-700">{prodiName}</p>
+            <p className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200">{prodiName}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div>
             <p className="text-[10px] font-medium text-slate-400">Angkatan</p>
-            <p className="mt-0.5 text-xs font-semibold text-slate-700">Angkatan {cohort}</p>
+            <p className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200">Angkatan {cohort}</p>
           </div>
           <div>
             <p className="text-[10px] font-medium text-slate-400">Role</p>
-            <p className="mt-0.5 text-xs font-semibold text-slate-700">{roleLabel}</p>
+            <p className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200">{roleLabel}</p>
           </div>
         </div>
 
         {phone !== '-' && (
-          <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+          <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <Phone className="h-3.5 w-3.5 text-slate-400" />
             {phone}
           </div>
         )}
 
-        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
           Terdaftar {formatDate(user.created_at)}
         </div>

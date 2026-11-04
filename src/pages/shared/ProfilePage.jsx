@@ -814,7 +814,7 @@ export default function ProfilePage() {
                     <Avatar
                       name={user?.name}
                       src={user?.avatar_url || user?.avatar}
-                      className="h-28 w-28 sm:h-32 sm:w-32 border-2 border-white dark:border-[#0c0d10] text-3xl shadow-2xl ring-1 ring-black/10 transition group-hover:opacity-95"
+                      className="h-28 w-28 sm:h-32 sm:w-32 rounded-full border-2 border-white shadow-xl transition-transform group-hover:scale-105 group-hover:opacity-95"
                     />
                     <button
                       type="button"
@@ -874,7 +874,7 @@ export default function ProfilePage() {
                   <Avatar
                     name={user?.name}
                     src={user?.avatar_url || user?.avatar}
-                    className="h-24 w-24 border-4 border-slate-100 text-2xl shadow-md ring-1 ring-slate-200"
+                    className="h-24 w-24 border-4 border-white dark:border-[#0c0d10] text-2xl shadow-md ring-1 ring-black/10"
                   />
                   <div className="text-center">
                     <p className="text-sm font-bold text-slate-800 dark:text-white">{user?.name}</p>
