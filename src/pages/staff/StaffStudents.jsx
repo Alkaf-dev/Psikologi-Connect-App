@@ -158,7 +158,7 @@ export default function StaffStudents() {
               aria-label="Lihat profil mahasiswa"
               onClick={() => window.location.href = `/profil/${student.id}`}
             >
-              <UserRound className="h-3.5 w-3.5" />
+              <UsersRound className="h-3.5 w-3.5" />
             </Button>
           </>
         )}
