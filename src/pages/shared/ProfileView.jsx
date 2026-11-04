@@ -1,4 +1,4 @@
-import { useEffect, useState, useLocation } from 'react'
+import { useEffect, useState, useLocation, useNavigate } from 'react'
 import {
   Avatar,
   Badge,
@@ -50,7 +50,16 @@ const COVER_PRESETS = [
 ]
 
 export default function ProfileView() {
+  const navigate = useNavigate()
   const location = useLocation()
+
+  useEffect(() => {
+    const token = localStorage.getItem('psikologi_connect_token')
+    if (!token) {
+      navigate('/login', { replace: true })
+    }
+  }, [navigate])
+
   const userId = location.pathname.match(/\/profil\/([^/]+)/)?.[1] || null
 
   const [profile, setProfile] = useState(null)
