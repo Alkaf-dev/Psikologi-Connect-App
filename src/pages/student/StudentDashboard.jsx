@@ -308,7 +308,16 @@ export default function StudentDashboard() {
                   </div>
                   <div className="flex -space-x-2">
                     {(group.members || []).slice(0, 3).map((member) => (
-                      <Avatar key={member.id} name={member.name} className="h-7 w-7 border-2 border-white text-[9px]" />
+                      <a
+                        key={member.id || member.user_id}
+                        href={`/profil/${member.user_id || member.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`Lihat profil ${member.name}`}
+                        className="transition hover:scale-110 hover:z-10"
+                      >
+                        <Avatar name={member.name} className="h-7 w-7 border-2 border-white text-[9px]" />
+                      </a>
                     ))}
                     {group.members_count > 3 ? (
                       <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-slate-100 text-[9px] font-semibold text-slate-500">

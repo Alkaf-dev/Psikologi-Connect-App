@@ -204,8 +204,38 @@ export default function StaffSubmissions() {
 
             return (
               <div className="min-w-[190px]">
-                <p className="truncate text-xs font-semibold text-slate-800">{name}</p>
-                <p className="truncate text-[10px] text-slate-400">{detail}</p>
+                {submission.user_id && !isGroup ? (
+                  <a
+                    href={`/profil/${submission.user_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block truncate text-xs font-semibold text-slate-800 hover:text-teal-600 hover:underline transition"
+                    title={`Lihat profil ${name}`}
+                  >
+                    {name}
+                  </a>
+                ) : (
+                  <p className="truncate text-xs font-semibold text-slate-800">{name}</p>
+                )}
+                <p className="truncate text-[10px] text-slate-400">
+                  {isGroup && submission.user_id ? (
+                    <>
+                      Perwakilan:{' '}
+                      <a
+                        href={`/profil/${submission.user_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-teal-600 hover:underline font-medium"
+                        title={`Lihat profil ${submission.student_name}`}
+                      >
+                        {submission.student_name}
+                      </a>
+                      {submission.student_npm ? ` · ${submission.student_npm}` : ''}
+                    </>
+                  ) : (
+                    detail
+                  )}
+                </p>
               </div>
             )
           },

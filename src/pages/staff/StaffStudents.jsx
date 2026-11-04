@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { GraduationCap, UsersRound } from 'lucide-react'
+import { GraduationCap, UserRound, UsersRound } from 'lucide-react'
 import CrudPage from '../../components/CrudPage'
 import UserGroupsModal from '../../components/UserGroupsModal'
 import { Badge, Button } from '../../components/ui'
@@ -64,7 +64,15 @@ export default function StaffStudents() {
               return (
                 <div className="min-w-[220px]">
                   <div className="flex items-center gap-1.5">
-                    <p className="truncate text-sm font-semibold text-slate-800">{student.name}</p>
+                    <a
+                      href={`/profil/${student.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="truncate text-sm font-semibold text-slate-800 hover:text-teal-600 hover:underline transition"
+                      title={`Lihat profil ${student.name}`}
+                    >
+                      {student.name}
+                    </a>
                     {isStaff && (
                       <Badge
                         variant={roles.includes('super_admin') || student.role === 'super_admin' ? 'danger' : 'warning'}
@@ -156,9 +164,9 @@ export default function StaffStudents() {
               size="icon-sm"
               title="Lihat Profil"
               aria-label="Lihat profil mahasiswa"
-              onClick={() => window.location.href = `/profil/${student.id}`}
+              onClick={() => window.open(`/profil/${student.id}`, '_blank')}
             >
-              <UsersRound className="h-3.5 w-3.5" />
+              <UserRound className="h-3.5 w-3.5" />
             </Button>
           </>
         )}

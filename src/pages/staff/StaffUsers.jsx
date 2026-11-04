@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Users, UsersRound } from 'lucide-react'
+import { UserRound, Users, UsersRound } from 'lucide-react'
 import CrudPage from '../../components/CrudPage'
 import UserGroupsModal from '../../components/UserGroupsModal'
 import { Avatar, Badge, Button } from '../../components/ui'
@@ -59,9 +59,25 @@ export default function StaffUsers() {
             label: 'Pengguna',
             render: (user) => (
               <div className="flex min-w-[220px] items-center gap-2.5">
-                <Avatar name={user.name} className="h-9 w-9" />
+                <a
+                  href={`/profil/${user.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 transition hover:opacity-80"
+                  title={`Lihat profil ${user.name}`}
+                >
+                  <Avatar name={user.name} className="h-9 w-9" />
+                </a>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-800">{user.name}</p>
+                  <a
+                    href={`/profil/${user.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block truncate text-sm font-semibold text-slate-800 hover:text-teal-600 hover:underline transition"
+                    title={`Lihat profil ${user.name}`}
+                  >
+                    {user.name}
+                  </a>
                   <p className="truncate text-[11px] text-slate-500">{user.email}</p>
                 </div>
               </div>
@@ -118,17 +134,30 @@ export default function StaffUsers() {
         extraActions={(user, { refresh }) => {
           const roles = parseUserRoles(user)
           const isStudent = roles.includes('mahasiswa') || user.role === 'mahasiswa'
-          return isStudent ? (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              title="Atur kelompok"
-              aria-label="Atur kelompok mahasiswa"
-              onClick={() => setGroupTarget({ user, refresh })}
-            >
-              <UsersRound className="h-3.5 w-3.5" />
-            </Button>
-          ) : null
+          return (
+            <>
+              {isStudent && (
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  title="Atur kelompok"
+                  aria-label="Atur kelompok mahasiswa"
+                  onClick={() => setGroupTarget({ user, refresh })}
+                >
+                  <UsersRound className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                title="Lihat Profil"
+                aria-label="Lihat profil pengguna"
+                onClick={() => window.open(`/profil/${user.id}`, '_blank')}
+              >
+                <UserRound className="h-3.5 w-3.5" />
+              </Button>
+            </>
+          )
         }}
         deleteTitle="Hapus akun pengguna?"
         deleteMessage="Akun akan dihapus permanen dan seluruh sesi login dicabut. Akun sendiri serta admin aktif terakhir tidak dapat dihapus."

@@ -300,10 +300,34 @@ export default function StaffDashboard() {
             <div className="divide-y divide-slate-100 px-5">
               {submissions.map((submission) => (
                 <div key={submission.id} className="flex items-start gap-3 py-3.5">
-                  <Avatar name={submission.student_name} className="h-9 w-9" />
+                  {submission.user_id ? (
+                    <a
+                      href={`/profil/${submission.user_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 transition hover:opacity-80"
+                      title={`Lihat profil ${submission.student_name}`}
+                    >
+                      <Avatar name={submission.student_name} className="h-9 w-9" />
+                    </a>
+                  ) : (
+                    <Avatar name={submission.student_name} className="h-9 w-9" />
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-semibold text-slate-800">
-                      {submission.student_name}
+                      {submission.user_id ? (
+                        <a
+                          href={`/profil/${submission.user_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-teal-600 hover:underline transition"
+                          title={`Lihat profil ${submission.student_name}`}
+                        >
+                          {submission.student_name}
+                        </a>
+                      ) : (
+                        submission.student_name
+                      )}
                       {submission.student_npm ? (
                         <span className="ml-1 text-[10px] font-normal text-slate-400">({submission.student_npm})</span>
                       ) : null}
