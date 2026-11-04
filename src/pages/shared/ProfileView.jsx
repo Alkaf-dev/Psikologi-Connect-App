@@ -162,7 +162,7 @@ export default function ProfileView() {
             <Avatar
               name={user?.name}
               src={avatarSrc}
-              className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-white dark:border-[#0c0d10]"
+              className="h-20 w-20 sm:h-24 sm:w-24 border-2 border-white dark:border-[#0c0d10]"
             />
           ) : (
             <div
