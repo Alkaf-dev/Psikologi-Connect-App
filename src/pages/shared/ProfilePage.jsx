@@ -98,7 +98,6 @@ export default function ProfilePage() {
     class_name: '',
     cohort: '',
     prodi_id: '',
-    password: '',
   })
   const [studyPrograms, setStudyPrograms] = useState([])
   const [profileErrors, setProfileErrors] = useState({})
@@ -507,7 +506,6 @@ export default function ProfilePage() {
       class_name: user?.class_name || '',
       cohort: user?.cohort || '',
       prodi_id: user?.prodi_id || '',
-      password: '',
     })
   }, [user])
 
@@ -545,14 +543,11 @@ export default function ProfilePage() {
         cohort: profile.cohort || null,
         prodi_id: profile.prodi_id || null,
       }
-      if (profile.password) {
-        payload.password = profile.password
-      }
       const response = await api.patch('/auth/profile', payload)
       const nextUser = response?.data
       if (nextUser) {
         updateLocalUser(nextUser)
-        setProfile((prev) => ({ ...prev, ...nextUser, password: '' }))
+        setProfile((prev) => ({ ...prev, ...nextUser }))
       }
       toast.success('Profil diperbarui', 'Semua perubahan identitas dan profil Anda berhasil disimpan.')
     } catch (error) {
@@ -1222,31 +1217,11 @@ export default function ProfilePage() {
                 />
               </Field>
 
-              <Field
-                label="Ganti Password Langsung (Opsional)"
-                error={profileErrors.password?.[0]}
-                hint="Kosongkan jika tidak ingin mengubah password akun Anda saat ini."
-              >
-                <Input
-                  type="password"
-                  value={profile.password}
-                  onChange={(event) => setProfile((current) => ({ ...current, password: event.target.value }))}
-                  placeholder="Ketik password baru (minimal 6 karakter)"
-                  minLength={6}
-                  autoComplete="new-password"
-                />
-              </Field>
-
-              <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
+              <div className="pt-2">
                 <Button type="submit" loading={savingProfile}>
                   <Save className="h-4 w-4" />
                   Simpan Perubahan
                 </Button>
-                {profile.password && (
-                  <span className="text-xs text-amber-600 dark:text-amber-400 font-medium animate-pulse">
-                    Password baru akan diterapkan saat disimpan
-                  </span>
-                )}
               </div>
             </form>
           </Card>
