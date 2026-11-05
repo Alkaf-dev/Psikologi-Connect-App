@@ -245,7 +245,7 @@ export default function GroupFormModal({
       open={open}
       onClose={close}
       title={editing ? `Ubah ${group?.name || 'Kelompok'}` : 'Tambah Kelompok'}
-      description="Ketua harus mahasiswa aktif dan otomatis menjadi anggota kelompok."
+      description="Ketua harus anggota aktif dan otomatis menjadi anggota kelompok."
       size="lg"
       footer={
         <>
