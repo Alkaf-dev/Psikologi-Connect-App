@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { AlertCircle, Loader2, Save, UsersRound } from 'lucide-react'
 import { api, errorMessage } from '../lib/api'
 import { fetchAll } from '../hooks/useApiData'
@@ -110,25 +111,23 @@ export default function UserGroupsModal({ open, user, onClose, onSaved }) {
     >
       {user ? (
         <div className="mb-5 flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
-          <a
-            href={`/profil/${user.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to={`/profil/${user.id}`}
+            onClick={onClose}
             className="shrink-0 transition hover:opacity-80"
             title={`Lihat profil ${user.name}`}
           >
             <Avatar name={user.name} className="h-10 w-10" />
-          </a>
+          </Link>
           <div className="min-w-0 flex-1">
-            <a
-              href={`/profil/${user.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to={`/profil/${user.id}`}
+              onClick={onClose}
               className="block truncate text-sm font-semibold text-slate-800 hover:text-teal-600 hover:underline transition"
               title={`Lihat profil ${user.name}`}
             >
               {user.name}
-            </a>
+            </Link>
             <p className="text-xs text-slate-500">
               NIM {user.npm || '-'} · {user.class_name || '-'} · {user.prodi_name || '-'}
             </p>

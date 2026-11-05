@@ -44,7 +44,7 @@ export function Button({
       {...props}
       disabled={isNativeButton ? loading || props.disabled : undefined}
       className={cn(
-        'inline-flex select-none items-center justify-center font-semibold transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed',
+        'inline-flex select-none items-center justify-center font-semibold transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 cursor-pointer disabled:cursor-not-allowed',
         buttonVariants[variant],
         buttonSizes[size],
         className,

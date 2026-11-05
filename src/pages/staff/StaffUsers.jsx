@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { UserRound, Users, UsersRound } from 'lucide-react'
 import CrudPage from '../../components/CrudPage'
 import UserGroupsModal from '../../components/UserGroupsModal'
@@ -26,6 +27,7 @@ const roleLabels = {
 }
 
 export default function StaffUsers() {
+  const navigate = useNavigate()
   const [groupTarget, setGroupTarget] = useState(null)
 
   return (
@@ -59,25 +61,21 @@ export default function StaffUsers() {
             label: 'Pengguna',
             render: (user) => (
               <div className="flex min-w-[220px] items-center gap-2.5">
-                <a
-                  href={`/profil/${user.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  to={`/profil/${user.id}`}
                   className="shrink-0 transition hover:opacity-80"
                   title={`Lihat profil ${user.name}`}
                 >
                   <Avatar name={user.name} className="h-9 w-9" />
-                </a>
+                </Link>
                 <div className="min-w-0">
-                  <a
-                    href={`/profil/${user.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    to={`/profil/${user.id}`}
                     className="block truncate text-sm font-semibold text-slate-800 hover:text-teal-600 hover:underline transition"
                     title={`Lihat profil ${user.name}`}
                   >
                     {user.name}
-                  </a>
+                  </Link>
                   <p className="truncate text-[11px] text-slate-500">{user.email}</p>
                 </div>
               </div>
@@ -152,7 +150,7 @@ export default function StaffUsers() {
                 size="icon-sm"
                 title="Lihat Profil"
                 aria-label="Lihat profil pengguna"
-                onClick={() => window.open(`/profil/${user.id}`, '_blank')}
+                onClick={() => navigate(`/profil/${user.id}`)}
               >
                 <UserRound className="h-3.5 w-3.5" />
               </Button>

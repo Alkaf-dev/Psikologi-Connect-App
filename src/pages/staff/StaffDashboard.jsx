@@ -301,30 +301,26 @@ export default function StaffDashboard() {
               {submissions.map((submission) => (
                 <div key={submission.id} className="flex items-start gap-3 py-3.5">
                   {submission.user_id ? (
-                    <a
-                      href={`/profil/${submission.user_id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      to={`/profil/${submission.user_id}`}
                       className="shrink-0 transition hover:opacity-80"
                       title={`Lihat profil ${submission.student_name}`}
                     >
                       <Avatar name={submission.student_name} className="h-9 w-9" />
-                    </a>
+                    </Link>
                   ) : (
                     <Avatar name={submission.student_name} className="h-9 w-9" />
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-semibold text-slate-800">
                       {submission.user_id ? (
-                        <a
-                          href={`/profil/${submission.user_id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <Link
+                          to={`/profil/${submission.user_id}`}
                           className="hover:text-teal-600 hover:underline transition"
                           title={`Lihat profil ${submission.student_name}`}
                         >
                           {submission.student_name}
-                        </a>
+                        </Link>
                       ) : (
                         submission.student_name
                       )}

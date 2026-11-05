@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { GraduationCap, UserRound, UsersRound } from 'lucide-react'
 import CrudPage from '../../components/CrudPage'
 import UserGroupsModal from '../../components/UserGroupsModal'
@@ -14,6 +15,7 @@ const activeOptions = [
 ]
 
 export default function StaffStudents() {
+  const navigate = useNavigate()
   const [groupTarget, setGroupTarget] = useState(null)
 
   return (
@@ -64,15 +66,13 @@ export default function StaffStudents() {
               return (
                 <div className="min-w-[220px]">
                   <div className="flex items-center gap-1.5">
-                    <a
-                      href={`/profil/${student.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      to={`/profil/${student.id}`}
                       className="truncate text-sm font-semibold text-slate-800 hover:text-teal-600 hover:underline transition"
                       title={`Lihat profil ${student.name}`}
                     >
                       {student.name}
-                    </a>
+                    </Link>
                     {isStaff && (
                       <Badge
                         variant={roles.includes('super_admin') || student.role === 'super_admin' ? 'danger' : 'warning'}
@@ -164,7 +164,7 @@ export default function StaffStudents() {
               size="icon-sm"
               title="Lihat Profil"
               aria-label="Lihat profil mahasiswa"
-              onClick={() => window.open(`/profil/${student.id}`, '_blank')}
+              onClick={() => navigate(`/profil/${student.id}`)}
             >
               <UserRound className="h-3.5 w-3.5" />
             </Button>

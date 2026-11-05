@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ExternalLink, Inbox } from 'lucide-react'
 import CrudPage from '../../components/CrudPage'
 import { Badge, Button } from '../../components/ui'
@@ -205,15 +205,13 @@ export default function StaffSubmissions() {
             return (
               <div className="min-w-[190px]">
                 {submission.user_id && !isGroup ? (
-                  <a
-                    href={`/profil/${submission.user_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    to={`/profil/${submission.user_id}`}
                     className="block truncate text-xs font-semibold text-slate-800 hover:text-teal-600 hover:underline transition"
                     title={`Lihat profil ${name}`}
                   >
                     {name}
-                  </a>
+                  </Link>
                 ) : (
                   <p className="truncate text-xs font-semibold text-slate-800">{name}</p>
                 )}
@@ -221,15 +219,13 @@ export default function StaffSubmissions() {
                   {isGroup && submission.user_id ? (
                     <>
                       Perwakilan:{' '}
-                      <a
-                        href={`/profil/${submission.user_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <Link
+                        to={`/profil/${submission.user_id}`}
                         className="text-teal-600 hover:underline font-medium"
                         title={`Lihat profil ${submission.student_name}`}
                       >
                         {submission.student_name}
-                      </a>
+                      </Link>
                       {submission.student_npm ? ` · ${submission.student_npm}` : ''}
                     </>
                   ) : (

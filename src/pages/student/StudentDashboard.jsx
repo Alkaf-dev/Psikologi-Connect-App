@@ -301,23 +301,21 @@ export default function StudentDashboard() {
                       {group.course_code} · {group.course_name}
                     </p>
                     <p className="mt-1 text-[11px] text-slate-400">
-                      Ketua: <a href={`/profil/${group.leader_id}`} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:underline">
+                      Ketua: <Link to={`/profil/${group.leader_id}`} className="text-teal-600 hover:underline">
                         {group.leader_name || '-'}
-                      </a> · {group.members_count} anggota
+                      </Link> · {group.members_count} anggota
                     </p>
                   </div>
                   <div className="flex -space-x-2">
                     {(group.members || []).slice(0, 3).map((member) => (
-                      <a
+                      <Link
                         key={member.id || member.user_id}
-                        href={`/profil/${member.user_id || member.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        to={`/profil/${member.user_id || member.id}`}
                         title={`Lihat profil ${member.name}`}
                         className="transition hover:scale-110 hover:z-10"
                       >
                         <Avatar name={member.name} className="h-7 w-7 border-2 border-white text-[9px]" />
-                      </a>
+                      </Link>
                     ))}
                     {group.members_count > 3 ? (
                       <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-slate-100 text-[9px] font-semibold text-slate-500">

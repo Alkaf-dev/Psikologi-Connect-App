@@ -62,6 +62,47 @@ export default function ProfileView() {
     }
   }, [userId])
 
+  const handleBack = () => {
+    // 1. Jika tab ini memiliki riwayat navigasi internal (SPA):
+    if (window.history.state && typeof window.history.state.idx === 'number' && window.history.state.idx > 0) {
+      navigate(-1)
+      return
+    }
+
+    // 2. Jika dibuka lewat tab baru (target="_blank"), coba tutup tab jika memungkinkan
+    if (window.history.length <= 1) {
+      window.close()
+    }
+
+    // 3. Jika document.referrer berasal dari aplikasi kita, kembali ke halaman asal tersebut
+    if (document.referrer && document.referrer.startsWith(window.location.origin)) {
+      try {
+        const refUrl = new URL(document.referrer)
+        const targetPath = refUrl.pathname + refUrl.search
+        if (targetPath && targetPath !== window.location.pathname) {
+          navigate(targetPath)
+          return
+        }
+      } catch {}
+    }
+
+    // 4. Fallback berdasarkan role akun yang sedang login
+    try {
+      const savedUser = JSON.parse(localStorage.getItem('psikologi_connect_user') || '{}')
+      if (savedUser?.role === 'super_admin' || savedUser?.role === 'pjmk') {
+        navigate('/dashboard')
+        return
+      }
+      if (savedUser?.role === 'mahasiswa') {
+        navigate('/portal')
+        return
+      }
+    } catch {}
+
+    // 5. Default fallback ke beranda
+    navigate('/')
+  }
+
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto py-4 sm:py-6 px-4 space-y-4">
@@ -96,7 +137,7 @@ export default function ProfileView() {
       <div className="max-w-md mx-auto py-12 px-4 text-center">
         <Card className="p-8">
           <p className="text-sm text-slate-500 mb-4">{error || 'Profil tidak ditemukan'}</p>
-          <Button variant="secondary" onClick={() => navigate(-1)}>
+          <Button variant="secondary" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" />
             Kembali
           </Button>
@@ -127,13 +168,13 @@ export default function ProfileView() {
       {/* Header navigasi atas */}
       <div className="flex items-center justify-between">
         <Button
-          variant="ghost"
+          variant="secondary"
           size="sm"
-          onClick={() => navigate(-1)}
-          className="text-slate-600 hover:text-slate-900"
+          onClick={handleBack}
+          className="gap-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 shadow-2xs border-slate-200"
         >
           <ArrowLeft className="h-4 w-4" />
-          Kembali
+          <span>Kembali</span>
         </Button>
         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
           Detail Pengguna
