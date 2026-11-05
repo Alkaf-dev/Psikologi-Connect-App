@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   CalendarDays,
   Camera,
@@ -1234,14 +1235,13 @@ export default function ProfilePage() {
 
       <div className="mt-4 text-center">
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-          <strong>Profil Publik:</strong> <a
-            href={`/profil/${user?.id || user?.email}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-teal-600 hover:underline"
+          <strong>Profil Publik:</strong>{' '}
+          <Link
+            to={`/profil/${user?.id || user?.email}`}
+            className="text-teal-600 hover:underline font-semibold"
           >
             Lihat Profil Publik
-          </a>
+          </Link>
         </p>
         <p className="text-xs text-slate-400">
           Bagikan link ini kepada orang lain untuk melihat profil Anda.
