@@ -44,6 +44,7 @@ import {
   Input,
   Modal,
   PageHeader,
+  Select,
   Skeleton,
 } from '../../components/ui'
 
@@ -89,7 +90,17 @@ const COVER_PRESETS = [
 export default function ProfilePage() {
   const { user, token, updateLocalUser, isMultiRole } = useAuth()
   const { toast, confirm } = useToast()
-  const [profile, setProfile] = useState({ name: '', phone: '' })
+  const [profile, setProfile] = useState({
+    name: '',
+    email: '',
+    npm: '',
+    phone: '',
+    class_name: '',
+    cohort: '',
+    prodi_id: '',
+    password: '',
+  })
+  const [studyPrograms, setStudyPrograms] = useState([])
   const [profileErrors, setProfileErrors] = useState({})
   const [savingProfile, setSavingProfile] = useState(false)
 
@@ -476,8 +487,29 @@ export default function ProfilePage() {
   }
 
   useEffect(() => {
-    setProfile({ name: user?.name || '', phone: user?.phone || '' })
-  }, [user?.name, user?.phone])
+    let active = true
+    api.get('/study-programs')
+      .then((res) => {
+        if (active) setStudyPrograms(res?.data || [])
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    setProfile({
+      name: user?.name || '',
+      email: user?.email || '',
+      npm: user?.npm || '',
+      phone: user?.phone || '',
+      class_name: user?.class_name || '',
+      cohort: user?.cohort || '',
+      prodi_id: user?.prodi_id || '',
+      password: '',
+    })
+  }, [user])
 
   useEffect(() => {
     let active = true
@@ -504,13 +536,25 @@ export default function ProfilePage() {
     setProfileErrors({})
 
     try {
-      const response = await api.patch('/auth/profile', {
+      const payload = {
         name: profile.name,
+        email: profile.email,
+        npm: profile.npm || null,
         phone: profile.phone || null,
-      })
+        class_name: profile.class_name || null,
+        cohort: profile.cohort || null,
+        prodi_id: profile.prodi_id || null,
+      }
+      if (profile.password) {
+        payload.password = profile.password
+      }
+      const response = await api.patch('/auth/profile', payload)
       const nextUser = response?.data
-      if (nextUser) updateLocalUser(nextUser)
-      toast.success('Profil diperbarui', 'Perubahan profil berhasil disimpan.')
+      if (nextUser) {
+        updateLocalUser(nextUser)
+        setProfile((prev) => ({ ...prev, ...nextUser, password: '' }))
+      }
+      toast.success('Profil diperbarui', 'Semua perubahan identitas dan profil Anda berhasil disimpan.')
     } catch (error) {
       setProfileErrors(error.errors || {})
       toast.error('Gagal menyimpan profil', errorMessage(error))
@@ -1089,17 +1133,87 @@ export default function ProfilePage() {
 
         <div className="space-y-5">
           <Card>
-            <CardHeader title="Data Profil" description="Nama dan nomor telepon yang dapat Anda ubah." icon={UserRound} />
+            <CardHeader
+              title="Data Profil & Akun"
+              description="Anda dapat mengubah seluruh informasi profil, username, data akademik, dan password akun Anda di sini."
+              icon={UserRound}
+            />
             <form onSubmit={saveProfile} className="space-y-4 p-5">
-              <Field label="Nama lengkap" required error={profileErrors.name?.[0]}>
+              <Field label="Nama Lengkap" required error={profileErrors.name?.[0]}>
                 <Input
                   value={profile.name}
                   onChange={(event) => setProfile((current) => ({ ...current, name: event.target.value }))}
                   required
                   maxLength={120}
+                  placeholder="Nama lengkap Anda"
                 />
               </Field>
-              <Field label="Nomor telepon" error={profileErrors.phone?.[0]}>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field
+                  label="Username / Email Login"
+                  required
+                  error={profileErrors.email?.[0]}
+                  hint="Username atau alamat email untuk login akun Anda."
+                >
+                  <Input
+                    value={profile.email}
+                    onChange={(event) => setProfile((current) => ({ ...current, email: event.target.value }))}
+                    required
+                    maxLength={150}
+                    placeholder="misal: namauser atau user@psi.id"
+                  />
+                </Field>
+
+                <Field
+                  label="NIM / NPM"
+                  error={profileErrors.npm?.[0]}
+                  hint="Nomor Induk Mahasiswa Anda."
+                >
+                  <Input
+                    value={profile.npm}
+                    onChange={(event) => setProfile((current) => ({ ...current, npm: event.target.value }))}
+                    maxLength={30}
+                    placeholder="misal: STF001"
+                  />
+                </Field>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Field label="Kelas" error={profileErrors.class_name?.[0]}>
+                  <Input
+                    value={profile.class_name}
+                    onChange={(event) => setProfile((current) => ({ ...current, class_name: event.target.value }))}
+                    placeholder="misal: Psikologi 1B"
+                    maxLength={50}
+                  />
+                </Field>
+
+                <Field label="Angkatan" error={profileErrors.cohort?.[0]}>
+                  <Input
+                    value={profile.cohort}
+                    onChange={(event) => setProfile((current) => ({ ...current, cohort: event.target.value }))}
+                    placeholder="misal: 2026"
+                    maxLength={10}
+                  />
+                </Field>
+
+                <Field label="Program Studi" error={profileErrors.prodi_id?.[0]}>
+                  <Select
+                    value={profile.prodi_id}
+                    onChange={(event) => setProfile((current) => ({ ...current, prodi_id: event.target.value }))}
+                  >
+                    <option value="">Pilih Program Studi</option>
+                    {studyPrograms.map((prog) => (
+                      <option key={prog.id} value={prog.id}>
+                        {prog.label || prog.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              </div>
+
+              <Field label="Nomor Telepon / WhatsApp" error={profileErrors.phone?.[0]}>
                 <Input
                   value={profile.phone}
                   onChange={(event) => setProfile((current) => ({ ...current, phone: event.target.value }))}
@@ -1107,18 +1221,33 @@ export default function ProfilePage() {
                   maxLength={30}
                 />
               </Field>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Email">
-                  <Input value={user?.email || ''} disabled />
-                </Field>
-                <Field label="NIM / NIP">
-                  <Input value={user?.npm || ''} disabled />
-                </Field>
+
+              <Field
+                label="Ganti Password Langsung (Opsional)"
+                error={profileErrors.password?.[0]}
+                hint="Kosongkan jika tidak ingin mengubah password akun Anda saat ini."
+              >
+                <Input
+                  type="password"
+                  value={profile.password}
+                  onChange={(event) => setProfile((current) => ({ ...current, password: event.target.value }))}
+                  placeholder="Ketik password baru (minimal 6 karakter)"
+                  minLength={6}
+                  autoComplete="new-password"
+                />
+              </Field>
+
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
+                <Button type="submit" loading={savingProfile}>
+                  <Save className="h-4 w-4" />
+                  Simpan Perubahan
+                </Button>
+                {profile.password && (
+                  <span className="text-xs text-amber-600 dark:text-amber-400 font-medium animate-pulse">
+                    Password baru akan diterapkan saat disimpan
+                  </span>
+                )}
               </div>
-              <Button type="submit" loading={savingProfile}>
-                <Save className="h-4 w-4" />
-                Simpan Profil
-              </Button>
             </form>
           </Card>
 
@@ -1230,7 +1359,7 @@ export default function ProfilePage() {
 
       <p className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
         <GraduationCap className="h-3 w-3" />
-        Perubahan data akademik hanya dapat dilakukan oleh admin program studi.
+        Seluruh informasi profil, data akademik, dan akun dapat Anda perbarui secara mandiri kapan saja.
       </p>
 
       <div className="mt-4 text-center">
