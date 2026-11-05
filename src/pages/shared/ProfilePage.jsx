@@ -6,11 +6,13 @@ import {
   CheckCircle2,
   ChevronDown,
   Crop,
+  Eye,
   GraduationCap,
   KeyRound,
   Laptop,
   Loader2,
   Mail,
+  Maximize2,
   Move,
   Phone,
   RotateCcw,
@@ -29,6 +31,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { api, errorMessage } from '../../lib/api'
 import { formatDate } from '../../lib/utils'
+import ImageLightbox from '../../components/ImageLightbox'
 import {
   Avatar,
   Badge,
@@ -102,6 +105,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [showAvatarModal, setShowAvatarModal] = useState(false)
+  const [previewImage, setPreviewImage] = useState(null)
   const [rawAvatarUrl, setRawAvatarUrl] = useState('')
   const [showAvatarCropModal, setShowAvatarCropModal] = useState(false)
   const [avatarZoom, setAvatarZoom] = useState(1)
@@ -757,6 +761,27 @@ export default function ProfilePage() {
                             <>
                               <button
                                 type="button"
+                                onClick={() => {
+                                  setShowCoverMenu(false)
+                                  setPreviewImage({
+                                    src: coverUrl,
+                                    title: `Foto Sampul · ${user?.name}`,
+                                    alt: `Foto Sampul ${user?.name}`,
+                                  })
+                                }}
+                                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
+                              >
+                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
+                                  <Eye className="h-3.5 w-3.5" />
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-slate-800 dark:text-slate-100">Lihat Sampul Penuh</p>
+                                  <p className="text-[10px] text-slate-400">Buka foto sampul dalam layar penuh</p>
+                                </div>
+                              </button>
+
+                              <button
+                                type="button"
                                 onClick={startCoverReposition}
                                 className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
                               >
@@ -808,14 +833,33 @@ export default function ProfilePage() {
                   {/* Avatar wrapper - ONLY THIS overlaps the cover photo! */}
                   <div
                     className="-mt-16 sm:-mt-20 relative shrink-0 cursor-pointer group"
-                    onClick={() => setShowAvatarModal(true)}
-                    title="Klik untuk atur foto profil"
+                    onClick={() => {
+                      if (user?.avatar_url || user?.avatar) {
+                        setPreviewImage({
+                          src: user?.avatar_url || user?.avatar,
+                          title: `Foto Profil · ${user?.name}`,
+                          alt: `Foto Profil ${user?.name}`,
+                        })
+                      } else {
+                        setShowAvatarModal(true)
+                      }
+                    }}
+                    title={
+                      user?.avatar_url || user?.avatar
+                        ? 'Klik untuk melihat foto profil penuh'
+                        : 'Klik untuk atur foto profil'
+                    }
                   >
                     <Avatar
                       name={user?.name}
                       src={user?.avatar_url || user?.avatar}
-                      className="h-28 w-28 sm:h-32 sm:w-32 rounded-full border-2 border-white shadow-xl transition-transform group-hover:scale-105 group-hover:opacity-95"
+                      className="h-28 w-28 sm:h-32 sm:w-32 rounded-full border-2 border-white shadow-xl transition-all group-hover:scale-105 group-hover:ring-4 group-hover:ring-teal-400/60"
                     />
+                    {(user?.avatar_url || user?.avatar) && (
+                      <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <Eye className="h-6 w-6 text-white drop-shadow" />
+                      </div>
+                    )}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -874,7 +918,18 @@ export default function ProfilePage() {
                   <Avatar
                     name={user?.name}
                     src={user?.avatar_url || user?.avatar}
-                    className="h-24 w-24 border-4 border-white dark:border-[#0c0d10] text-2xl shadow-md ring-1 ring-black/10"
+                    className="h-24 w-24 border-4 border-white dark:border-[#0c0d10] text-2xl shadow-md ring-1 ring-black/10 cursor-pointer hover:scale-105 transition-transform"
+                    onClick={() => {
+                      if (user?.avatar_url || user?.avatar) {
+                        setShowAvatarModal(false)
+                        setPreviewImage({
+                          src: user?.avatar_url || user?.avatar,
+                          title: `Foto Profil · ${user?.name}`,
+                          alt: `Foto Profil ${user?.name}`,
+                        })
+                      }
+                    }}
+                    title="Klik untuk melihat foto penuh"
                   />
                   <div className="text-center">
                     <p className="text-sm font-bold text-slate-800 dark:text-white">{user?.name}</p>
@@ -882,6 +937,30 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="w-full space-y-2 mt-2">
+                    {/* 0. Lihat Foto Penuh */}
+                    {(user?.avatar_url || user?.avatar) ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAvatarModal(false)
+                          setPreviewImage({
+                            src: user?.avatar_url || user?.avatar,
+                            title: `Foto Profil · ${user?.name}`,
+                            alt: `Foto Profil ${user?.name}`,
+                          })
+                        }}
+                        className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left transition hover:border-teal-300 hover:bg-teal-50/50 shadow-2xs"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+                          <Eye className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-800">Lihat Foto Profil Penuh</p>
+                          <p className="text-[11px] text-slate-500">Tampilkan foto dalam ukuran asli layar penuh</p>
+                        </div>
+                      </button>
+                    ) : null}
+
                     {/* 1. Unggah Foto Baru */}
                     <button
                       type="button"
@@ -1391,6 +1470,15 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Lightbox Modal Full Screen */}
+      <ImageLightbox
+        open={Boolean(previewImage)}
+        onClose={() => setPreviewImage(null)}
+        src={previewImage?.src}
+        title={previewImage?.title}
+        alt={previewImage?.alt}
+      />
     </div>
   )
 }

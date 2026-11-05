@@ -3,7 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
   CalendarDays,
+  Eye,
   Mail,
+  Maximize2,
   Phone,
 } from 'lucide-react'
 import {
@@ -13,6 +15,7 @@ import {
   Card,
   Skeleton,
 } from '../../components/ui'
+import ImageLightbox from '../../components/ImageLightbox'
 import { api, errorMessage } from '../../lib/api'
 import { formatDate } from '../../lib/utils'
 
@@ -32,6 +35,7 @@ export default function ProfileView() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [previewImage, setPreviewImage] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -139,19 +143,39 @@ export default function ProfileView() {
       {/* Main Profile Card - Ukuran dan format persis seperti Profil Saya */}
       <Card className="overflow-hidden shadow-sm">
         {/* Cover Photo Banner: Aspect ratio & ukuran sampul persis seperti Profil Saya */}
-        <div className="relative h-48 sm:h-56 select-none bg-gradient-to-br from-slate-900 via-teal-950 to-slate-900 overflow-hidden">
+        <div
+          className={`relative h-48 sm:h-56 select-none bg-gradient-to-br from-slate-900 via-teal-950 to-slate-900 overflow-hidden ${
+            coverSrc ? 'cursor-pointer group' : ''
+          }`}
+          onClick={() => {
+            if (coverSrc) {
+              setPreviewImage({
+                src: coverSrc,
+                title: `Foto Sampul · ${user?.name}`,
+                alt: `Foto Sampul ${user?.name}`,
+              })
+            }
+          }}
+          title={coverSrc ? 'Klik untuk melihat foto sampul penuh' : undefined}
+        >
           {coverSrc ? (
-            <img
-              src={coverSrc}
-              alt="Foto Sampul"
-              draggable={false}
-              style={{
-                objectPosition: `${coverPosX}% ${coverPosY}%`,
-                transform: `scale(${coverZoom})`,
-                transformOrigin: `${coverPosX}% ${coverPosY}%`,
-              }}
-              className="h-full w-full object-cover transition-none pointer-events-none"
-            />
+            <>
+              <img
+                src={coverSrc}
+                alt="Foto Sampul"
+                draggable={false}
+                style={{
+                  objectPosition: `${coverPosX}% ${coverPosY}%`,
+                  transform: `scale(${coverZoom})`,
+                  transformOrigin: `${coverPosX}% ${coverPosY}%`,
+                }}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02] pointer-events-none"
+              />
+              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white rounded-full px-2.5 py-1 text-xs font-medium backdrop-blur-sm pointer-events-none flex items-center gap-1.5 shadow-lg">
+                <Maximize2 className="h-3.5 w-3.5" />
+                <span>Lihat Sampul Penuh</span>
+              </div>
+            </>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-teal-900 via-teal-800 to-slate-900">
               <div className="hero-dots absolute inset-0 opacity-20" />
@@ -168,12 +192,35 @@ export default function ProfileView() {
             {/* Avatar + User Info */}
             <div className="flex flex-col sm:flex-row sm:items-end gap-3.5 sm:gap-4 min-w-0 flex-1">
               {/* Avatar overlapping cover photo on the left */}
-              <div className="-mt-16 sm:-mt-20 relative shrink-0">
+              <div
+                className={`-mt-16 sm:-mt-20 relative shrink-0 ${
+                  avatarSrc ? 'cursor-pointer group' : ''
+                }`}
+                onClick={() => {
+                  if (avatarSrc) {
+                    setPreviewImage({
+                      src: avatarSrc,
+                      title: `Foto Profil · ${user?.name}`,
+                      alt: `Foto Profil ${user?.name}`,
+                    })
+                  }
+                }}
+                title={avatarSrc ? 'Klik untuk melihat foto profil penuh' : undefined}
+              >
                 <Avatar
                   name={user?.name}
                   src={avatarSrc}
-                  className="h-28 w-28 sm:h-32 sm:w-32 rounded-full border-2 border-white shadow-xl bg-white"
+                  className={`h-28 w-28 sm:h-32 sm:w-32 rounded-full border-2 border-white shadow-xl bg-white transition-all ${
+                    avatarSrc
+                      ? 'group-hover:scale-105 group-hover:ring-4 group-hover:ring-teal-400/60'
+                      : ''
+                  }`}
                 />
+                {avatarSrc && (
+                  <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <Eye className="h-6 w-6 text-white drop-shadow" />
+                  </div>
+                )}
               </div>
 
               {/* Name, Role & Email */}
@@ -249,6 +296,15 @@ export default function ProfileView() {
           </div>
         </div>
       </Card>
+
+      {/* Lightbox Modal Full Screen */}
+      <ImageLightbox
+        open={Boolean(previewImage)}
+        onClose={() => setPreviewImage(null)}
+        src={previewImage?.src}
+        title={previewImage?.title}
+        alt={previewImage?.alt}
+      />
     </div>
   )
 }
