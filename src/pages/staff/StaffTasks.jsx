@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ClipboardList, ExternalLink, Inbox } from 'lucide-react'
 import CrudPage from '../../components/CrudPage'
@@ -5,6 +6,7 @@ import { Badge, Button } from '../../components/ui'
 import { formatDateTime, toDateTimeInput } from '../../lib/utils'
 import { loadCourseOptions, loadGroupsWithMembers } from '../../lib/staffLookups'
 import { MascotLauncher } from '../../components/PsychologyMascot'
+import StaffTaskDetailModal from '../../components/StaffTaskDetailModal'
 
 const typeOptions = [
   { value: 'individu', label: 'Individu' },
@@ -40,6 +42,8 @@ const initialValues = {
 }
 
 export default function StaffTasks() {
+  const [detailTask, setDetailTask] = useState(null)
+
   return (
     <>
       <CrudPage
@@ -151,12 +155,19 @@ export default function StaffTasks() {
           key: 'title',
           label: 'Tugas',
           render: (task) => (
-            <div className="max-w-[300px]">
-              <p className="text-sm font-semibold text-slate-800">{task.title}</p>
+            <button
+              type="button"
+              onClick={() => setDetailTask(task)}
+              className="group flex max-w-[320px] flex-col text-left focus:outline-none cursor-pointer"
+              title="Klik untuk melihat rincian tugas"
+            >
+              <p className="text-sm font-semibold text-slate-800 transition group-hover:text-teal-600 group-hover:underline">
+                {task.title}
+              </p>
               <p className="mt-0.5 text-[11px] text-slate-500">
                 {task.course_code} · {task.course_name}
               </p>
-            </div>
+            </button>
           ),
         },
         {
@@ -275,6 +286,11 @@ export default function StaffTasks() {
       formSize="lg"
       centerHeaders
       gridLines
+      />
+      <StaffTaskDetailModal
+        task={detailTask}
+        open={Boolean(detailTask)}
+        onClose={() => setDetailTask(null)}
       />
       <div className="psy-mascot-launcher-spacer" aria-hidden="true" />
       <MascotLauncher context="admin-tasks" />
