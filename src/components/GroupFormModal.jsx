@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState } from 'react'
-import { AlertCircle, Save } from 'lucide-react'
+import { AlertCircle, Crown, Save } from 'lucide-react'
 import { api, errorMessage } from '../lib/api'
 import { useToast } from '../context/ToastContext'
 import { eligibleStudentsForCourse } from '../lib/groupHelpers'
@@ -9,6 +9,7 @@ import {
   Field,
   Input,
   Modal,
+  SearchInput,
   Select,
   Textarea,
 } from './ui'
@@ -36,6 +37,8 @@ export default function GroupFormModal({
   const { toast } = useToast()
   const formId = useId()
   const [values, setValues] = useState(emptyValues)
+  const [memberSearch, setMemberSearch] = useState('')
+  const [showOnlySelected, setShowOnlySelected] = useState(false)
   const [errors, setErrors] = useState({})
   const [submitError, setSubmitError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -46,15 +49,23 @@ export default function GroupFormModal({
     if (!open) return
 
     if (group) {
-      const memberIds = Array.isArray(group.member_ids)
+      const rawMemberIds = Array.isArray(group.member_ids)
         ? group.member_ids
-        : (group.members || []).map((member) => member.user_id)
+        : (group.members || []).map((member) => member.user_id || member.id)
+
+      // Sertakan leader_id dalam daftar anggota agar seluruh anggota kelompok tercentang
+      const allMemberIds = [
+        ...rawMemberIds,
+        ...(group.leader_id && !rawMemberIds.some((id) => String(id) === String(group.leader_id))
+          ? [group.leader_id]
+          : []),
+      ]
 
       setValues({
         course_id: group.course_id || courseId || '',
         name: group.name || '',
         leader_id: group.leader_id || '',
-        member_ids: memberIds.filter((id) => String(id) !== String(group.leader_id)),
+        member_ids: allMemberIds,
         description: group.description || '',
       })
     } else {
@@ -64,6 +75,8 @@ export default function GroupFormModal({
       })
     }
 
+    setMemberSearch('')
+    setShowOnlySelected(false)
     setErrors({})
     setSubmitError('')
   }, [open, group, courseId])
@@ -81,9 +94,29 @@ export default function GroupFormModal({
     [students, selectedCourse, groups, group?.id],
   )
 
-  const memberOptions = eligibleStudents.filter(
-    (student) => String(student.id) !== String(values.leader_id),
-  )
+  // Kandidat ketua HANYA mahasiswa yang sudah dipilih menjadi anggota
+  const leaderCandidates = useMemo(() => {
+    const memberIdSet = new Set(values.member_ids.map(String))
+    return eligibleStudents.filter((student) => memberIdSet.has(String(student.id)))
+  }, [eligibleStudents, values.member_ids])
+
+  // Filter anggota berdasarkan input ketikan dan filter 'Hanya yang dipilih'
+  const filteredStudents = useMemo(() => {
+    let list = eligibleStudents
+    if (showOnlySelected) {
+      const memberIdSet = new Set(values.member_ids.map(String))
+      list = list.filter((student) => memberIdSet.has(String(student.id)))
+    }
+
+    const term = memberSearch.trim().toLowerCase()
+    if (!term) return list
+
+    return list.filter((student) =>
+      [student.name, student.npm, student.class_name].some((value) =>
+        String(value || '').toLowerCase().includes(term),
+      ),
+    )
+  }, [eligibleStudents, memberSearch, showOnlySelected, values.member_ids])
 
   const fieldError = (name) => {
     const error = errors[name]
@@ -102,6 +135,8 @@ export default function GroupFormModal({
       leader_id: '',
       member_ids: [],
     }))
+    setMemberSearch('')
+    setShowOnlySelected(false)
     setErrors((current) => ({
       ...current,
       course_id: undefined,
@@ -114,7 +149,6 @@ export default function GroupFormModal({
     setValues((current) => ({
       ...current,
       leader_id: value,
-      member_ids: current.member_ids.filter((id) => String(id) !== String(value)),
     }))
     setErrors((current) => ({ ...current, leader_id: undefined }))
   }
@@ -122,14 +156,25 @@ export default function GroupFormModal({
   const toggleMember = (userId, checked) => {
     setValues((current) => {
       const currentIds = Array.isArray(current.member_ids) ? current.member_ids : []
+      const nextMemberIds = checked
+        ? [...currentIds.filter((id) => String(id) !== String(userId)), userId]
+        : currentIds.filter((id) => String(id) !== String(userId))
+
+      // Jika anggota yang dilepas adalah ketua saat ini, sesuaikan ketua
+      let nextLeaderId = current.leader_id
+      if (!checked && String(current.leader_id) === String(userId)) {
+        nextLeaderId = nextMemberIds.length === 1 ? nextMemberIds[0] : ''
+      } else if (checked && nextMemberIds.length === 1 && !nextLeaderId) {
+        nextLeaderId = userId
+      }
+
       return {
         ...current,
-        member_ids: checked
-          ? [...currentIds, userId]
-          : currentIds.filter((id) => String(id) !== String(userId)),
+        member_ids: nextMemberIds,
+        leader_id: nextLeaderId,
       }
     })
-    setErrors((current) => ({ ...current, member_ids: undefined }))
+    setErrors((current) => ({ ...current, member_ids: undefined, leader_id: undefined }))
   }
 
   const close = () => {
@@ -144,7 +189,17 @@ export default function GroupFormModal({
     const nextErrors = {}
     if (!values.course_id) nextErrors.course_id = 'Pilih mata kuliah.'
     if (!values.name.trim()) nextErrors.name = 'Nama kelompok wajib diisi.'
-    if (!values.leader_id) nextErrors.leader_id = 'Pilih ketua kelompok.'
+    if (values.member_ids.length === 0) {
+      nextErrors.member_ids = 'Pilih minimal satu anggota kelompok.'
+    }
+    if (!values.leader_id) {
+      nextErrors.leader_id =
+        values.member_ids.length === 0
+          ? 'Pilih anggota kelompok terlebih dahulu.'
+          : 'Pilih ketua kelompok dari anggota yang sudah dipilih.'
+    } else if (!values.member_ids.some((id) => String(id) === String(values.leader_id))) {
+      nextErrors.leader_id = 'Ketua harus berasal dari anggota kelompok yang dipilih.'
+    }
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
@@ -157,7 +212,7 @@ export default function GroupFormModal({
       course_id: values.course_id,
       name: values.name.trim(),
       leader_id: values.leader_id,
-      member_ids: values.member_ids,
+      member_ids: values.member_ids.filter((id) => String(id) !== String(values.leader_id)),
       description: values.description.trim() || null,
     }
 
@@ -260,23 +315,32 @@ export default function GroupFormModal({
           htmlFor={`${formId}-leader`}
           required
           error={fieldError('leader_id')}
+          help={
+            leaderCandidates.length > 0
+              ? 'Hanya anggota yang dipilih yang dapat dijadikan ketua.'
+              : 'Pilih anggota kelompok di bawah terlebih dahulu untuk menentukan ketua.'
+          }
         >
           <Select
             id={`${formId}-leader`}
             value={values.leader_id}
             onChange={(event) => changeLeader(event.target.value)}
-            disabled={!selectedCourse || studentsLoading}
+            disabled={!selectedCourse || studentsLoading || leaderCandidates.length === 0}
           >
             <option value="">
               {!selectedCourse
                 ? 'Pilih mata kuliah terlebih dahulu'
                 : studentsLoading
-                  ? 'Memuat mahasiswa...'
-                  : 'Pilih ketua'}
+                  ? 'Memuat data mahasiswa...'
+                  : leaderCandidates.length === 0
+                    ? 'Pilih anggota kelompok terlebih dahulu'
+                    : '-- Pilih ketua kelompok --'}
             </option>
-            {eligibleStudents.map((student) => (
+            {leaderCandidates.map((student) => (
               <option key={student.id} value={student.id}>
-                {[student.name, student.npm].filter(Boolean).join(' · ')}
+                {[student.name, student.npm ? `NIM ${student.npm}` : '', student.class_name]
+                  .filter(Boolean)
+                  .join(' · ')}
               </option>
             ))}
           </Select>
@@ -285,33 +349,125 @@ export default function GroupFormModal({
         <Field
           label="Anggota kelompok"
           error={fieldError('member_ids')}
-          help="Ketua otomatis menjadi anggota. Anggota harus berasal dari prodi yang sesuai dan belum masuk kelompok lain pada mata kuliah ini."
+          help="Centang mahasiswa yang menjadi anggota kelompok. Pilihan ketua di atas otomatis disesuaikan dari anggota yang Anda centang."
           className="sm:col-span-2"
         >
           {studentsLoading ? (
             <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-xs text-slate-500">
               Memuat data mahasiswa...
             </p>
-          ) : memberOptions.length === 0 ? (
+          ) : eligibleStudents.length === 0 ? (
             <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-xs text-slate-500">
               {selectedCourse
-                ? 'Belum ada mahasiswa yang tersedia untuk mata kuliah ini.'
+                ? 'Belum ada mahasiswa yang memenuhi syarat untuk mata kuliah ini.'
                 : 'Pilih mata kuliah untuk melihat pilihan anggota.'}
             </p>
           ) : (
-            <div className="scrollbar-thin grid max-h-56 gap-1.5 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/50 p-2 sm:grid-cols-2">
-              {memberOptions.map((student) => (
-                <Checkbox
-                  key={student.id}
-                  label={student.name}
-                  description={[student.npm ? `NIM ${student.npm}` : '', student.class_name]
-                    .filter(Boolean)
-                    .join(' · ')}
-                  checked={values.member_ids.some((id) => String(id) === String(student.id))}
-                  onChange={(event) => toggleMember(student.id, event.target.checked)}
-                  className="items-center p-2.5"
+            <div className="space-y-2">
+              {/* Filter nama dengan mengetik & tombol cepat */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <SearchInput
+                  value={memberSearch}
+                  onChange={setMemberSearch}
+                  placeholder="Ketik nama, NIM, atau kelas mahasiswa..."
+                  className="flex-1"
                 />
-              ))}
+                <div className="flex items-center gap-1.5 shrink-0 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setShowOnlySelected(false)}
+                    className={`px-2.5 py-1.5 rounded-lg font-medium transition ${
+                      !showOnlySelected
+                        ? 'bg-teal-50 text-teal-700 font-semibold border border-teal-200'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    Semua ({eligibleStudents.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowOnlySelected(true)}
+                    className={`px-2.5 py-1.5 rounded-lg font-medium transition ${
+                      showOnlySelected
+                        ? 'bg-teal-50 text-teal-700 font-semibold border border-teal-200'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    Dipilih ({values.member_ids.length})
+                  </button>
+                </div>
+              </div>
+
+              {/* Status bar ringkasan */}
+              <div className="flex items-center justify-between px-1 text-[11px] text-slate-500">
+                <span>
+                  {values.member_ids.length > 0 ? (
+                    <strong className="text-teal-700 font-semibold">
+                      {values.member_ids.length} anggota dipilih
+                    </strong>
+                  ) : (
+                    'Belum ada anggota yang dipilih'
+                  )}
+                  {values.leader_id && (
+                    <span className="ml-2 inline-flex items-center gap-1 text-amber-700 font-medium">
+                      <Crown className="h-3 w-3 inline text-amber-500" />
+                      Ketua:{' '}
+                      {leaderCandidates.find((c) => String(c.id) === String(values.leader_id))?.name || '-'}
+                    </span>
+                  )}
+                </span>
+                {memberSearch && (
+                  <span className="text-slate-400">
+                    Menampilkan {filteredStudents.length} dari {eligibleStudents.length}
+                  </span>
+                )}
+              </div>
+
+              {/* Daftar Checkbox Anggota */}
+              {filteredStudents.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-6 text-center text-xs text-slate-500">
+                  Tidak ada mahasiswa yang cocok dengan pencarian &ldquo;{memberSearch}&rdquo;.
+                </div>
+              ) : (
+                <div className="scrollbar-thin grid max-h-56 gap-1.5 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/50 p-2 sm:grid-cols-2">
+                  {filteredStudents.map((student) => {
+                    const isChecked = values.member_ids.some(
+                      (id) => String(id) === String(student.id),
+                    )
+                    const isLeader = String(values.leader_id) === String(student.id)
+
+                    return (
+                      <div
+                        key={student.id}
+                        className={`flex items-center justify-between rounded-xl border p-2 transition ${
+                          isChecked
+                            ? 'border-teal-200 bg-teal-50/40'
+                            : 'border-transparent hover:bg-white'
+                        }`}
+                      >
+                        <Checkbox
+                          label={student.name}
+                          description={[
+                            student.npm ? `NIM ${student.npm}` : '',
+                            student.class_name,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                          checked={isChecked}
+                          onChange={(event) => toggleMember(student.id, event.target.checked)}
+                          className="flex-1 items-center"
+                        />
+                        {isLeader && (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 shrink-0">
+                            <Crown className="h-2.5 w-2.5 text-amber-600" />
+                            Ketua
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
         </Field>
