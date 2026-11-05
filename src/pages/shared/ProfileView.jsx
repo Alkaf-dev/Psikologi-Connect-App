@@ -1,55 +1,20 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { CalendarDays, Loader2, Phone, UserRound } from 'lucide-react'
+import {
+  ArrowLeft,
+  CalendarDays,
+  Mail,
+  Phone,
+} from 'lucide-react'
 import {
   Avatar,
   Badge,
   Button,
   Card,
-  CardHeader,
   Skeleton,
 } from '../../components/ui'
 import { api, errorMessage } from '../../lib/api'
 import { formatDate } from '../../lib/utils'
-
-const COVER_PRESETS = [
-  {
-    id: 'calm-teal',
-    title: 'Calm Mindfulness',
-    category: 'Relaksasi',
-    url: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'peaceful-nature',
-    title: 'Forest Serenity',
-    category: 'Alam',
-    url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'warm-sunset',
-    title: 'Warm Twilight',
-    category: 'Senja',
-    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'cozy-library',
-    title: 'Academic & Focus',
-    category: 'Edukasi',
-    url: 'https://images.unsplash.com/photo-1507842229453-769a6327389a?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'aurora-emerald',
-    title: 'Emerald Aurora',
-    category: 'Aurora',
-    url: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'minimal-abstract',
-    title: 'Minimal Geometric',
-    category: 'Modern',
-    url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
-  },
-]
 
 export default function ProfileView() {
   const navigate = useNavigate()
@@ -95,126 +60,195 @@ export default function ProfileView() {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader title="Profil" icon={Loader2} />
-        <div className="p-8 text-center">
-          <Skeleton className="h-16 w-16 rounded-full mx-auto mb-3" />
-          <Skeleton className="h-96 rounded-md mb-4 mx-auto" />
-          <Skeleton className="h-16 w-40 mb-2 mx-auto text-sm" />
-          <Skeleton className="h-16 w-40 mb-2 mx-auto text-sm" />
+      <div className="max-w-2xl mx-auto py-4 sm:py-6 px-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-24 rounded-lg" />
+          <Skeleton className="h-4 w-28 rounded" />
         </div>
-      </Card>
+        <Card className="overflow-hidden">
+          <Skeleton className="h-48 sm:h-56 w-full" />
+          <div className="p-6 space-y-4">
+            <div className="-mt-20 flex items-end gap-4">
+              <Skeleton className="h-28 w-28 rounded-full border-2 border-white" />
+              <div className="space-y-2 flex-1 pb-2">
+                <Skeleton className="h-6 w-48 rounded" />
+                <Skeleton className="h-4 w-32 rounded" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-4">
+              <Skeleton className="h-14 rounded-xl" />
+              <Skeleton className="h-14 rounded-xl" />
+              <Skeleton className="h-14 rounded-xl" />
+              <Skeleton className="h-14 rounded-xl" />
+            </div>
+          </div>
+        </Card>
+      </div>
     )
   }
 
-  if (error) {
+  if (error || !profile) {
     return (
-      <Card>
-        <CardHeader title="Profil" icon={Loader2} />
-        <div className="p-8 text-center text-slate-500">
-          <p>{error}</p>
-          <Button onClick={() => window.location.reload()}>Coba Lagi</Button>
-        </div>
-      </Card>
+      <div className="max-w-md mx-auto py-12 px-4 text-center">
+        <Card className="p-8">
+          <p className="text-sm text-slate-500 mb-4">{error || 'Profil tidak ditemukan'}</p>
+          <Button variant="secondary" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4" />
+            Kembali
+          </Button>
+        </Card>
+      </div>
     )
-  }
-
-  if (!profile) {
-    return <p className="text-center text-slate-500">Profil tidak ditemukan</p>
   }
 
   const user = profile
   const npm = user.npm || '-'
   const prodiName = user.prodi_name || '-'
+  const className = user.class_name || '-'
   const cohort = user.cohort || '-'
-  const roleLabel = user.role_label || user.role || '-'
+  const roleLabel = user.role_label || user.role || 'Mahasiswa'
+  const isMultiRole = user.role === 'super_admin' || user.role === 'pjmk'
   const phone = user.phone || '-'
   const email = user.email || '-'
 
   const avatarSrc = user.avatar_url || user.avatar || null
   const coverSrc = user.cover_url || null
 
+  const coverPosX = user.cover_pos_x ?? user.cover_pos ?? 50
+  const coverPosY = user.cover_pos_y ?? user.cover_pos ?? 50
+  const coverZoom = user.cover_zoom ?? 1
+
   return (
-    <Card>
-      <CardHeader title="Profil Saya" icon={UserRound} />
+    <div className="max-w-2xl mx-auto py-4 sm:py-6 px-4 space-y-5 animate-fade-in">
+      {/* Header navigasi atas */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="text-slate-600 hover:text-slate-900"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Kembali
+        </Button>
+        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          Detail Pengguna
+        </span>
+      </div>
 
-      <div className="relative h-64 sm:h-72 overflow-hidden sm:rounded-t-lg">
-        {coverSrc ? (
-          <img
-            src={coverSrc}
-            alt="Foto Sampul"
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div
-            className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-teal-900 via-teal-800 to-slate-900"
-          >
-            <div className="hero-dots absolute inset-0 opacity-20" />
-            <div className="absolute -right-8 -top-12 h-44 w-44 rounded-full bg-teal-400/20 blur-2xl" />
-            <div className="absolute -left-8 -bottom-10 h-36 w-36 rounded-full bg-emerald-400/20 blur-xl" />
-          </div>
-        )}
-
-        {/* Foto Profil: HANYA Foto dan Border Putih Tipis (Semua warna abu-abu & padding tebal di luar stroke dihilangkan) */}
-        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10">
-          {avatarSrc ? (
-            <Avatar
-              name={user?.name}
-              src={avatarSrc}
-              className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border-2 border-white shadow-xl"
+      {/* Main Profile Card - Ukuran dan format persis seperti Profil Saya */}
+      <Card className="overflow-hidden shadow-sm">
+        {/* Cover Photo Banner: Aspect ratio & ukuran sampul persis seperti Profil Saya */}
+        <div className="relative h-48 sm:h-56 select-none bg-gradient-to-br from-slate-900 via-teal-950 to-slate-900 overflow-hidden">
+          {coverSrc ? (
+            <img
+              src={coverSrc}
+              alt="Foto Sampul"
+              draggable={false}
+              style={{
+                objectPosition: `${coverPosX}% ${coverPosY}%`,
+                transform: `scale(${coverZoom})`,
+                transformOrigin: `${coverPosX}% ${coverPosY}%`,
+              }}
+              className="h-full w-full object-cover transition-none pointer-events-none"
             />
           ) : (
-            <div
-              className="flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-teal-600 text-2xl font-bold text-white border-2 border-white shadow-xl"
-            >
-              {user.name?.[0]?.toUpperCase() || '?'}
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-teal-900 via-teal-800 to-slate-900">
+              <div className="hero-dots absolute inset-0 opacity-20" />
+              <div className="absolute -right-8 -top-12 h-44 w-44 rounded-full bg-teal-400/20 blur-2xl" />
+              <div className="absolute -left-8 -bottom-10 h-36 w-36 rounded-full bg-emerald-400/20 blur-xl" />
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="px-5 py-4">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
-          {user.name}
-        </h2>
-        <p className="text-slate-500 dark:text-slate-400 mb-2">
-          {user.email}
-        </p>
-
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <div>
-            <p className="text-[10px] font-medium text-slate-400">NIM / NIP</p>
-            <p className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200">{npm}</p>
-          </div>
-          <div>
-            <p className="text-[10px] font-medium text-slate-400">Prodi</p>
-            <p className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200">{prodiName}</p>
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
         </div>
 
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <div>
-            <p className="text-[10px] font-medium text-slate-400">Angkatan</p>
-            <p className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200">Angkatan {cohort}</p>
+        {/* Profile Info Area */}
+        <div className="relative z-10 px-5 sm:px-6 pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            {/* Avatar + User Info */}
+            <div className="flex flex-col sm:flex-row sm:items-end gap-3.5 sm:gap-4 min-w-0 flex-1">
+              {/* Avatar overlapping cover photo on the left */}
+              <div className="-mt-16 sm:-mt-20 relative shrink-0">
+                <Avatar
+                  name={user?.name}
+                  src={avatarSrc}
+                  className="h-28 w-28 sm:h-32 sm:w-32 rounded-full border-2 border-white shadow-xl bg-white"
+                />
+              </div>
+
+              {/* Name, Role & Email */}
+              <div className="pt-1 sm:pt-0 sm:pb-1.5 min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-tight break-words">
+                    {user?.name}
+                  </h1>
+                  {isMultiRole ? (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Badge variant="teal">{user?.role_label || 'Admin'}</Badge>
+                      <Badge variant="neutral">Mahasiswa</Badge>
+                    </div>
+                  ) : (
+                    <Badge variant="teal" className="shrink-0">
+                      {roleLabel}
+                    </Badge>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 break-all">
+                  {email}
+                </p>
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] font-medium text-slate-400">Role</p>
-            <p className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200">{roleLabel}</p>
+
+          {/* 4 Identitas Akademik Grid (Persis seperti Profil Saya) */}
+          <div className="mt-6 grid grid-cols-2 gap-2">
+            <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
+              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                NIM / NIP
+              </p>
+              <p className="mt-1 truncate text-xs font-bold text-slate-800">{npm}</p>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
+              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                Kelas
+              </p>
+              <p className="mt-1 truncate text-xs font-bold text-slate-800">{className}</p>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
+              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                Program Studi
+              </p>
+              <p className="mt-1 truncate text-xs font-bold text-slate-800">{prodiName}</p>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
+              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                Angkatan
+              </p>
+              <p className="mt-1 truncate text-xs font-bold text-slate-800">
+                {cohort !== '-' ? `Angkatan ${cohort}` : '-'}
+              </p>
+            </div>
+          </div>
+
+          {/* Informasi Kontak & Tanggal */}
+          <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <span>{email}</span>
+            </div>
+            {phone !== '-' && (
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <span>{phone}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <CalendarDays className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <span>Terdaftar {formatDate(user?.created_at)}</span>
+            </div>
           </div>
         </div>
-
-        {phone !== '-' && (
-          <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <Phone className="h-3.5 w-3.5 text-slate-400" />
-            {phone}
-          </div>
-        )}
-
-        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
-          Terdaftar {formatDate(user.created_at)}
-        </div>
-      </div>
-    </Card>
+      </Card>
+    </div>
   )
 }
