@@ -199,7 +199,10 @@ export default function StaffTasks() {
                 </p>
                 {task.type === 'kelompok' && (
                   <div className="mt-1 flex flex-wrap items-center gap-1">
-                    <span className="inline-flex items-center gap-1 rounded-md bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700 border border-purple-200/80 shadow-xs">
+                    <span
+                      className="inline-flex items-center gap-1 rounded-md bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700 border border-purple-200/80 shadow-xs"
+                      title={groupNameText ? `Khusus: ${groupNameText}` : 'Semua kelompok'}
+                    >
                       <Users className="h-3 w-3 text-purple-500 shrink-0" />
                       <span className="truncate max-w-[220px]">
                         {groupNameText ? `Khusus: ${groupNameText}` : 'Semua kelompok'}
@@ -234,24 +237,9 @@ export default function StaffTasks() {
           key: 'type',
           label: 'Jenis',
           className: 'text-center',
-          render: (task, { lookups }) => {
-            const groupNameText = getTaskGroupName(task, lookups)
-            return (
-              <div className="flex flex-col items-center gap-1">
-                <Badge variant={task.type === 'kelompok' ? 'purple' : 'info'}>
-                  {task.type_label}
-                </Badge>
-                {task.type === 'kelompok' && groupNameText && (
-                  <span
-                    className="max-w-[130px] truncate text-[10px] font-semibold text-purple-700"
-                    title={groupNameText}
-                  >
-                    {groupNameText}
-                  </span>
-                )}
-              </div>
-            )
-          },
+          render: (task) => (
+            <Badge variant={task.type === 'kelompok' ? 'purple' : 'info'}>{task.type_label}</Badge>
+          ),
         },
         {
           key: 'start_at',
