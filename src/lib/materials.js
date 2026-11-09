@@ -24,6 +24,7 @@ export function buildLearningMaterials({
   courses = [],
   schedules = [],
   manualMaterials = [],
+  includeTasks = true,
 } = {}) {
   const courseMap = new Map(
     (Array.isArray(courses) ? courses : []).map((course) => [String(course.id), course]),
@@ -60,7 +61,8 @@ export function buildLearningMaterials({
     })
   })
 
-  ;(Array.isArray(tasks) ? tasks : []).forEach((task) => {
+  const taskList = includeTasks ? (Array.isArray(tasks) ? tasks : []) : []
+  taskList.forEach((task) => {
     const course = courseMap.get(String(task.course_id)) || {}
     const url = pickUrl(
       task.attachment_url,

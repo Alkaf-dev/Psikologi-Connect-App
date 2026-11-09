@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import {
   BookOpen,
   CalendarDays,
-  ClipboardList,
   ExternalLink,
   FolderOpen,
   GraduationCap,
@@ -30,9 +29,14 @@ import { MascotGif } from '../../components/PsychologyMascot'
 
 const sourceIcons = {
   manual: BookOpen,
-  task: ClipboardList,
   course: FolderOpen,
   schedule: CalendarDays,
+}
+
+const sourceLabels = {
+  manual: 'Materi dosen',
+  course: 'Berkas mata kuliah',
+  schedule: 'Bahan sesi kuliah',
 }
 
 export default function MaterialsPage() {
@@ -44,16 +48,10 @@ export default function MaterialsPage() {
   const [editingMaterial, setEditingMaterial] = useState(null)
   const debouncedSearch = useDebouncedValue(search)
 
-  const taskPath = isStaff ? '/staff/tasks' : '/student/tasks'
   const coursePath = isStaff ? '/staff/courses' : '/student/courses'
   const schedulePath = isStaff ? '/staff/schedules' : '/student/schedules'
   const materialPath = isStaff ? '/staff/materials' : '/student/materials'
 
-  const { data: tasks, loading: loadingTasks } = useApiData(
-    taskPath,
-    { per_page: 200 },
-    { allPages: true },
-  )
   const { data: courses, loading: loadingCourses } = useApiData(
     coursePath,
     { per_page: 500 },
@@ -70,11 +68,17 @@ export default function MaterialsPage() {
     { allPages: true },
   )
 
-  const loading = loadingTasks || loadingCourses || loadingSchedules || loadingManual
+  const loading = loadingCourses || loadingSchedules || loadingManual
 
   const materials = useMemo(
-    () => buildLearningMaterials({ tasks, courses, schedules, manualMaterials }),
-    [tasks, courses, schedules, manualMaterials],
+    () =>
+      buildLearningMaterials({
+        courses,
+        schedules,
+        manualMaterials,
+        includeTasks: false,
+      }),
+    [courses, schedules, manualMaterials],
   )
 
   const courseOptions = useMemo(() => {
@@ -133,7 +137,7 @@ export default function MaterialsPage() {
       }))
   }, [filteredMaterials])
 
-  const taskMaterialCount = materials.filter((item) => item.sourceType === 'task').length
+  const manualCount = materials.filter((item) => item.sourceType === 'manual').length
   const hasFilters = Boolean(search.trim() || courseFilter !== 'all')
 
   const resetFilters = () => {
@@ -220,11 +224,11 @@ export default function MaterialsPage() {
         </Card>
         <Card className="flex items-center gap-3 p-4">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
-            <ClipboardList className="h-5 w-5" aria-hidden="true" />
+            <Pencil className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <p className="text-[11px] font-medium text-slate-500">Materi dari tugas</p>
-            <p className="text-lg font-bold text-slate-900">{taskMaterialCount}</p>
+            <p className="text-[11px] font-medium text-slate-500">Materi dosen</p>
+            <p className="text-lg font-bold text-slate-900">{manualCount}</p>
           </div>
         </Card>
       </div>
@@ -279,7 +283,7 @@ export default function MaterialsPage() {
               ? 'Coba ubah kata kunci atau pilih mata kuliah lain untuk menemukan materi.'
               : isStaff
                 ? 'Belum ada materi. Tambahkan materi pertama agar dapat diakses mahasiswa.'
-                : 'Materi akan muncul di sini setelah dosen menambahkan tautan bahan ajar pada tugas, mata kuliah, atau jadwal.'
+                : 'Materi akan muncul di sini setelah dosen menambahkan materi baru atau tautan bahan ajar pada mata kuliah dan jadwal.'
           }
           action={
             hasFilters ? (
@@ -387,13 +391,7 @@ export default function MaterialsPage() {
                             </div>
                           ) : (
                             <span className="text-[11px] font-medium text-slate-400">
-                              {item.sourceType === 'manual'
-                                ? 'Materi dosen'
-                                : item.sourceType === 'task'
-                                  ? 'Tautan tugas'
-                                  : item.sourceType === 'course'
-                                    ? 'Berkas mata kuliah'
-                                    : 'Bahan sesi kuliah'}
+                              {sourceLabels[item.sourceType] || 'Materi perkuliahan'}
                             </span>
                           )}
                         </div>
