@@ -6,12 +6,20 @@ import {
   FileText,
   Inbox,
   Link2,
+  Users,
 } from 'lucide-react'
 import { formatDateTime } from '../lib/utils'
 import { Badge, Button, DetailList, Modal } from './ui'
 
 export default function StaffTaskDetailModal({ task, open, onClose }) {
   if (!task) return null
+
+  const isGroupTask = task.type === 'kelompok'
+  const groupLabel =
+    task.resolved_group_name ||
+    (task.group_name && task.group_name !== 'Semua mahasiswa' ? task.group_name : null) ||
+    (task.group_names?.length ? task.group_names.join(', ') : null) ||
+    'Semua kelompok'
 
   return (
     <Modal
@@ -35,11 +43,17 @@ export default function StaffTaskDetailModal({ task, open, onClose }) {
       }
     >
       <div className="space-y-5">
-        {/* Badges Status & Jenis */}
+        {/* Badges Status, Jenis & Kelompok */}
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={task.type === 'kelompok' ? 'purple' : 'info'}>
-            {task.type_label || (task.type === 'kelompok' ? 'Kelompok' : 'Individu')}
+          <Badge variant={isGroupTask ? 'purple' : 'info'}>
+            {task.type_label || (isGroupTask ? 'Kelompok' : 'Individu')}
           </Badge>
+          {isGroupTask && (
+            <Badge variant="purple" className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {groupLabel}
+            </Badge>
+          )}
           <Badge
             variant={
               task.status === 'active'
@@ -92,6 +106,26 @@ export default function StaffTaskDetailModal({ task, open, onClose }) {
           </div>
         </div>
 
+        {/* Info Khusus Kelompok untuk Tugas Kelompok */}
+        {isGroupTask && (
+          <div className="flex items-start gap-3 rounded-2xl border border-purple-200 bg-purple-50/60 p-3.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-purple-100 bg-white text-purple-600 shadow-sm">
+              <Users className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-purple-600">
+                Kelompok yang Ditugaskan
+              </p>
+              <p className="mt-0.5 text-xs font-bold text-purple-950">
+                {groupLabel}
+              </p>
+              <p className="mt-0.5 text-[11px] text-purple-700/80">
+                Tugas ini hanya dapat dikumpulkan oleh anggota kelompok di atas.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Detail List Informasi Utama */}
         <DetailList
           items={[
@@ -104,8 +138,14 @@ export default function StaffTaskDetailModal({ task, open, onClose }) {
               : null,
             {
               label: 'Jenis tugas',
-              value: task.type_label || (task.type === 'kelompok' ? 'Kelompok' : 'Individu'),
+              value: task.type_label || (isGroupTask ? 'Kelompok' : 'Individu'),
             },
+            isGroupTask
+              ? {
+                  label: 'Kelompok yang ditugaskan',
+                  value: groupLabel,
+                }
+              : null,
             {
               label: 'Total Pengumpulan',
               value: `${task.submission_count ?? 0} pengumpulan`,

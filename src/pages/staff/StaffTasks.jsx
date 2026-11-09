@@ -1,12 +1,32 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ClipboardList, ExternalLink, Inbox } from 'lucide-react'
+import { ClipboardList, ExternalLink, Inbox, Users } from 'lucide-react'
 import CrudPage from '../../components/CrudPage'
 import { Badge, Button } from '../../components/ui'
 import { formatDateTime, toDateTimeInput } from '../../lib/utils'
 import { loadCourseOptions, loadGroupsWithMembers } from '../../lib/staffLookups'
 import { MascotLauncher } from '../../components/PsychologyMascot'
 import StaffTaskDetailModal from '../../components/StaffTaskDetailModal'
+
+function getTaskGroupName(task, lookups) {
+  if (task.type !== 'kelompok') return null
+  if (task.group_name && task.group_name !== 'Semua mahasiswa' && task.group_name !== 'Semua kelompok') {
+    return task.group_name
+  }
+  if (task.group_names?.length) {
+    return task.group_names.join(', ')
+  }
+  if (task.group_ids?.length && lookups?.groups?.length) {
+    const ids = Array.isArray(task.group_ids) ? task.group_ids : [task.group_ids]
+    const matched = ids
+      .map((id) => lookups.groups.find((g) => String(g.id) === String(id))?.name)
+      .filter(Boolean)
+    if (matched.length > 0) {
+      return matched.join(', ')
+    }
+  }
+  return null
+}
 
 const typeOptions = [
   { value: 'individu', label: 'Individu' },
@@ -58,7 +78,10 @@ export default function StaffTasks() {
       emptyDescription="Buat tugas pertama dan tentukan tenggat waktunya untuk mahasiswa."
       mascot="membaca"
       initialValues={initialValues}
-      loadFilterLookups={async () => ({ courses: await loadCourseOptions() })}
+      loadFilterLookups={async () => ({
+        courses: await loadCourseOptions(),
+        groups: await loadGroupsWithMembers(),
+      })}
       loadLookups={async () => ({ groups: await loadGroupsWithMembers() })}
       fields={[
         {
@@ -154,21 +177,39 @@ export default function StaffTasks() {
         {
           key: 'title',
           label: 'Tugas',
-          render: (task) => (
-            <button
-              type="button"
-              onClick={() => setDetailTask(task)}
-              className="group flex max-w-[320px] flex-col text-left focus:outline-none cursor-pointer"
-              title="Klik untuk melihat rincian tugas"
-            >
-              <p className="text-sm font-semibold text-slate-800 transition group-hover:text-teal-600 group-hover:underline">
-                {task.title}
-              </p>
-              <p className="mt-0.5 text-[11px] text-slate-500">
-                {task.course_code} · {task.course_name}
-              </p>
-            </button>
-          ),
+          render: (task, { lookups }) => {
+            const groupNameText = getTaskGroupName(task, lookups)
+            return (
+              <button
+                type="button"
+                onClick={() =>
+                  setDetailTask({
+                    ...task,
+                    resolved_group_name: groupNameText || task.group_name,
+                  })
+                }
+                className="group flex max-w-[320px] flex-col text-left focus:outline-none cursor-pointer"
+                title="Klik untuk melihat rincian tugas"
+              >
+                <p className="text-sm font-semibold text-slate-800 transition group-hover:text-teal-600 group-hover:underline">
+                  {task.title}
+                </p>
+                <p className="mt-0.5 text-[11px] text-slate-500">
+                  {task.course_code} · {task.course_name}
+                </p>
+                {task.type === 'kelompok' && (
+                  <div className="mt-1 flex flex-wrap items-center gap-1">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700 border border-purple-200/80 shadow-xs">
+                      <Users className="h-3 w-3 text-purple-500 shrink-0" />
+                      <span className="truncate max-w-[220px]">
+                        {groupNameText ? `Khusus: ${groupNameText}` : 'Semua kelompok'}
+                      </span>
+                    </span>
+                  </div>
+                )}
+              </button>
+            )
+          },
         },
         {
           key: 'material_url',
@@ -193,9 +234,24 @@ export default function StaffTasks() {
           key: 'type',
           label: 'Jenis',
           className: 'text-center',
-          render: (task) => (
-            <Badge variant={task.type === 'kelompok' ? 'purple' : 'info'}>{task.type_label}</Badge>
-          ),
+          render: (task, { lookups }) => {
+            const groupNameText = getTaskGroupName(task, lookups)
+            return (
+              <div className="flex flex-col items-center gap-1">
+                <Badge variant={task.type === 'kelompok' ? 'purple' : 'info'}>
+                  {task.type_label}
+                </Badge>
+                {task.type === 'kelompok' && groupNameText && (
+                  <span
+                    className="max-w-[130px] truncate text-[10px] font-semibold text-purple-700"
+                    title={groupNameText}
+                  >
+                    {groupNameText}
+                  </span>
+                )}
+              </div>
+            )
+          },
         },
         {
           key: 'start_at',
