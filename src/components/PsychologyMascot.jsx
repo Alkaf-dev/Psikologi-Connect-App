@@ -55,17 +55,17 @@ function useAnimatedAssets() {
 
 function MascotImage({ asset, animated, loading = 'eager', className, alt, width, height }) {
   const [failed, setFailed] = useState(false)
-  const [showGif, setShowGif] = useState(false)
+  const [showAnimated, setShowAnimated] = useState(false)
 
   useEffect(() => {
     setFailed(false)
-    setShowGif(false)
+    setShowAnimated(false)
 
-    if (!asset?.gif || !animated) return undefined
+    if ((!asset?.webp && !asset?.gif) || !animated) return undefined
 
     let cancelled = false
     const start = () => {
-      if (!cancelled) setShowGif(true)
+      if (!cancelled) setShowAnimated(true)
     }
 
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
@@ -87,7 +87,9 @@ function MascotImage({ asset, animated, loading = 'eager', className, alt, width
 
   if (!asset) return null
 
-  const src = animated && showGif && !failed ? asset.gif : asset.poster || asset.gif
+  const animatedSrc = asset.webp || asset.gif
+  const staticSrc = asset.poster || animatedSrc
+  const src = animated && showAnimated && !failed ? animatedSrc : staticSrc
 
   return (
     <img
