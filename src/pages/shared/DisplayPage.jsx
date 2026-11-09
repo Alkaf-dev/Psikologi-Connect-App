@@ -482,16 +482,18 @@ export default function DisplayPage() {
 
   // --------------------------------------------------------------------------
   // ASSEMBLE LEARNING MATERIALS (MATERI PERKULIAHAN)
+  // Strictly from the Materials page sources (courses, schedules, manual materials)
+  // excluding task attachments to keep it clean and separated from tasks
   // --------------------------------------------------------------------------
   const materialsList = useMemo(
     () =>
       buildLearningMaterials({
-        tasks: allTasks,
         courses: rawCourses,
         schedules: rawSchedules,
         manualMaterials: rawMaterials,
+        includeTasks: false,
       }),
-    [allTasks, rawCourses, rawSchedules, rawMaterials],
+    [rawCourses, rawSchedules, rawMaterials],
   )
 
   // Map courses with material counts (like Kelompok)
