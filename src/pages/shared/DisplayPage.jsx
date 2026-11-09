@@ -357,8 +357,6 @@ export default function DisplayPage() {
     return rawList.map((sch) => {
       const course = coursesMap.get(String(sch.course_id)) || sch.course || {}
       const groupsForCourse = groupsMap.get(String(sch.course_id)) || []
-      const tasksForCourse = tasksMap.get(String(sch.course_id)) || []
-      const taskWithMaterial = tasksForCourse.find((t) => t.attachment_url || t.material_url || t.materials || t.attachment)
 
       const realGroups = groupsForCourse.map((g, gIdx) => ({
         id: g.id,
@@ -379,14 +377,13 @@ export default function DisplayPage() {
         end_time: (sch.end_time || '').slice(0, 5),
         mode: sch.mode || 'offline',
         class_name: sch.class_name || course.class_name || '',
+        course_id: String(sch.course_id || course.id || ''),
         course_code: sch.course_code || course.code || '',
         course_name: sch.course_name || course.name || 'Mata Kuliah',
         lecturer_name: sch.lecturer_name || sch.course_lecturer || course.lecturer || '',
         credits: sch.credits || course.credits || 0,
         attendance_link: sch.attendance_link || course.attendance_link || '',
         material_link:
-          taskWithMaterial?.attachment_url ||
-          taskWithMaterial?.material_url ||
           sch.material_link ||
           course.material_link ||
           '',
@@ -394,7 +391,7 @@ export default function DisplayPage() {
         groups: realGroups,
       }
     })
-  }, [rawSchedules, rawCourses, rawGroups, rawTasks])
+  }, [rawSchedules, rawCourses, rawGroups])
 
   // Filtered schedules by day
   const [selectedDay, setSelectedDay] = useState('today')
@@ -512,6 +509,7 @@ export default function DisplayPage() {
         lecturer: c.lecturer || '',
         class_name: c.class_name || '',
         items: [],
+        manual_count: 0,
         materials_count: 0,
       })
     })
@@ -529,6 +527,7 @@ export default function DisplayPage() {
           lecturer: item.lecturer || '',
           class_name: '',
           items: [],
+          manual_count: 0,
           materials_count: 0,
         })
       }
@@ -536,6 +535,7 @@ export default function DisplayPage() {
       const entry = courseMap.get(key)
       entry.items.push(item)
       entry.materials_count += 1
+      if (item.sourceType === 'manual') entry.manual_count += 1
     })
 
     return Array.from(courseMap.values()).sort((a, b) => a.name.localeCompare(b.name, 'id'))
@@ -1067,21 +1067,40 @@ export default function DisplayPage() {
                           )}
 
                           {/* 2. Materi */}
-                          {item.material_link ? (
-                            <a
-                              href={item.material_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-2.5 py-2 text-xs font-semibold transition"
-                            >
-                              <BookOpen className="h-3.5 w-3.5 text-slate-600" aria-hidden="true" />
-                              <span>Materi</span>
-                            </a>
-                          ) : (
-                            <span className="inline-flex min-h-11 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-400 text-xs py-2">
-                              Materi Tatap Muka
-                            </span>
-                          )}
+                          {(() => {
+                            const courseKey = String(item.course_id || item.course_name || '')
+                            const cCard = materialCourseCards.find(
+                              (c) => c.key === courseKey || c.name === item.course_name,
+                            )
+                            const mCount = cCard?.materials_count || 0
+
+                            if (mCount > 0 || item.material_link) {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (cCard?.key) {
+                                      setSelectedMaterialCourseKey(cCard.key)
+                                    } else if (courseKey) {
+                                      setSelectedMaterialCourseKey(courseKey)
+                                    }
+                                    setActiveTab('materials')
+                                  }}
+                                  className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/50 text-teal-900 dark:text-teal-200 border border-teal-200 dark:border-teal-800 px-2.5 py-2 text-xs font-semibold transition cursor-pointer"
+                                  title="Buka materi mata kuliah ini di tab Materi Kuliah"
+                                >
+                                  <BookOpen className="h-3.5 w-3.5 text-teal-700 dark:text-teal-400" aria-hidden="true" />
+                                  <span>Materi {mCount > 0 ? `(${mCount})` : ''}</span>
+                                </button>
+                              )
+                            }
+
+                            return (
+                              <span className="inline-flex min-h-11 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-400 text-xs py-2">
+                                Materi Tatap Muka
+                              </span>
+                            )
+                          })()}
                         </div>
 
                         <div className="grid grid-cols-2 gap-1.5">
