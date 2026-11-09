@@ -601,7 +601,19 @@ body {
   .animate-fade-in,
   .animate-fade-up,
   .animate-slide-in-right,
-  .animate-scale-in {
+  .animate-scale-in,
+  .animate-pulse,
+  .animate-ping,
+  .animate-bounce {
     animation: none;
   }
+}
+
+.fi-display-page :where(button, a, select, input, [tabindex]):focus-visible {
+  outline: 2px solid #0d9488;
+  outline-offset: 2px;
+}
+
+.fi-display-page :where(button, a, select):not(:disabled) {
+  touch-action: manipulation;
 }

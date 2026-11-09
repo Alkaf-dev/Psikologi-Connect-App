@@ -1,32 +1,30 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
-  AlertCircle,
-  AlertTriangle,
   Bell,
   BookOpen,
   CalendarClock,
   CalendarDays,
   CheckCircle2,
   Clock,
-  Download,
+  Droplets,
   ExternalLink,
+  Eye,
   FileText,
-  Filter,
   Flame,
   FolderOpen,
   GraduationCap,
   Info,
   Laptop,
-  Layers,
-  Link2,
   LogIn,
   Megaphone,
+  Pause,
+  Play,
   RotateCcw,
-  Search,
   Smartphone,
   Sparkles,
   Timer,
+  User,
   UsersRound,
   Video,
   X,
@@ -34,22 +32,29 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { useApiData } from '../../hooks/useApiData'
 import { formatDate, formatDateTime } from '../../lib/utils'
-import { Badge, Button, Card, FilterChip, Modal, SearchInput, Skeleton } from '../../components/ui'
+import { Button, Modal, SearchInput, Skeleton } from '../../components/ui'
 import { getMascot } from '../../lib/mascots'
+import { buildLearningMaterials } from '../../lib/materials'
 
-function MascotCharacter({ name, className = 'h-14 w-auto object-contain', alt }) {
+function MascotCharacter({ name, className = 'h-14 w-auto object-contain', loading = 'lazy' }) {
   const asset = getMascot(name)
   if (!asset) return null
   return (
     <img
       src={asset.webp || asset.gif || asset.poster}
-      alt={alt || asset.alt || 'Maskot Psikologi Connect'}
+      alt=""
+      aria-hidden="true"
+      width={asset.width}
+      height={asset.height}
       className={className}
       draggable={false}
-      loading="eager"
+      loading={loading}
+      decoding="async"
     />
   )
 }
+
+const DISPLAY_TAB_ORDER = ['schedules', 'tasks', 'materials', 'announcements', 'tips', 'guidelines']
 
 // Minimalist self-care tips
 const PSYCHOLOGY_TIPS = [
@@ -222,6 +227,9 @@ export default function DisplayPage() {
   const [materialSearch, setMaterialSearch] = useState('')
 
   const [tipIndex, setTipIndex] = useState(0)
+  const [tipsPaused, setTipsPaused] = useState(false)
+  const [tipsFocused, setTipsFocused] = useState(false)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
 
   // Real-time clock tick every second
   useEffect(() => {
@@ -229,13 +237,23 @@ export default function DisplayPage() {
     return () => clearInterval(timer)
   }, [])
 
-  // Cycle tips every 10s
   useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setPrefersReducedMotion(query.matches)
+    update()
+    query.addEventListener?.('change', update)
+    return () => query.removeEventListener?.('change', update)
+  }, [])
+
+  // Cycle tips every 10s unless paused, focused, or the user prefers reduced motion
+  useEffect(() => {
+    if (tipsPaused || tipsFocused || prefersReducedMotion) return undefined
     const interval = setInterval(() => {
       setTipIndex((prev) => (prev + 1) % PSYCHOLOGY_TIPS.length)
     }, 10000)
     return () => clearInterval(interval)
-  }, [])
+  }, [tipsPaused, tipsFocused, prefersReducedMotion])
 
   // --------------------------------------------------------------------------
   // INTEGRASI TABEL DATABASE ASLI
@@ -244,6 +262,7 @@ export default function DisplayPage() {
   const coursePath = user ? (isStaff ? '/staff/courses' : '/student/courses') : null
   const groupPath = user ? (isStaff ? '/staff/groups' : '/student/groups') : null
   const taskPath = user ? (isStaff ? '/staff/tasks' : '/student/tasks') : null
+  const materialPath = user ? (isStaff ? '/staff/materials' : '/student/materials') : null
 
   // 1. Tabel Jadwal
   const {
@@ -273,7 +292,14 @@ export default function DisplayPage() {
     refresh: refreshTasks,
   } = useApiData(taskPath, { per_page: 200 }, { allPages: true, enabled: Boolean(user && taskPath) })
 
-  // 5. Tabel Pengumuman
+  // 5. Tabel Materi Perkuliahan
+  const {
+    data: rawMaterials,
+    loading: loadingMaterials,
+    refresh: refreshMaterials,
+  } = useApiData(materialPath, { per_page: 100 }, { allPages: true, enabled: Boolean(user && materialPath) })
+
+  // 6. Tabel Pengumuman
   const {
     data: announcements,
     loading: loadingAnnouncements,
@@ -286,10 +312,17 @@ export default function DisplayPage() {
     refreshCourses()
     refreshGroups()
     refreshTasks()
+    refreshMaterials()
     refreshAnnouncements()
   }
 
-  const isSyncing = loadingSchedules || loadingCourses || loadingGroups || loadingTasks || loadingAnnouncements
+  const isSyncing =
+    loadingSchedules ||
+    loadingCourses ||
+    loadingGroups ||
+    loadingTasks ||
+    loadingMaterials ||
+    loadingAnnouncements
 
   // Detect current day in Indonesian
   const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
@@ -447,78 +480,16 @@ export default function DisplayPage() {
   // --------------------------------------------------------------------------
   // ASSEMBLE LEARNING MATERIALS (MATERI PERKULIAHAN)
   // --------------------------------------------------------------------------
-  const materialsList = useMemo(() => {
-    const list = []
-    const seenUrls = new Set()
-
-    // 1. From Tasks that have attachments or material URLs
-    allTasks.forEach((task) => {
-      const url = task.material_link
-      if (url && !seenUrls.has(url)) {
-        seenUrls.add(url)
-        list.push({
-          id: `task-mat-${task.id}`,
-          title: task.title || 'Materi Perkuliahan',
-          course_name: task.course_name,
-          course_code: task.course_code,
-          course_id: String(task.course_id || ''),
-          meeting_number: task.meeting_number || null,
-          url,
-          sourceType: 'task',
-          sourceLabel: 'Materi & Penugasan',
-          description: task.description || 'Bahan rujukan materi dan instruksi pelaksanaan tugas perkuliahan.',
-          lecturer: task.lecturer_name,
-          relatedTask: task,
-        })
-      }
-    })
-
-    // 2. From Courses that have material_link
-    ;(rawCourses || []).forEach((c) => {
-      const url = c.material_link || c.syllabus_url || c.drive_url
-      if (url && !seenUrls.has(url)) {
-        seenUrls.add(url)
-        list.push({
-          id: `course-mat-${c.id}`,
-          title: `Silabus & Berkas Drive: ${c.name}`,
-          course_name: c.name,
-          course_code: c.code || '',
-          course_id: String(c.id),
-          meeting_number: null,
-          url,
-          sourceType: 'course',
-          sourceLabel: 'Drive / Silabus MK',
-          description: `Folder repositori berkas pembelajaran, silabus modul, dan bahan presentasi mata kuliah ${c.name}.`,
-          lecturer: c.lecturer || '',
-          relatedTask: null,
-        })
-      }
-    })
-
-    // 3. From Schedules that have material_link
-    ;(rawSchedules || []).forEach((s) => {
-      const url = s.material_link
-      if (url && !seenUrls.has(url)) {
-        seenUrls.add(url)
-        list.push({
-          id: `schedule-mat-${s.id}`,
-          title: `Bahan Pertemuan: ${s.course_name || 'Mata Kuliah'}`,
-          course_name: s.course_name || 'Mata Kuliah',
-          course_code: s.course_code || '',
-          course_id: String(s.course_id || ''),
-          meeting_number: null,
-          url,
-          sourceType: 'schedule',
-          sourceLabel: 'Bahan Sesi Kuliah',
-          description: `Tautan materi digital untuk jadwal perkuliahan hari ${s.day || ''}.`,
-          lecturer: s.lecturer_name || '',
-          relatedTask: null,
-        })
-      }
-    })
-
-    return list
-  }, [allTasks, rawCourses, rawSchedules])
+  const materialsList = useMemo(
+    () =>
+      buildLearningMaterials({
+        tasks: allTasks,
+        courses: rawCourses,
+        schedules: rawSchedules,
+        manualMaterials: rawMaterials,
+      }),
+    [allTasks, rawCourses, rawSchedules, rawMaterials],
+  )
 
   // Filtered materials
   const displayedMaterials = useMemo(() => {
@@ -559,9 +530,23 @@ export default function DisplayPage() {
     return Array.isArray(rawCourses) ? rawCourses : []
   }, [rawCourses])
 
+  const handleTabKeyDown = (event) => {
+    const currentIndex = DISPLAY_TAB_ORDER.indexOf(activeTab)
+    let nextIndex = null
+    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % DISPLAY_TAB_ORDER.length
+    else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + DISPLAY_TAB_ORDER.length) % DISPLAY_TAB_ORDER.length
+    else if (event.key === 'Home') nextIndex = 0
+    else if (event.key === 'End') nextIndex = DISPLAY_TAB_ORDER.length - 1
+    if (nextIndex === null) return
+    event.preventDefault()
+    const nextTab = DISPLAY_TAB_ORDER[nextIndex]
+    setActiveTab(nextTab)
+    requestAnimationFrame(() => document.getElementById(`display-tab-${nextTab}`)?.focus())
+  }
+
   return (
     <div
-      className={`min-h-screen ${
+      className={`fi-display-page min-h-screen ${
         isStandaloneRoute
           ? 'bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 p-4 sm:p-6 lg:p-8'
           : 'text-slate-900 dark:text-slate-100 space-y-6'
@@ -600,57 +585,65 @@ export default function DisplayPage() {
           <div className="fi-header-actions flex flex-wrap items-center gap-2.5">
             {/* Filament Status Pill */}
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 ring-1 ring-inset ring-emerald-600/20">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" aria-hidden="true" />
               <span>Hari Ini: {currentDayName}</span>
             </span>
 
             {/* Filament Digital Clock Pill */}
             <div className="inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs font-mono font-medium text-gray-700 dark:text-gray-300 shadow-xs">
-              <Clock className="h-3.5 w-3.5 text-gray-400" />
-              <span>{timeString} WIB</span>
+              <Clock className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
+              <span className="tabular-nums">{timeString} WIB</span>
             </div>
 
             {/* Filament Segmented Button (Auto | Web | HP) */}
-            <div className="inline-flex rounded-lg bg-gray-100 dark:bg-gray-800 p-0.5 border border-gray-200 dark:border-gray-700/60 shadow-xs">
+            <div
+              className="inline-flex rounded-lg bg-gray-100 dark:bg-gray-800 p-0.5 border border-gray-200 dark:border-gray-700/60 shadow-xs"
+              role="group"
+              aria-label="Mode tampilan perangkat"
+            >
               <button
                 type="button"
                 onClick={() => setDeviceMode('auto')}
-                className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition cursor-pointer ${
+                aria-pressed={deviceMode === 'auto'}
+                aria-label="Tampilan otomatis mengikuti ukuran layar"
+                className={`inline-flex min-h-9 items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
                   deviceMode === 'auto'
                     ? 'bg-white dark:bg-gray-900 text-gray-950 dark:text-white shadow-xs font-semibold'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-950'
                 }`}
                 title="Otomatis mengikuti ukuran layar"
               >
-                <Sparkles className="h-3 w-3 text-teal-600" />
+                <Sparkles className="h-3.5 w-3.5 text-teal-600" aria-hidden="true" />
                 <span className="hidden sm:inline">Auto</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setDeviceMode('web')}
-                className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition cursor-pointer ${
+                aria-pressed={deviceMode === 'web'}
+                className={`inline-flex min-h-9 items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
                   deviceMode === 'web'
                     ? 'bg-white dark:bg-gray-900 text-gray-950 dark:text-white shadow-xs font-semibold'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-950'
                 }`}
                 title="Tampilan Desktop / Web"
               >
-                <Laptop className="h-3 w-3" />
+                <Laptop className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Web</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setDeviceMode('mobile')}
-                className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition cursor-pointer ${
+                aria-pressed={deviceMode === 'mobile'}
+                className={`inline-flex min-h-9 items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
                   deviceMode === 'mobile'
                     ? 'bg-white dark:bg-gray-900 text-gray-950 dark:text-white shadow-xs font-semibold'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-950'
                 }`}
                 title="Tampilan Ponsel / HP"
               >
-                <Smartphone className="h-3 w-3" />
+                <Smartphone className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>HP</span>
               </button>
             </div>
@@ -661,10 +654,11 @@ export default function DisplayPage() {
                 type="button"
                 onClick={refreshAll}
                 disabled={isSyncing}
-                className="inline-flex items-center justify-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-xs font-medium text-gray-700 dark:text-gray-200 shadow-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50 cursor-pointer"
+                className="inline-flex h-11 w-11 items-center justify-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-medium text-gray-700 dark:text-gray-200 shadow-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50 cursor-pointer"
                 title="Sinkronkan data dari tabel database"
+                aria-label={isSyncing ? 'Menyinkronkan data' : 'Sinkronkan data dari tabel database'}
               >
-                <RotateCcw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                <RotateCcw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} aria-hidden="true" />
               </button>
             )}
 
@@ -673,17 +667,17 @@ export default function DisplayPage() {
               user ? (
                 <Link
                   to={isStaff ? '/admin' : '/portal'}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white px-3 py-1.5 text-xs font-semibold shadow-xs transition"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white px-3 py-2 text-xs font-semibold shadow-xs transition"
                 >
-                  <GraduationCap className="h-3.5 w-3.5" />
+                  <GraduationCap className="h-4 w-4" aria-hidden="true" />
                   <span>Portal</span>
                 </Link>
               ) : (
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white px-3 py-1.5 text-xs font-semibold shadow-xs transition"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white px-3 py-2 text-xs font-semibold shadow-xs transition"
                 >
-                  <LogIn className="h-3.5 w-3.5" />
+                  <LogIn className="h-4 w-4" aria-hidden="true" />
                   <span>Masuk</span>
                 </Link>
               )
@@ -700,11 +694,8 @@ export default function DisplayPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-start gap-3.5">
                 <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-600">
-                  <Flame className="h-6 w-6 text-amber-600 dark:text-amber-400 animate-pulse" />
-                  <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-rose-500" />
-                  </span>
+                  <Flame className="h-6 w-6 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                  <span className="absolute -top-1 -right-1 inline-flex h-3.5 w-3.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900" />
                 </div>
 
                 <div className="space-y-1">
@@ -718,12 +709,12 @@ export default function DisplayPage() {
                     </span>
                   </div>
 
-                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug">
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug">
                     {urgentTasks[0].title}{' '}
                     <span className="font-normal text-slate-600 dark:text-slate-400">
                       ({urgentTasks[0].course_name})
                     </span>
-                  </h3>
+                  </h2>
 
                   <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-600 dark:text-slate-300">
                     <span className="inline-flex items-center gap-1 font-semibold text-rose-700 dark:text-rose-400">
@@ -735,8 +726,9 @@ export default function DisplayPage() {
                     {urgentTasks[0].type === 'kelompok' && (
                       <>
                         <span>•</span>
-                        <span className="rounded-md bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 px-1.5 py-0.5 text-[10px] font-semibold">
-                          👥 Tugas Kelompok
+                        <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 px-1.5 py-0.5 text-[11px] font-semibold">
+                          <UsersRound className="h-3 w-3" aria-hidden="true" />
+                          Tugas Kelompok
                         </span>
                       </>
                     )}
@@ -752,17 +744,18 @@ export default function DisplayPage() {
                     setActiveTab('tasks')
                     setTaskFilterUrgency('critical')
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-2 text-xs font-bold shadow-xs transition cursor-pointer"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-amber-700 hover:bg-amber-600 text-white px-3.5 py-2 text-xs font-bold shadow-xs transition cursor-pointer"
                 >
                   <span>Lihat Semua ({urgentTasks.length})</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsReminderDismissed(true)}
-                  className="rounded-xl p-2 text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition cursor-pointer"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition cursor-pointer"
                   title="Sembunyikan notifikasi ini"
+                  aria-label="Sembunyikan pengingat tenggat tugas"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -773,21 +766,21 @@ export default function DisplayPage() {
         {!user && (
           <div className="rounded-2xl border border-teal-200 dark:border-teal-800/80 bg-teal-50/60 dark:bg-slate-900 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <MascotCharacter name="melambai" className="h-12 w-auto shrink-0" />
+              <MascotCharacter name="melambai" className="h-12 w-auto shrink-0" loading="eager" />
               <div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">
                   Selamat Datang di Portal Display Akademik
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                </h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
                   Masuk dengan akun terdaftar untuk melihat jadwal harian lengkap, mengakses materi perkuliahan, dan memantau tugas Anda.
                 </p>
               </div>
             </div>
             <Link
               to="/login"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-teal-700 hover:bg-teal-600 text-white px-4 py-2 text-xs font-semibold transition shrink-0"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-teal-700 hover:bg-teal-600 text-white px-4 py-2 text-xs font-semibold transition shrink-0"
             >
-              <LogIn className="h-4 w-4" />
+              <LogIn className="h-4 w-4" aria-hidden="true" />
               <span>Masuk Sekarang</span>
             </Link>
           </div>
@@ -797,7 +790,12 @@ export default function DisplayPage() {
         {/* 3. LARAVEL FILAMENT V5 STYLE TABS (PRO-MAX NAVIGATION)        */}
         {/* ============================================================== */}
         <div className="fi-tabs border-b border-gray-200 dark:border-white/10 flex items-center justify-between gap-4 overflow-x-auto">
-          <nav className="-mb-px flex gap-x-5 sm:gap-x-6 min-w-max">
+          <nav
+            role="tablist"
+            aria-label="Bagian display informasi"
+            onKeyDown={handleTabKeyDown}
+            className="-mb-px flex gap-x-5 sm:gap-x-6 min-w-max"
+          >
             {[
               {
                 id: 'schedules',
@@ -847,19 +845,24 @@ export default function DisplayPage() {
               return (
                 <button
                   key={tab.id}
+                  id={`display-tab-${tab.id}`}
                   type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={`display-panel-${tab.id}`}
+                  tabIndex={isActive ? 0 : -1}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center gap-2 pb-3.5 text-xs sm:text-sm font-semibold border-b-2 transition cursor-pointer ${
+                  className={`relative flex min-h-11 items-center gap-2 pb-3.5 text-xs sm:text-sm font-semibold border-b-2 transition cursor-pointer ${
                     isActive
                       ? 'border-teal-600 text-teal-700 dark:text-teal-400'
                       : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-4 w-4" aria-hidden="true" />
                   <span>{tab.title}</span>
                   {tab.count !== null && (
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums ${
                         isActive
                           ? 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300'
                           : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
@@ -869,7 +872,7 @@ export default function DisplayPage() {
                     </span>
                   )}
                   {tab.alertDot && (
-                    <span className="flex h-2 w-2 rounded-full bg-rose-500 animate-ping absolute -top-0.5 -right-1" />
+                    <span className="absolute -top-0.5 -right-1 flex h-2 w-2 rounded-full bg-rose-500" />
                   )}
                 </button>
               )
@@ -881,7 +884,13 @@ export default function DisplayPage() {
         {/* 4. TAB 1: JADWAL KULIAH                                        */}
         {/* ============================================================== */}
         {activeTab === 'schedules' && (
-          <div className="space-y-4">
+          <div
+            role="tabpanel"
+            id="display-panel-schedules"
+            aria-labelledby="display-tab-schedules"
+            className="space-y-4"
+          >
+            <h2 className="sr-only">Jadwal Kuliah</h2>
             {/* Filter Hari */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
               <span className="font-semibold text-slate-500 mr-1 shrink-0">Pilih Hari:</span>
@@ -899,7 +908,8 @@ export default function DisplayPage() {
                   key={d.id}
                   type="button"
                   onClick={() => setSelectedDay(d.id)}
-                  className={`rounded-lg px-2.5 py-1 font-semibold transition cursor-pointer ${
+                  aria-pressed={selectedDay === d.id}
+                  className={`min-h-11 rounded-lg px-3 py-2 font-semibold transition cursor-pointer ${
                     selectedDay === d.id
                       ? 'bg-teal-800 text-white shadow-2xs'
                       : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50'
@@ -922,7 +932,7 @@ export default function DisplayPage() {
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   Tidak Ada Jadwal Kuliah pada {selectedDay === 'today' ? `Hari Ini (${currentDayName})` : `Hari ${selectedDay}`}
                 </h3>
-                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   Tidak ada sesi perkuliahan aktif yang dijadwalkan pada hari ini di sistem. Anda dapat memilih hari lain di atas untuk melihat materi dan presensi.
                 </p>
               </div>
@@ -944,12 +954,12 @@ export default function DisplayPage() {
                       <div>
                         {/* Time & Mode Header */}
                         <div className="flex items-center justify-between gap-2 mb-2">
-                          <span className="font-mono text-xs font-bold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 px-2 py-0.5 rounded-md">
+                          <span className="font-mono text-xs font-bold tabular-nums text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 px-2 py-0.5 rounded-md">
                             {item.start_time} - {item.end_time} WIB
                           </span>
 
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                            className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${
                               isOnline
                                 ? 'bg-sky-50 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800'
                                 : 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
@@ -964,7 +974,7 @@ export default function DisplayPage() {
                           {item.course_name}
                         </h3>
 
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
                           {item.course_code && <span>{item.course_code}</span>}
                           {item.credits > 0 && <span>• {item.credits} SKS</span>}
                           {item.class_name && <span>• Kelas {item.class_name}</span>}
@@ -986,13 +996,13 @@ export default function DisplayPage() {
                               href={item.attendance_link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/50 text-teal-900 dark:text-teal-200 border border-teal-200 dark:border-teal-800 px-2.5 py-1.5 text-xs font-semibold transition"
+                              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/50 text-teal-900 dark:text-teal-200 border border-teal-200 dark:border-teal-800 px-2.5 py-2 text-xs font-semibold transition"
                             >
-                              <CheckCircle2 className="h-3.5 w-3.5 text-teal-700" />
+                              <CheckCircle2 className="h-3.5 w-3.5 text-teal-700" aria-hidden="true" />
                               <span>Presensi</span>
                             </a>
                           ) : (
-                            <span className="inline-flex items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-400 text-xs py-1.5">
+                            <span className="inline-flex min-h-11 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-400 text-xs py-2">
                               Presensi Kelas
                             </span>
                           )}
@@ -1003,13 +1013,13 @@ export default function DisplayPage() {
                               href={item.material_link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 text-xs font-semibold transition"
+                              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-2.5 py-2 text-xs font-semibold transition"
                             >
-                              <BookOpen className="h-3.5 w-3.5 text-slate-600" />
+                              <BookOpen className="h-3.5 w-3.5 text-slate-600" aria-hidden="true" />
                               <span>Materi</span>
                             </a>
                           ) : (
-                            <span className="inline-flex items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-400 text-xs py-1.5">
+                            <span className="inline-flex min-h-11 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-400 text-xs py-2">
                               Materi Tatap Muka
                             </span>
                           )}
@@ -1020,9 +1030,10 @@ export default function DisplayPage() {
                           <button
                             type="button"
                             onClick={() => setSelectedGroupCourse(item)}
-                            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 text-xs font-semibold transition cursor-pointer"
+                            aria-haspopup="dialog"
+                            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-2.5 py-2 text-xs font-semibold transition cursor-pointer"
                           >
-                            <UsersRound className="h-3.5 w-3.5 text-slate-600" />
+                            <UsersRound className="h-3.5 w-3.5 text-slate-600" aria-hidden="true" />
                             <span>Kelompok ({groupCount})</span>
                           </button>
 
@@ -1032,13 +1043,13 @@ export default function DisplayPage() {
                               href={item.meeting_link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/50 text-sky-900 dark:text-sky-200 border border-sky-200 dark:border-sky-800 px-2.5 py-1.5 text-xs font-semibold transition"
+                              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/50 text-sky-900 dark:text-sky-200 border border-sky-200 dark:border-sky-800 px-2.5 py-2 text-xs font-semibold transition"
                             >
-                              <Video className="h-3.5 w-3.5 text-sky-700" />
+                              <Video className="h-3.5 w-3.5 text-sky-700" aria-hidden="true" />
                               <span>Masuk Zoom</span>
                             </a>
                           ) : (
-                            <span className="inline-flex items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/40 text-slate-400 text-xs py-1.5">
+                            <span className="inline-flex min-h-11 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/40 text-slate-400 text-xs py-2">
                               Tatap Muka
                             </span>
                           )}
@@ -1056,7 +1067,13 @@ export default function DisplayPage() {
         {/* 5. TAB 2: TUGAS KULIAH & PENGINGAT TENGGAT (PRO-MAX)           */}
         {/* ============================================================== */}
         {activeTab === 'tasks' && (
-          <div className="space-y-4">
+          <div
+            role="tabpanel"
+            id="display-panel-tasks"
+            aria-labelledby="display-tab-tasks"
+            className="space-y-4"
+          >
+            <h2 className="sr-only">Tugas Kuliah</h2>
             {/* Quick Urgency & Type Filter Chips */}
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
               <span className="font-semibold text-slate-500 mr-1 shrink-0">Filter Tugas:</span>
@@ -1066,7 +1083,8 @@ export default function DisplayPage() {
                   setTaskFilterUrgency('all')
                   setTaskFilterType('all')
                 }}
-                className={`rounded-lg px-2.5 py-1 font-semibold transition cursor-pointer ${
+                aria-pressed={taskFilterUrgency === 'all' && taskFilterType === 'all'}
+                className={`min-h-11 rounded-lg px-3 py-2 font-semibold transition cursor-pointer ${
                   taskFilterUrgency === 'all' && taskFilterType === 'all'
                     ? 'bg-teal-800 text-white shadow-2xs'
                     : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50'
@@ -1078,46 +1096,50 @@ export default function DisplayPage() {
               <button
                 type="button"
                 onClick={() => setTaskFilterUrgency('critical')}
-                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-semibold transition cursor-pointer ${
+                aria-pressed={taskFilterUrgency === 'critical'}
+                className={`inline-flex min-h-11 items-center gap-1 rounded-lg px-3 py-2 font-semibold transition cursor-pointer ${
                   taskFilterUrgency === 'critical'
                     ? 'bg-rose-700 text-white shadow-2xs'
                     : 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800 hover:bg-rose-100'
                 }`}
               >
-                <Flame className="h-3 w-3" />
+                <Flame className="h-3 w-3" aria-hidden="true" />
                 <span>Mendesak / Hari Ini ({allTasks.filter((t) => t.urgency.isCritical).length})</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setTaskFilterUrgency('approaching')}
-                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-semibold transition cursor-pointer ${
+                aria-pressed={taskFilterUrgency === 'approaching'}
+                className={`inline-flex min-h-11 items-center gap-1 rounded-lg px-3 py-2 font-semibold transition cursor-pointer ${
                   taskFilterUrgency === 'approaching'
-                    ? 'bg-amber-600 text-white shadow-2xs'
+                    ? 'bg-amber-700 text-white shadow-2xs'
                     : 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100'
                 }`}
               >
-                <Timer className="h-3 w-3" />
+                <Timer className="h-3 w-3" aria-hidden="true" />
                 <span>Mendekati Tenggat ({allTasks.filter((t) => t.urgency.isApproaching).length})</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setTaskFilterType('kelompok')}
-                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-semibold transition cursor-pointer ${
+                aria-pressed={taskFilterType === 'kelompok'}
+                className={`inline-flex min-h-11 items-center gap-1 rounded-lg px-3 py-2 font-semibold transition cursor-pointer ${
                   taskFilterType === 'kelompok'
                     ? 'bg-purple-700 text-white shadow-2xs'
                     : 'bg-purple-50 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100'
                 }`}
               >
-                <UsersRound className="h-3 w-3" />
+                <UsersRound className="h-3 w-3" aria-hidden="true" />
                 <span>Tugas Kelompok ({allTasks.filter((t) => t.type === 'kelompok').length})</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setTaskFilterType('individu')}
-                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-semibold transition cursor-pointer ${
+                aria-pressed={taskFilterType === 'individu'}
+                className={`inline-flex min-h-11 items-center gap-1 rounded-lg px-3 py-2 font-semibold transition cursor-pointer ${
                   taskFilterType === 'individu'
                     ? 'bg-sky-700 text-white shadow-2xs'
                     : 'bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-100'
@@ -1134,14 +1156,19 @@ export default function DisplayPage() {
                   value={taskSearch}
                   onChange={setTaskSearch}
                   placeholder="Cari judul tugas, mata kuliah, atau instruksi..."
+                  label="Cari tugas kuliah"
                 />
               </div>
 
               <div>
+                <label htmlFor="task-course-filter" className="sr-only">
+                  Filter tugas berdasarkan mata kuliah
+                </label>
                 <select
+                  id="task-course-filter"
                   value={taskFilterCourse}
                   onChange={(e) => setTaskFilterCourse(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs focus:border-teal-500"
                 >
                   <option value="all">Semua Mata Kuliah ({availableCourses.length})</option>
                   {availableCourses.map((c) => (
@@ -1165,7 +1192,7 @@ export default function DisplayPage() {
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   Tidak Ada Tugas yang Ditemukan
                 </h3>
-                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   {taskSearch || taskFilterCourse !== 'all' || taskFilterUrgency !== 'all' || taskFilterType !== 'all'
                     ? 'Coba sesuaikan kata kunci atau filter status untuk menemukan tugas lainnya.'
                     : 'Belum ada tugas perkuliahan yang aktif saat ini. Semua tugas sudah terselesaikan dengan baik!'}
@@ -1179,7 +1206,7 @@ export default function DisplayPage() {
                       setTaskFilterType('all')
                       setTaskFilterUrgency('all')
                     }}
-                    className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-3.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition cursor-pointer"
+                    className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition cursor-pointer"
                   >
                     Reset Filter
                   </button>
@@ -1209,17 +1236,22 @@ export default function DisplayPage() {
                         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <span
-                              className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                              className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${
                                 isGroup
                                   ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
                                   : 'bg-sky-100 text-sky-800 dark:bg-sky-950/70 dark:text-sky-300 border border-sky-200 dark:border-sky-800'
                               }`}
                             >
-                              {isGroup ? '👥 Kelompok' : '👤 Individu'}
+                              {isGroup ? (
+                                <UsersRound className="h-3 w-3" aria-hidden="true" />
+                              ) : (
+                                <User className="h-3 w-3" aria-hidden="true" />
+                              )}
+                              {isGroup ? 'Kelompok' : 'Individu'}
                             </span>
 
                             {task.meeting_number && (
-                              <span className="rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 text-[10px] font-bold">
+                              <span className="rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 text-[11px] font-bold">
                                 Pertemuan {task.meeting_number}
                               </span>
                             )}
@@ -1227,9 +1259,9 @@ export default function DisplayPage() {
 
                           {/* Urgency Badge */}
                           <span
-                            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold ${
+                            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold tabular-nums ${
                               task.urgency.isCritical
-                                ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300 animate-pulse'
+                                ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300'
                                 : task.urgency.isApproaching
                                   ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300'
                                   : task.urgency.isOverdue
@@ -1237,8 +1269,12 @@ export default function DisplayPage() {
                                     : 'bg-teal-50 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300 border border-teal-200 dark:border-teal-800'
                             }`}
                           >
-                            {task.urgency.isCritical && <Flame className="h-3 w-3 text-rose-600 animate-bounce" />}
-                            {task.urgency.isApproaching && <Timer className="h-3 w-3 text-amber-600" />}
+                            {task.urgency.isCritical && (
+                              <Flame className="h-3 w-3 text-rose-600" aria-hidden="true" />
+                            )}
+                            {task.urgency.isApproaching && (
+                              <Timer className="h-3 w-3 text-amber-600" aria-hidden="true" />
+                            )}
                             <span>{task.urgency.countdown}</span>
                           </span>
                         </div>
@@ -1255,21 +1291,21 @@ export default function DisplayPage() {
                         {/* Group detail pill if available */}
                         {isGroup && task.groupLabel && (
                           <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-purple-50 dark:bg-purple-950/50 border border-purple-200/80 dark:border-purple-800 px-2.5 py-1 text-[11px] font-medium text-purple-800 dark:text-purple-300">
-                            <UsersRound className="h-3 w-3 text-purple-600 shrink-0" />
+                            <UsersRound className="h-3 w-3 shrink-0 text-purple-600" aria-hidden="true" />
                             <span className="truncate">Khusus: {task.groupLabel}</span>
                           </div>
                         )}
 
                         {/* Description Preview */}
                         {task.description && (
-                          <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
                             {task.description}
                           </p>
                         )}
 
                         {/* Deadline Row */}
                         <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                          <CalendarClock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          <CalendarClock className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
                           <span>Tenggat: <strong className="text-slate-800 dark:text-slate-200">{task.urgency.formattedDeadline}</strong></span>
                         </div>
                       </div>
@@ -1281,9 +1317,10 @@ export default function DisplayPage() {
                           <button
                             type="button"
                             onClick={() => setSelectedTaskDetail(task)}
-                            className="inline-flex items-center gap-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-3 py-1.5 text-xs font-semibold transition cursor-pointer"
+                            aria-haspopup="dialog"
+                            className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-3 py-2 text-xs font-semibold transition cursor-pointer"
                           >
-                            <Info className="h-3.5 w-3.5" />
+                            <Info className="h-3.5 w-3.5" aria-hidden="true" />
                             <span>Lihat Detail</span>
                           </button>
 
@@ -1293,9 +1330,9 @@ export default function DisplayPage() {
                               href={task.material_link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 rounded-xl bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800 px-3 py-1.5 text-xs font-semibold transition"
+                              className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800 px-3 py-2 text-xs font-semibold transition"
                             >
-                              <ExternalLink className="h-3.5 w-3.5" />
+                              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                               <span>Buka Materi</span>
                             </a>
                           )}
@@ -1305,7 +1342,7 @@ export default function DisplayPage() {
                         {user && !isStaff && (
                           <Link
                             to="/portal/tugas"
-                            className="inline-flex items-center gap-1 rounded-xl bg-teal-700 hover:bg-teal-600 text-white px-3 py-1.5 text-xs font-semibold transition"
+                            className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-teal-700 hover:bg-teal-600 text-white px-3 py-2 text-xs font-semibold transition"
                           >
                             <span>Kumpulkan</span>
                           </Link>
@@ -1323,20 +1360,25 @@ export default function DisplayPage() {
         {/* 6. TAB 3: MATERI KULIAH (MODUL, SLIDE & BAHAN AJAR)           */}
         {/* ============================================================== */}
         {activeTab === 'materials' && (
-          <div className="space-y-4">
+          <div
+            role="tabpanel"
+            id="display-panel-materials"
+            aria-labelledby="display-tab-materials"
+            className="space-y-4"
+          >
             {/* Header Showcase with Mascot */}
             <div className="rounded-2xl border border-teal-200 dark:border-teal-800 bg-gradient-to-r from-teal-50/70 via-white to-teal-50/30 dark:from-slate-900 dark:to-teal-950/20 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row items-center gap-4">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-teal-100 dark:bg-teal-950/80 border border-teal-200 dark:border-teal-800">
                 <MascotCharacter name="membaca" className="h-14 w-auto object-contain" />
               </div>
               <div className="space-y-1 text-center sm:text-left flex-1">
-                <span className="inline-block rounded-md bg-teal-800 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                <span className="inline-block rounded-md bg-teal-800 text-white px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider">
                   Bahan Pembelajaran Digital
                 </span>
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                   Pusat Materi & Bahan Perkuliahan
                 </h2>
-                <p className="text-xs text-slate-600 dark:text-slate-300">
+                <p className="text-sm text-slate-600 dark:text-slate-300">
                   Akses modul referensi, slide presentasi materi, silabus mata kuliah, dan bahan bacaan yang dibagikan oleh dosen pengampu.
                 </p>
               </div>
@@ -1349,14 +1391,19 @@ export default function DisplayPage() {
                   value={materialSearch}
                   onChange={setMaterialSearch}
                   placeholder="Cari modul, materi pertemuan, atau mata kuliah..."
+                  label="Cari materi kuliah"
                 />
               </div>
 
               <div>
+                <label htmlFor="material-course-filter" className="sr-only">
+                  Filter materi berdasarkan mata kuliah
+                </label>
                 <select
+                  id="material-course-filter"
                   value={materialFilterCourse}
                   onChange={(e) => setMaterialFilterCourse(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs focus:border-teal-500"
                 >
                   <option value="all">Semua Mata Kuliah ({availableCourses.length})</option>
                   {availableCourses.map((c) => (
@@ -1375,7 +1422,7 @@ export default function DisplayPage() {
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   Tidak Ada Materi Ditemukan
                 </h3>
-                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   {materialSearch || materialFilterCourse !== 'all'
                     ? 'Coba ganti kata kunci pencarian atau pilih mata kuliah lainnya.'
                     : 'Belum ada berkas materi digital atau tautan drive yang ditautkan untuk mata kuliah ini. Bahan ajar dibagikan secara luring di kelas.'}
@@ -1391,13 +1438,13 @@ export default function DisplayPage() {
                     <div>
                       {/* Top Source Badge */}
                       <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="inline-flex items-center gap-1 rounded-md bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800 px-2 py-0.5 text-[10px] font-bold">
-                          <FolderOpen className="h-3 w-3" />
+                        <span className="inline-flex items-center gap-1 rounded-md bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800 px-2 py-0.5 text-[11px] font-bold">
+                          <FolderOpen className="h-3 w-3" aria-hidden="true" />
                           <span>{item.sourceLabel}</span>
                         </span>
 
                         {item.meeting_number && (
-                          <span className="rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 text-[10px] font-bold">
+                          <span className="rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 text-[11px] font-bold">
                             Pertemuan {item.meeting_number}
                           </span>
                         )}
@@ -1419,7 +1466,7 @@ export default function DisplayPage() {
                       )}
 
                       {/* Description */}
-                      <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
                         {item.description}
                       </p>
                     </div>
@@ -1430,9 +1477,9 @@ export default function DisplayPage() {
                         href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-teal-700 hover:bg-teal-600 text-white px-3.5 py-1.5 text-xs font-semibold transition shadow-2xs"
+                        className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-teal-700 hover:bg-teal-600 text-white px-3.5 py-2 text-xs font-semibold transition shadow-2xs"
                       >
-                        <ExternalLink className="h-3.5 w-3.5" />
+                        <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                         <span>Buka / Unduh Materi</span>
                       </a>
 
@@ -1440,10 +1487,11 @@ export default function DisplayPage() {
                         <button
                           type="button"
                           onClick={() => setSelectedTaskDetail(item.relatedTask)}
-                          className="inline-flex items-center gap-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2.5 py-1.5 text-xs font-medium transition cursor-pointer"
+                          className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2.5 py-2 text-xs font-medium transition cursor-pointer"
                           title="Lihat tugas terkait materi ini"
+                          aria-haspopup="dialog"
                         >
-                          <Info className="h-3 w-3" />
+                          <Info className="h-3 w-3" aria-hidden="true" />
                           <span>Tugas</span>
                         </button>
                       )}
@@ -1459,14 +1507,20 @@ export default function DisplayPage() {
         {/* 7. TAB 4: PENGUMUMAN                                           */}
         {/* ============================================================== */}
         {activeTab === 'announcements' && (
-          <div className="space-y-3">
+          <div
+            role="tabpanel"
+            id="display-panel-announcements"
+            aria-labelledby="display-tab-announcements"
+            className="space-y-3"
+          >
+            <h2 className="sr-only">Pengumuman</h2>
             {loadingAnnouncements ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 <Skeleton className="h-28 rounded-2xl" />
                 <Skeleton className="h-28 rounded-2xl" />
               </div>
             ) : (announcements || []).length === 0 ? (
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center text-xs text-slate-500">
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center text-sm text-slate-500">
                 Belum ada pengumuman baru yang dipublikasikan saat ini.
               </div>
             ) : (
@@ -1478,17 +1532,17 @@ export default function DisplayPage() {
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <span className="rounded-md bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 px-2 py-0.5 text-[10px] font-bold uppercase">
+                        <span className="rounded-md bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 px-2 py-0.5 text-[11px] font-bold uppercase">
                           {ann.category || 'Akademik'}
                         </span>
-                        <span className="text-[11px] text-slate-500">
+                        <span className="text-xs text-slate-500">
                           {formatDate(ann.published_at || ann.created_at)}
                         </span>
                       </div>
                       <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2">
                         {ann.title}
                       </h3>
-                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 line-clamp-3">
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 line-clamp-3">
                         {ann.excerpt || ann.content?.replace(/<[^>]+>/g, '')}
                       </p>
                     </div>
@@ -1503,51 +1557,101 @@ export default function DisplayPage() {
         {/* 8. TAB 5: TIPS BELAJAR & SELF-CARE                             */}
         {/* ============================================================== */}
         {activeTab === 'tips' && (
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-teal-200 dark:border-teal-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs">
+          <div
+            role="tabpanel"
+            id="display-panel-tips"
+            aria-labelledby="display-tab-tips"
+            className="space-y-4"
+          >
+            <h2 className="sr-only">Tips Belajar</h2>
+            <div
+              role="group"
+              aria-roledescription="carousel"
+              aria-label="Tips belajar dan self-care"
+              onFocusCapture={() => setTipsFocused(true)}
+              onBlurCapture={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) setTipsFocused(false)
+              }}
+              className="rounded-2xl border border-teal-200 dark:border-teal-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs"
+            >
               <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
                 <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-teal-50 dark:bg-slate-800 p-2 border border-teal-200 dark:border-teal-800">
-                  <MascotCharacter name={activeTip.mascot} className="h-16 w-auto object-contain" />
+                  <MascotCharacter name={activeTip.mascot} className="h-16 w-auto object-contain" loading="eager" />
                 </div>
-                <div className="space-y-1.5 flex-1">
-                  <span className="inline-block rounded-md bg-teal-800 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                <div
+                  className="space-y-1.5 flex-1"
+                  aria-live={tipsPaused || tipsFocused || prefersReducedMotion ? 'polite' : 'off'}
+                >
+                  <span className="inline-block rounded-md bg-teal-800 text-white px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider">
                     {activeTip.category}
                   </span>
                   <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                     {activeTip.title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed italic">
+                  <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 leading-relaxed italic">
                     "{activeTip.quote}"
                   </p>
                 </div>
               </div>
 
               {/* Dot switcher */}
-              <div className="mt-4 flex items-center justify-center gap-1.5">
-                {PSYCHOLOGY_TIPS.map((_, idx) => (
+              <div className="mt-4 flex items-center justify-center gap-2">
+                <div className="flex items-center gap-1" role="group" aria-label="Pilih tips">
+                  {PSYCHOLOGY_TIPS.map((tip, idx) => (
+                    <button
+                      key={tip.id}
+                      type="button"
+                      onClick={() => setTipIndex(idx)}
+                      aria-label={`Tampilkan tips: ${tip.title}`}
+                      aria-pressed={idx === tipIndex}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-full transition cursor-pointer"
+                    >
+                      <span
+                        className={`h-2 rounded-full transition-all ${
+                          idx === tipIndex ? 'w-6 bg-teal-800 dark:bg-teal-400' : 'w-2 bg-slate-300 dark:bg-slate-700'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+                {!prefersReducedMotion && (
                   <button
-                    key={idx}
                     type="button"
-                    onClick={() => setTipIndex(idx)}
-                    className={`h-2 rounded-full transition-all cursor-pointer ${
-                      idx === tipIndex ? 'w-6 bg-teal-800' : 'w-2 bg-slate-300 dark:bg-slate-700'
-                    }`}
-                  />
-                ))}
+                    onClick={() => setTipsPaused((prev) => !prev)}
+                    aria-pressed={tipsPaused}
+                    aria-label={tipsPaused ? 'Lanjutkan rotasi tips otomatis' : 'Jeda rotasi tips otomatis'}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                  >
+                    {tipsPaused ? (
+                      <Play className="h-4 w-4" aria-hidden="true" />
+                    ) : (
+                      <Pause className="h-4 w-4" aria-hidden="true" />
+                    )}
+                  </button>
+                )}
               </div>
             </div>
 
             <div className={`grid gap-3 ${isMobileView ? 'grid-cols-1' : 'grid-cols-3'}`}>
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 text-xs space-y-1">
-                <span className="font-bold text-teal-800 dark:text-teal-400">⏱️ Pomodoro 25/5</span>
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 text-sm space-y-1">
+                <span className="inline-flex items-center gap-1.5 font-bold text-teal-800 dark:text-teal-400">
+                  <Timer className="h-4 w-4" aria-hidden="true" />
+                  Pomodoro 25/5
+                </span>
                 <p className="text-slate-600 dark:text-slate-300">25 menit fokus penuh, 5 menit jeda relaksasi.</p>
               </div>
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 text-xs space-y-1">
-                <span className="font-bold text-teal-800 dark:text-teal-400">👁️ Relaksasi Mata</span>
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 text-sm space-y-1">
+                <span className="inline-flex items-center gap-1.5 font-bold text-teal-800 dark:text-teal-400">
+                  <Eye className="h-4 w-4" aria-hidden="true" />
+                  Relaksasi Mata
+                </span>
                 <p className="text-slate-600 dark:text-slate-300">Tiap 20 menit, pandang objek 6 meter selama 20 detik.</p>
               </div>
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 text-xs space-y-1">
-                <span className="font-bold text-teal-800 dark:text-teal-400">💧 Hidrasi Otak</span>
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 text-sm space-y-1">
+                <span className="inline-flex items-center gap-1.5 font-bold text-teal-800 dark:text-teal-400">
+                  <Droplets className="h-4 w-4" aria-hidden="true" />
+                  Hidrasi Otak
+                </span>
                 <p className="text-slate-600 dark:text-slate-300">Minum air teratur agar fokus konsentrasi tidak menurun.</p>
               </div>
             </div>
@@ -1558,15 +1662,21 @@ export default function DisplayPage() {
         {/* 9. TAB 6: KETENTUAN STUDI                                      */}
         {/* ============================================================== */}
         {activeTab === 'guidelines' && (
-          <div className={`grid gap-3.5 ${isMobileView ? 'grid-cols-1' : 'grid-cols-2'}`}>
+          <div
+            role="tabpanel"
+            id="display-panel-guidelines"
+            aria-labelledby="display-tab-guidelines"
+            className={`grid gap-3.5 ${isMobileView ? 'grid-cols-1' : 'grid-cols-2'}`}
+          >
+            <h2 className="sr-only">Ketentuan Studi</h2>
             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-2">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-400">
-                  <CheckCircle2 className="h-4.5 w-4.5" />
+                  <CheckCircle2 className="h-4.5 w-4.5" aria-hidden="true" />
                 </span>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-white">Pengingat Presensi Kuliah</h4>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Pengingat Presensi Kuliah</h3>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 Pastikan Anda selalu mengisi tautan presensi/absensi yang tertera pada tiap mata kuliah yang berlangsung setiap minggunya tepat waktu sesuai jam perkuliahan.
               </p>
             </div>
@@ -1574,11 +1684,11 @@ export default function DisplayPage() {
             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-2">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-400">
-                  <Clock className="h-4.5 w-4.5" />
+                  <Clock className="h-4.5 w-4.5" aria-hidden="true" />
                 </span>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-white">Pengingat Tugas & Portofolio</h4>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Pengingat Tugas & Portofolio</h3>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 Kumpulkan tugas perkuliahan (baik tugas individu maupun laporan kelompok) sebelum batas tenggat waktu. Tugas kelompok memerlukan koordinasi yang baik antar anggota.
               </p>
             </div>
@@ -1590,93 +1700,79 @@ export default function DisplayPage() {
       {/* 10. MODAL KELOMPOK                                             */}
       {/* ============================================================== */}
       {selectedGroupCourse && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fade-in">
-          <div className="relative w-full max-w-lg max-h-[85vh] overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl flex flex-col">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-5 py-3.5">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Daftar Kelompok: {selectedGroupCourse.course_name}
-                </h3>
-                <p className="text-[11px] text-slate-500">
-                  {selectedGroupCourse.lecturer_name ? `Dosen: ${selectedGroupCourse.lecturer_name}` : 'Mata Kuliah'}
+        <Modal
+          open
+          onClose={() => setSelectedGroupCourse(null)}
+          title={`Daftar Kelompok: ${selectedGroupCourse.course_name}`}
+          description={
+            selectedGroupCourse.lecturer_name
+              ? `Dosen: ${selectedGroupCourse.lecturer_name}`
+              : 'Mata Kuliah'
+          }
+          size="md"
+          footer={
+            <Button variant="secondary" onClick={() => setSelectedGroupCourse(null)}>
+              Tutup
+            </Button>
+          }
+        >
+          <div className="space-y-3 text-sm">
+            {!selectedGroupCourse.groups || selectedGroupCourse.groups.length === 0 ? (
+              <div className="px-4 py-8 text-center">
+                <UsersRound className="mx-auto mb-2 h-10 w-10 text-slate-300 dark:text-slate-700" aria-hidden="true" />
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                  Belum Ada Data Kelompok
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Belum ada pembagian kelompok yang didaftarkan untuk mata kuliah ini di database.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedGroupCourse(null)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="p-4 overflow-y-auto space-y-3">
-              {(!selectedGroupCourse.groups || selectedGroupCourse.groups.length === 0) ? (
-                <div className="py-8 px-4 text-center">
-                  <UsersRound className="h-10 w-10 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
-                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                    Belum Ada Data Kelompok
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Belum ada pembagian kelompok yang didaftarkan untuk mata kuliah ini di database.
-                  </p>
-                </div>
-              ) : (
-                selectedGroupCourse.groups.map((grp, idx) => (
-                  <div
-                    key={grp.id || idx}
-                    className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3.5 text-xs"
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-bold text-teal-800 dark:text-teal-300 text-xs">
-                        {grp.name}
+            ) : (
+              selectedGroupCourse.groups.map((grp, idx) => (
+                <div
+                  key={grp.id || idx}
+                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3.5"
+                >
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-bold text-teal-800 dark:text-teal-300">
+                      {grp.name}
+                    </h3>
+                    {grp.leader && (
+                      <span className="text-xs text-slate-600 dark:text-slate-400">
+                        Ketua: <strong className="text-slate-900 dark:text-white">{grp.leader}</strong>
                       </span>
-                      {grp.leader && (
-                        <span className="text-[11px] text-slate-600 dark:text-slate-400">
-                          Ketua: <strong className="text-slate-900 dark:text-white">{grp.leader}</strong>
-                        </span>
-                      )}
-                    </div>
-
-                    {grp.topic && (
-                      <p className="text-[11px] text-slate-600 dark:text-slate-300 mb-2">
-                        Topik / Tugas: <span className="font-medium text-slate-800 dark:text-slate-200">{grp.topic}</span>
-                      </p>
-                    )}
-
-                    {grp.members && grp.members.length > 0 && (
-                      <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                          Anggota ({grp.members.length}):
-                        </p>
-                        <div className="flex flex-wrap gap-1">
-                          {grp.members.map((m, mIdx) => (
-                            <span
-                              key={mIdx}
-                              className="rounded-md bg-white dark:bg-slate-700 px-2 py-0.5 text-[11px] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600"
-                            >
-                              {m}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
                     )}
                   </div>
-                ))
-              )}
-            </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-800 px-5 py-2.5 text-right">
-              <button
-                type="button"
-                onClick={() => setSelectedGroupCourse(null)}
-                className="rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-4 py-1.5 text-xs font-semibold transition cursor-pointer"
-              >
-                Tutup
-              </button>
-            </div>
+                  {grp.topic && (
+                    <p className="mb-2 text-xs text-slate-600 dark:text-slate-300">
+                      Topik / Tugas:{' '}
+                      <span className="font-medium text-slate-800 dark:text-slate-200">{grp.topic}</span>
+                    </p>
+                  )}
+
+                  {grp.members && grp.members.length > 0 && (
+                    <div className="border-t border-slate-200 pt-2 dark:border-slate-700">
+                      <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                        Anggota ({grp.members.length}):
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {grp.members.map((m, mIdx) => (
+                          <span
+                            key={mIdx}
+                            className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-800 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
+                          >
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* ============================================================== */}
@@ -1692,8 +1788,8 @@ export default function DisplayPage() {
           }${selectedTaskDetail.meeting_number ? ` (Pertemuan ${selectedTaskDetail.meeting_number})` : ''}`}
           size="lg"
           footer={
-            <div className="flex w-full items-center justify-between gap-2">
-              <div className="text-[11px] text-slate-500">
+            <div className="flex w-full flex-wrap items-center justify-between gap-2">
+              <div className="text-xs text-slate-500">
                 Tenggat: {selectedTaskDetail.urgency?.formattedDeadline || '-'}
               </div>
               <div className="flex items-center gap-2">
@@ -1706,7 +1802,7 @@ export default function DisplayPage() {
                   </Button>
                 )}
                 {user && isStaff && (
-                  <Button as={Link} to="/admin/materi-dan-tugas">
+                  <Button as={Link} to="/admin/tugas">
                     Kelola Tugas di Admin
                   </Button>
                 )}
@@ -1714,17 +1810,22 @@ export default function DisplayPage() {
             </div>
           }
         >
-          <div className="space-y-4 text-xs">
+          <div className="space-y-4 text-sm">
             {/* Status & Urgency Badges */}
             <div className="flex flex-wrap items-center gap-2">
               <span
-                className={`rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
+                className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
                   selectedTaskDetail.type === 'kelompok'
                     ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-200'
                     : 'bg-sky-100 text-sky-800 dark:bg-sky-950/70 dark:text-sky-300 border border-sky-200'
                 }`}
               >
-                {selectedTaskDetail.type === 'kelompok' ? '👥 Tugas Kelompok' : '👤 Tugas Individu'}
+                {selectedTaskDetail.type === 'kelompok' ? (
+                  <UsersRound className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : (
+                  <User className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
+                {selectedTaskDetail.type === 'kelompok' ? 'Tugas Kelompok' : 'Tugas Individu'}
               </span>
 
               <span
@@ -1736,8 +1837,8 @@ export default function DisplayPage() {
                       : 'bg-teal-50 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300 border border-teal-200'
                 }`}
               >
-                <Clock className="h-3.5 w-3.5" />
-                <span>{selectedTaskDetail.urgency?.countdown}</span>
+                <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                <span className="tabular-nums">{selectedTaskDetail.urgency?.countdown}</span>
               </span>
             </div>
 
@@ -1745,7 +1846,7 @@ export default function DisplayPage() {
             {selectedTaskDetail.type === 'kelompok' && selectedTaskDetail.groupLabel && (
               <div className="rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 p-3">
                 <div className="flex items-center gap-2 font-bold text-purple-900 dark:text-purple-300">
-                  <UsersRound className="h-4 w-4 text-purple-700" />
+                  <UsersRound className="h-4 w-4 text-purple-700" aria-hidden="true" />
                   <span>Alokasi Kelompok Tugas:</span>
                 </div>
                 <p className="mt-1 text-purple-800 dark:text-purple-200 font-medium">
@@ -1768,10 +1869,10 @@ export default function DisplayPage() {
             {selectedTaskDetail.material_link && (
               <div className="rounded-xl border border-teal-200 dark:border-teal-800/80 bg-teal-50/60 dark:bg-teal-950/30 p-3.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-teal-900 dark:text-teal-200">
-                  <BookOpen className="h-4 w-4 text-teal-700" />
+                  <BookOpen className="h-4 w-4 text-teal-700" aria-hidden="true" />
                   <div>
-                    <span className="font-bold block">Bahan & Materi Tugas</span>
-                    <span className="text-[11px] text-teal-700/80 dark:text-teal-400">
+                    <span className="block font-bold">Bahan & Materi Tugas</span>
+                    <span className="text-xs text-teal-700/80 dark:text-teal-400">
                       Tautan dokumen atau slide referensi pengerjaan
                     </span>
                   </div>
@@ -1780,9 +1881,9 @@ export default function DisplayPage() {
                   href={selectedTaskDetail.material_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-teal-700 hover:bg-teal-600 text-white px-3 py-1.5 text-xs font-semibold transition shrink-0"
+                  className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-teal-700 hover:bg-teal-600 text-white px-3 py-2 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
                 >
-                  <ExternalLink className="h-3.5 w-3.5" />
+                  <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>Buka Materi</span>
                 </a>
               </div>

@@ -21,6 +21,7 @@ const ProfilePage = lazy(() => import('./pages/shared/ProfilePage'))
 const ProfileView = lazy(() => import('./pages/shared/ProfileView'))
 const NotificationsPage = lazy(() => import('./pages/shared/NotificationsPage'))
 const DisplayPage = lazy(() => import('./pages/shared/DisplayPage'))
+const MaterialsPage = lazy(() => import('./pages/shared/MaterialsPage'))
 const StaffDashboard = lazy(() => import('./pages/staff/StaffDashboard'))
 const StaffCourses = lazy(() => import('./pages/staff/StaffCourses'))
 const StaffSchedule = lazy(() => import('./pages/staff/StaffSchedule'))
@@ -68,6 +69,7 @@ export default function App() {
               <Route path="/portal" element={<PortalLayout />}>
                 <Route index element={<StudentDashboard />} />
                 <Route path="display" element={<DisplayPage />} />
+                <Route path="materi" element={<MaterialsPage />} />
                 <Route path="tugas" element={<StudentTasks />} />
                 <Route path="jadwal" element={<StudentSchedule />} />
                 <Route path="kelompok" element={<StudentGroups />} />
@@ -84,6 +86,7 @@ export default function App() {
                 <Route path="mata-kuliah" element={<StaffCourses />} />
                 <Route path="jadwal" element={<StaffSchedule />} />
                 <Route path="kelompok" element={<StaffGroups />} />
+                <Route path="materi" element={<MaterialsPage />} />
                 <Route path="tugas" element={<StaffTasks />} />
                 <Route path="pengumpulan" element={<StaffSubmissions />} />
                 <Route path="mahasiswa" element={<StaffStudents />} />

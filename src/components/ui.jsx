@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
@@ -197,15 +197,28 @@ export function Checkbox({ label, description, className, ...props }) {
   )
 }
 
-export function SearchInput({ value, onChange, placeholder = 'Cari...', className }) {
+export function SearchInput({ value, onChange, placeholder = 'Cari...', className, label, id }) {
+  const generatedId = useId()
+  const inputId = id || generatedId
+
   return (
     <div className={cn('relative', className)}>
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      {label ? (
+        <label htmlFor={inputId} className="sr-only">
+          {label}
+        </label>
+      ) : null}
+      <Search
+        aria-hidden="true"
+        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+      />
       <input
+        id={inputId}
         type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
+        aria-label={label ? undefined : placeholder}
         className="h-10 w-full rounded-xl border border-slate-300 bg-white pl-9 pr-9 text-sm text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/15"
       />
       {value ? (
@@ -490,6 +503,53 @@ function useEscape(active, onClose) {
   }, [active, onClose])
 }
 
+function useFocusTrap(active, containerRef) {
+  useEffect(() => {
+    if (!active) return undefined
+    const node = containerRef.current
+    if (!node) return undefined
+
+    const previouslyFocused = document.activeElement
+    const getFocusable = () =>
+      Array.from(
+        node.querySelectorAll(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => element.getClientRects().length > 0)
+
+    const initial = getFocusable()
+    if (initial.length > 0) initial[0].focus()
+    else node.focus()
+
+    const handleKeyDown = (event) => {
+      if (event.key !== 'Tab') return
+      const focusable = getFocusable()
+      if (focusable.length === 0) {
+        event.preventDefault()
+        node.focus()
+        return
+      }
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey) {
+        if (document.activeElement === first || !node.contains(document.activeElement)) {
+          event.preventDefault()
+          last.focus()
+        }
+      } else if (document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    node.addEventListener('keydown', handleKeyDown)
+    return () => {
+      node.removeEventListener('keydown', handleKeyDown)
+      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus()
+    }
+  }, [active, containerRef])
+}
+
 const modalSizes = {
   sm: 'max-w-md',
   md: 'max-w-xl',
@@ -498,8 +558,13 @@ const modalSizes = {
 }
 
 export function Modal({ open, onClose, title, description, children, footer, size = 'md', className }) {
+  const titleId = useId()
+  const descriptionId = useId()
+  const dialogRef = useRef(null)
+
   useLockBody(open)
   useEscape(open, onClose)
+  useFocusTrap(open, dialogRef)
 
   if (!open) return null
 
@@ -512,24 +577,34 @@ export function Modal({ open, onClose, title, description, children, footer, siz
         aria-label="Tutup dialog"
       />
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
+        tabIndex={-1}
         className={cn(
-          'relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-scale-in sm:rounded-2xl',
+          'relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-scale-in outline-none sm:rounded-2xl',
           modalSizes[size] || modalSizes.md,
           className,
         )}
       >
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-            {description ? <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p> : null}
+            <h2 id={titleId} className="text-base font-semibold text-slate-900">{title}</h2>
+            {description ? (
+              <p id={descriptionId} className="mt-1 text-xs leading-5 text-slate-500">
+                {description}
+              </p>
+            ) : null}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
             aria-label="Tutup"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 

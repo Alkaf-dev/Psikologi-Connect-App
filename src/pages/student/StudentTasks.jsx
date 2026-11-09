@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   AlertTriangle,
+  BookOpen,
   CalendarClock,
   ClipboardList,
   ExternalLink,
@@ -47,6 +49,12 @@ export default function StudentTasks() {
         eyebrow="Akademik"
         title="Materi dan Tugas"
         description="Pantau tugas individu dan kelompok, buka materi perkuliahan, lalu kumpulkan tautan tugas Anda."
+        actions={
+          <Button as={Link} to="/portal/materi" variant="secondary" size="sm">
+            <BookOpen className="h-4 w-4" />
+            Halaman materi
+          </Button>
+        }
       />
 
       <MascotGif mascot="membaca" variant="banner" className="psy-page-mascot" />

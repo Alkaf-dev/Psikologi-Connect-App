@@ -44,6 +44,7 @@ const quickActions = [
   { label: 'Mata Kuliah', description: 'Kelola kelas dan prodi', to: '/admin/mata-kuliah', icon: BookOpen, tone: 'bg-sky-50 text-sky-600' },
   { label: 'Jadwal', description: 'Atur perkuliahan', to: '/admin/jadwal', icon: CalendarDays, tone: 'bg-amber-50 text-amber-600' },
   { label: 'Kelompok', description: 'Susun anggota kelas', to: '/admin/kelompok', icon: UsersRound, tone: 'bg-violet-50 text-violet-600' },
+  { label: 'Materi', description: 'Bagikan bahan ajar', to: '/admin/materi', icon: BookOpen, tone: 'bg-indigo-50 text-indigo-600' },
   { label: 'Tugas Baru', description: 'Publikasikan tugas', to: '/admin/tugas', icon: ClipboardList, tone: 'bg-teal-50 text-teal-600' },
   { label: 'Pengumuman', description: 'Bagikan informasi', to: '/admin/pengumuman', icon: Megaphone, tone: 'bg-rose-50 text-rose-600' },
   { label: 'Mahasiswa', description: 'Kelola akun mahasiswa', to: '/admin/mahasiswa', icon: GraduationCap, tone: 'bg-emerald-50 text-emerald-600' },

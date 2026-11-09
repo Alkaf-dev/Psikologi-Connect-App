@@ -363,8 +363,9 @@ export default function StudentDashboard() {
         </Card>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
+          { to: '/portal/materi', icon: BookOpen, title: 'Materi kuliah', desc: 'Modul, slide, dan bahan ajar' },
           { to: '/portal/tugas', icon: ClipboardList, title: 'Kumpulkan tugas', desc: 'Tautan dan catatan tugas' },
           { to: '/portal/kelompok', icon: UsersRound, title: 'Cek kelompok', desc: 'Anggota dan ketua kelompok' },
           { to: '/portal/notifikasi', icon: Plus, title: 'Notifikasi', desc: 'Tugas aktif dan jadwal terdekat' },

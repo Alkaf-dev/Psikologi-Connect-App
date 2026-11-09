@@ -42,6 +42,7 @@ const staffNavigation = [
       { to: '/admin/mata-kuliah', label: 'Mata Kuliah', icon: BookOpen },
       { to: '/admin/jadwal', label: 'Jadwal', icon: CalendarDays },
       { to: '/admin/kelompok', label: 'Kelompok', icon: UsersRound },
+      { to: '/admin/materi', label: 'Materi', icon: BookOpen },
       { to: '/admin/tugas', label: 'Materi dan Tugas', icon: ClipboardList },
       { to: '/admin/pengumpulan', label: 'Pengumpulan', icon: Inbox },
     ],
@@ -82,6 +83,7 @@ const studentNavigation = [
     label: 'Akademik',
     items: [
       { to: '/portal/jadwal', label: 'Jadwal Kuliah', icon: CalendarDays },
+      { to: '/portal/materi', label: 'Materi', icon: BookOpen },
       { to: '/portal/tugas', label: 'Materi dan Tugas', icon: ClipboardList },
       { to: '/portal/kelompok', label: 'Kelompok Saya', icon: UsersRound },
     ],
