@@ -565,7 +565,11 @@ export default function DisplayPage() {
       })
     }
 
-    return list
+    return [...list].sort(
+      (a, b) =>
+        (a.meeting_number ?? 999) - (b.meeting_number ?? 999) ||
+        a.title.localeCompare(b.title, 'id'),
+    )
   }, [materialsList, selectedMaterialCourse, materialFilterCourse, materialSearch])
 
   const timeString = currentTime.toLocaleTimeString('id-ID', {

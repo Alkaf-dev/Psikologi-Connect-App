@@ -30,11 +30,44 @@ export function buildLearningMaterials({
     (Array.isArray(courses) ? courses : []).map((course) => [String(course.id), course]),
   )
   const materials = []
-  const seenUrls = new Set()
+  const seenManualIds = new Set()
+  const seenFallbackKeys = new Set()
 
   const addMaterial = (item) => {
-    if (!item.url || seenUrls.has(item.url)) return
-    seenUrls.add(item.url)
+    if (!item.url) return
+
+    // 1. Materi manual dosen:
+    // JANGAN PERNAH di-deduplikasi berdasarkan URL!
+    // Satu dosen bisa menggunakan buku / tautan Google Drive / BookCreator yang sama
+    // untuk beberapa sesi pertemuan sekaligus (misal Pertemuan 1 s.d. 6).
+    if (item.sourceType === 'manual') {
+      const recordId = String(
+        item.record?.id ||
+          item.id ||
+          `${item.course_id}-${item.meeting_number}-${item.title}`,
+      )
+      if (seenManualIds.has(recordId)) return
+      seenManualIds.add(recordId)
+      materials.push(item)
+      return
+    }
+
+    // 2. Sumber otomatis fallback (silabus mata kuliah, drive mk, sesi jadwal):
+    // Deduplikasi per mata kuliah agar berkas umum tidak berulang
+    const courseKey = String(item.course_id || item.course_name || '')
+    const fallbackKey = `${courseKey}::${item.url}`
+    if (seenFallbackKeys.has(fallbackKey)) return
+    seenFallbackKeys.add(fallbackKey)
+
+    // Jangan masukkan fallback jika materi dosen manual pada mata kuliah ini sudah memiliki tautan tersebut
+    const alreadyCoveredInManual = materials.some(
+      (m) =>
+        m.sourceType === 'manual' &&
+        String(m.course_id) === courseKey &&
+        m.url === item.url,
+    )
+    if (alreadyCoveredInManual) return
+
     materials.push(item)
   }
 
