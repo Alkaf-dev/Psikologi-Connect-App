@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
+  ArrowLeft,
   BookOpen,
   CalendarDays,
   ExternalLink,
@@ -7,6 +8,8 @@ import {
   GraduationCap,
   Pencil,
   Plus,
+  RotateCcw,
+  Search,
   Trash2,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -15,14 +18,15 @@ import { useApiData, useDebouncedValue } from '../../hooks/useApiData'
 import { api, errorMessage } from '../../lib/api'
 import { buildLearningMaterials } from '../../lib/materials'
 import MaterialFormModal from '../../components/MaterialFormModal'
+import MaterialCourseCard from '../../components/MaterialCourseCard'
 import {
   Badge,
   Button,
   Card,
   EmptyState,
+  FilterChip,
   PageHeader,
   SearchInput,
-  Select,
   Skeleton,
 } from '../../components/ui'
 import { MascotGif } from '../../components/PsychologyMascot'
@@ -42,9 +46,16 @@ const sourceLabels = {
 export default function MaterialsPage() {
   const { isStaff } = useAuth()
   const { toast, confirm } = useToast()
+
+  // Selected Course State (card click like Kelompok)
+  const [selectedCourseKey, setSelectedCourseKey] = useState('')
+
+  // Search & Filters
   const [search, setSearch] = useState('')
-  const [courseFilter, setCourseFilter] = useState('all')
+  const [selectedMeeting, setSelectedMeeting] = useState('all')
+
   const [formOpen, setFormOpen] = useState(false)
+  const [formCourseId, setFormCourseId] = useState('')
   const [editingMaterial, setEditingMaterial] = useState(null)
   const debouncedSearch = useDebouncedValue(search)
 
@@ -70,7 +81,8 @@ export default function MaterialsPage() {
 
   const loading = loadingCourses || loadingSchedules || loadingManual
 
-  const materials = useMemo(
+  // All synthesized materials
+  const allMaterials = useMemo(
     () =>
       buildLearningMaterials({
         courses,
@@ -81,82 +93,133 @@ export default function MaterialsPage() {
     [courses, schedules, manualMaterials],
   )
 
-  const courseOptions = useMemo(() => {
-    const options = new Map()
-    materials.forEach((item) => {
-      const key = item.course_id || item.course_name
-      if (!key || options.has(key)) return
-      options.set(key, {
+  // Map courses with material counts and items
+  const courseCards = useMemo(() => {
+    const courseMap = new Map()
+    const courseList = Array.isArray(courses) ? courses : []
+
+    // Initialize map from courses
+    courseList.forEach((c) => {
+      const key = String(c.id || c.name || '')
+      if (!key) return
+      courseMap.set(key, {
         key,
-        code: item.course_code,
-        name: item.course_name,
+        id: String(c.id || ''),
+        course_id: String(c.id || ''),
+        name: c.name || c.course_name || 'Mata Kuliah',
+        code: c.code || '',
+        lecturer: c.lecturer || c.lecturer_name || '',
+        class_name: c.class_name || '',
+        credits: c.credits || 0,
+        items: [],
+        manual_count: 0,
+        materials_count: 0,
       })
     })
-    return Array.from(options.values()).sort((a, b) => a.name.localeCompare(b.name, 'id'))
-  }, [materials])
 
-  const filteredMaterials = useMemo(() => {
-    const query = debouncedSearch.trim().toLowerCase()
+    // Assign materials to their respective courses
+    allMaterials.forEach((item) => {
+      const key = String(item.course_id || item.course_name || '')
+      if (!key) return
 
-    return materials.filter((item) => {
-      const itemCourseKey = item.course_id || item.course_name
-      if (courseFilter !== 'all' && itemCourseKey !== courseFilter) return false
-      if (!query) return true
-
-      return [item.title, item.course_name, item.course_code, item.description, item.lecturer]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(query))
-    })
-  }, [materials, courseFilter, debouncedSearch])
-
-  const groupedMaterials = useMemo(() => {
-    const groups = new Map()
-
-    filteredMaterials.forEach((item) => {
-      const key = item.course_id || item.course_name
-      if (!groups.has(key)) {
-        groups.set(key, {
+      if (!courseMap.has(key)) {
+        courseMap.set(key, {
           key,
-          course_name: item.course_name,
-          course_code: item.course_code,
+          id: String(item.course_id || ''),
+          course_id: String(item.course_id || ''),
+          name: item.course_name || 'Mata Kuliah',
+          code: item.course_code || '',
+          lecturer: item.lecturer || '',
+          class_name: '',
+          credits: 0,
           items: [],
+          manual_count: 0,
+          materials_count: 0,
         })
       }
-      groups.get(key).items.push(item)
+
+      const entry = courseMap.get(key)
+      entry.items.push(item)
+      entry.materials_count += 1
+      if (item.sourceType === 'manual') entry.manual_count += 1
     })
 
-    return Array.from(groups.values())
-      .sort((a, b) => a.course_name.localeCompare(b.course_name, 'id'))
-      .map((group) => ({
-        ...group,
-        items: [...group.items].sort(
-          (a, b) =>
-            (a.meeting_number ?? 999) - (b.meeting_number ?? 999) ||
-            a.title.localeCompare(b.title, 'id'),
-        ),
-      }))
-  }, [filteredMaterials])
+    return Array.from(courseMap.values()).sort((a, b) => a.name.localeCompare(b.name, 'id'))
+  }, [courses, allMaterials])
 
-  const manualCount = materials.filter((item) => item.sourceType === 'manual').length
-  const hasFilters = Boolean(search.trim() || courseFilter !== 'all')
+  // Filtered courses for level 1 (search)
+  const filteredCourses = useMemo(() => {
+    const query = debouncedSearch.trim().toLowerCase()
+    if (!query) return courseCards
 
-  const resetFilters = () => {
-    setSearch('')
-    setCourseFilter('all')
-  }
+    return courseCards.filter((c) => {
+      return [c.name, c.code, c.lecturer, c.class_name]
+        .filter(Boolean)
+        .some((val) => String(val).toLowerCase().includes(query))
+    })
+  }, [courseCards, debouncedSearch])
 
-  const openCreate = () => {
+  // Currently selected course object
+  const selectedCourse = useMemo(() => {
+    if (!selectedCourseKey) return null
+    return courseCards.find((c) => c.key === selectedCourseKey) || null
+  }, [courseCards, selectedCourseKey])
+
+  // Available meetings for selected course
+  const courseMeetings = useMemo(() => {
+    if (!selectedCourse) return []
+    const meetings = new Set()
+    selectedCourse.items.forEach((item) => {
+      if (item.meeting_number) meetings.add(Number(item.meeting_number))
+    })
+    return Array.from(meetings).sort((a, b) => a - b)
+  }, [selectedCourse])
+
+  // Filtered materials inside selected course
+  const selectedCourseMaterials = useMemo(() => {
+    if (!selectedCourse) return []
+    let list = [...selectedCourse.items]
+
+    // Meeting filter
+    if (selectedMeeting !== 'all') {
+      list = list.filter((item) => Number(item.meeting_number) === Number(selectedMeeting))
+    }
+
+    // Search query within course
+    const query = debouncedSearch.trim().toLowerCase()
+    if (query) {
+      list = list.filter((item) => {
+        return [item.title, item.description, item.lecturer]
+          .filter(Boolean)
+          .some((val) => String(val).toLowerCase().includes(query))
+      })
+    }
+
+    // Sort by meeting number, then title
+    return list.sort(
+      (a, b) =>
+        (a.meeting_number ?? 999) - (b.meeting_number ?? 999) ||
+        a.title.localeCompare(b.title, 'id'),
+    )
+  }, [selectedCourse, selectedMeeting, debouncedSearch])
+
+  const manualCount = allMaterials.filter((item) => item.sourceType === 'manual').length
+
+  const openCreate = (courseId = '') => {
     setEditingMaterial(null)
+    setFormCourseId(courseId || selectedCourse?.course_id || '')
     setFormOpen(true)
   }
 
   const openEdit = (item) => {
     setEditingMaterial(item.record || null)
+    setFormCourseId(item.course_id ? String(item.course_id) : '')
     setFormOpen(true)
   }
 
   const closeForm = () => {
     setFormOpen(false)
+    setFormCourseId('')
     setEditingMaterial(null)
   }
 
@@ -181,6 +244,12 @@ export default function MaterialsPage() {
     }
   }
 
+  const backToCourses = () => {
+    setSelectedCourseKey('')
+    setSelectedMeeting('all')
+    setSearch('')
+  }
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -188,14 +257,14 @@ export default function MaterialsPage() {
         title="Materi Perkuliahan"
         description={
           isStaff
-            ? 'Kelola semua bahan ajar, tambahkan materi baru, dan bagikan tautannya langsung kepada mahasiswa.'
-            : 'Semua modul, slide, silabus, dan bahan ajar dari dosen dalam satu halaman khusus. Buka materi langsung tanpa harus menelusuri daftar tugas.'
+            ? 'Kelola materi per mata kuliah, tambahkan bahan ajar, dan bagikan tautannya langsung kepada mahasiswa.'
+            : 'Pilih mata kuliah untuk melihat seluruh modul, slide, silabus, dan materi pembelajaran.'
         }
         actions={
           isStaff ? (
-            <Button onClick={openCreate}>
+            <Button onClick={() => openCreate(selectedCourse?.course_id || '')}>
               <Plus className="h-4 w-4" aria-hidden="true" />
-              Tambah materi
+              <span>Tambah materi</span>
             </Button>
           ) : null
         }
@@ -203,217 +272,273 @@ export default function MaterialsPage() {
 
       <MascotGif mascot="membaca" variant="banner" className="psy-page-mascot" />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      {/* Top Stat Cards */}
+      <div className="grid gap-3.5 sm:grid-cols-3">
         <Card className="flex items-center gap-3 p-4">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
             <BookOpen className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <p className="text-[11px] font-medium text-slate-500">Total materi</p>
-            <p className="text-lg font-bold text-slate-900">{materials.length}</p>
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total materi</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">{allMaterials.length}</p>
           </div>
         </Card>
         <Card className="flex items-center gap-3 p-4">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400">
             <GraduationCap className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <p className="text-[11px] font-medium text-slate-500">Mata kuliah</p>
-            <p className="text-lg font-bold text-slate-900">{courseOptions.length}</p>
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Mata kuliah</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">{courseCards.length}</p>
           </div>
         </Card>
         <Card className="flex items-center gap-3 p-4">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400">
             <Pencil className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <p className="text-[11px] font-medium text-slate-500">Materi dosen</p>
-            <p className="text-lg font-bold text-slate-900">{manualCount}</p>
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Materi dosen</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">{manualCount}</p>
           </div>
         </Card>
       </div>
 
-      <Card className="space-y-3 p-4">
-        <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_18rem]">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Cari judul materi, mata kuliah, atau dosen..."
-            label="Cari materi perkuliahan"
-          />
-          <div>
-            <label htmlFor="materials-course-filter" className="sr-only">
-              Filter materi berdasarkan mata kuliah
-            </label>
-            <Select
-              id="materials-course-filter"
-              value={courseFilter}
-              onChange={(event) => setCourseFilter(event.target.value)}
-            >
-              <option value="all">Semua mata kuliah ({courseOptions.length})</option>
-              {courseOptions.map((course) => (
-                <option key={course.key} value={course.key}>
-                  {course.code ? `${course.code} · ` : ''}
-                  {course.name}
-                </option>
-              ))}
-            </Select>
-          </div>
-        </div>
-
-        {!loading ? (
-          <p className="text-xs text-slate-500" aria-live="polite">
-            Menampilkan {filteredMaterials.length} dari {materials.length} materi
-          </p>
-        ) : null}
-      </Card>
-
       {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
           {[0, 1, 2, 3, 4, 5].map((item) => (
-            <Skeleton key={item} className="h-56" />
+            <Skeleton key={item} className="h-44 rounded-2xl" />
           ))}
         </div>
-      ) : groupedMaterials.length === 0 ? (
-        <EmptyState
-          icon={BookOpen}
-          title={hasFilters ? 'Tidak ada materi yang cocok' : 'Belum ada materi'}
-          description={
-            hasFilters
-              ? 'Coba ubah kata kunci atau pilih mata kuliah lain untuk menemukan materi.'
-              : isStaff
-                ? 'Belum ada materi. Tambahkan materi pertama agar dapat diakses mahasiswa.'
-                : 'Materi akan muncul di sini setelah dosen menambahkan materi baru atau tautan bahan ajar pada mata kuliah dan jadwal.'
-          }
-          action={
-            hasFilters ? (
-              <Button variant="secondary" size="sm" onClick={resetFilters}>
-                Reset filter
+      ) : selectedCourse ? (
+        /* ================================================================ */
+        /* LEVEL 2: DETAIL MATERI MATA KULIAH TERPILIH                      */
+        /* ================================================================ */
+        <div className="space-y-4 animate-fade-in">
+          {/* Header Bar: Tombol Kembali & Info Mata Kuliah */}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-xs">
+            <div className="flex min-w-0 items-center gap-3">
+              <Button variant="secondary" size="sm" onClick={backToCourses} className="shrink-0">
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>Kembali</span>
               </Button>
-            ) : isStaff ? (
-              <Button size="sm" onClick={openCreate}>
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Tambah materi
-              </Button>
-            ) : null
-          }
-        />
-      ) : (
-        <div className="space-y-6">
-          {groupedMaterials.map((group) => {
-            const sectionId = `materials-course-${String(group.key).replace(/[^a-zA-Z0-9_-]/g, '-')}`
-
-            return (
-              <section key={group.key} aria-labelledby={sectionId}>
-                <div className="mb-2.5 flex items-center gap-3">
-                  <h2 id={sectionId} className="text-sm font-bold text-slate-900">
-                    {group.course_code ? `${group.course_code} · ` : ''}
-                    {group.course_name}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  {selectedCourse.code && <Badge variant="neutral">{selectedCourse.code}</Badge>}
+                  <h2 className="text-base sm:text-lg font-bold leading-tight text-slate-900 dark:text-white truncate">
+                    {selectedCourse.name}
                   </h2>
-                  <span className="h-px flex-1 bg-slate-200" aria-hidden="true" />
-                  <span className="text-[11px] text-slate-400">
-                    {group.items.length} materi
-                  </span>
                 </div>
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 truncate">
+                  {[
+                    selectedCourse.lecturer ? `Dosen: ${selectedCourse.lecturer}` : null,
+                    selectedCourse.class_name ? `Kelas ${selectedCourse.class_name}` : null,
+                    selectedCourse.credits ? `${selectedCourse.credits} SKS` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+              </div>
+            </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {group.items.map((item) => {
-                    const SourceIcon = sourceIcons[item.sourceType] || BookOpen
+            <div className="flex items-center gap-2">
+              <Badge variant="info">{selectedCourse.materials_count} materi</Badge>
+              {isStaff && (
+                <Button size="sm" onClick={() => openCreate(selectedCourse.course_id || '')}>
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Tambah Materi</span>
+                </Button>
+              )}
+            </div>
+          </div>
 
-                    return (
-                      <Card
-                        key={item.id}
-                        className="group flex flex-col justify-between p-5 transition hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md"
+          {/* Search & Filter Pertemuan Toolbar */}
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="w-full sm:max-w-md">
+                <SearchInput
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Cari materi pertemuan ini..."
+                />
+              </div>
+
+              {courseMeetings.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 text-xs overflow-x-auto pb-1">
+                  <span className="font-semibold text-slate-400 shrink-0">Pertemuan:</span>
+                  <FilterChip
+                    active={selectedMeeting === 'all'}
+                    onClick={() => setSelectedMeeting('all')}
+                  >
+                    Semua
+                  </FilterChip>
+                  {courseMeetings.map((num) => (
+                    <FilterChip
+                      key={num}
+                      active={Number(selectedMeeting) === num}
+                      onClick={() => setSelectedMeeting(String(num))}
+                    >
+                      P-{num}
+                    </FilterChip>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Grid Materi untuk Mata Kuliah ini */}
+          {selectedCourseMaterials.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center max-w-lg mx-auto">
+              <MascotGif mascot="berpikir" variant="empty" className="mx-auto mb-2" />
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                {search || selectedMeeting !== 'all'
+                  ? 'Tidak ada materi yang sesuai'
+                  : 'Belum ada materi untuk mata kuliah ini'}
+              </h3>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                {search || selectedMeeting !== 'all'
+                  ? 'Coba ubah kata kunci pencarian atau pilih pertemuan lain.'
+                  : isStaff
+                    ? 'Tambahkan materi modul atau tautan Google Drive pertama untuk mahasiswa.'
+                    : 'Materi akan tampil di sini setelah dosen mengunggah bahan ajar perkuliahan.'}
+              </p>
+              {isStaff && (
+                <div className="mt-4">
+                  <Button size="sm" onClick={() => openCreate(selectedCourse.course_id || '')}>
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Tambah Materi Pertama</span>
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+              {selectedCourseMaterials.map((item) => {
+                const SourceIcon = sourceIcons[item.sourceType] || BookOpen
+                const isManual = item.sourceType === 'manual'
+
+                return (
+                  <Card
+                    key={item.id}
+                    className="group flex flex-col justify-between p-4 transition duration-200 hover:-translate-y-0.5 hover:border-teal-400 hover:shadow-md"
+                  >
+                    <div>
+                      {/* Top Badges */}
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-md bg-teal-50 dark:bg-teal-950/60 px-2 py-0.5 text-[10px] font-bold text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                          <SourceIcon className="h-3 w-3" />
+                          <span>{sourceLabels[item.sourceType] || 'Materi'}</span>
+                        </span>
+
+                        {item.meeting_number && (
+                          <span className="rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 text-[10px] font-bold">
+                            Pertemuan {item.meeting_number}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Title */}
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug group-hover:text-teal-700 dark:group-hover:text-teal-400 transition-colors line-clamp-2">
+                        {item.title}
+                      </h3>
+
+                      {/* Description */}
+                      {item.description && (
+                        <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                          {item.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Bottom Actions */}
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-teal-700 hover:bg-teal-600 text-white px-3.5 py-1.5 text-xs font-semibold transition shadow-2xs"
                       >
-                        <div>
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold text-teal-700">
-                              <SourceIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                              {item.sourceLabel}
-                            </span>
-                            {item.meeting_number ? (
-                              <Badge variant="neutral">Pertemuan {item.meeting_number}</Badge>
-                            ) : null}
-                          </div>
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        <span>Buka Materi</span>
+                      </a>
 
-                          <h3 className="mt-3 text-base font-semibold leading-snug text-slate-900 line-clamp-2 group-hover:text-teal-700">
-                            {item.title}
-                          </h3>
-
-                          <p className="mt-1 text-xs font-medium text-slate-500">
-                            {item.course_code ? `${item.course_code} · ` : ''}
-                            {item.course_name}
-                          </p>
-
-                          {item.lecturer ? (
-                            <p className="mt-1.5 truncate text-xs text-slate-500">
-                              Dosen: <span className="font-semibold text-slate-700">{item.lecturer}</span>
-                            </p>
-                          ) : null}
-
-                          <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
-                            {item.description}
-                          </p>
-                        </div>
-
-                        <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3.5">
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Buka materi ${item.title}`}
-                            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-teal-700 px-3.5 py-2 text-xs font-semibold text-white shadow-2xs transition hover:bg-teal-600"
+                      {/* Staff Edit & Delete if manual material */}
+                      {isStaff && isManual && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(item)}
+                            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                            title="Edit materi"
                           >
-                            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                            Buka materi
-                          </a>
-                          {isStaff && item.sourceType === 'manual' && item.record ? (
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => openEdit(item)}
-                                aria-label={`Edit materi ${item.title}`}
-                                title="Edit materi"
-                              >
-                                <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => handleDelete(item)}
-                                aria-label={`Hapus materi ${item.title}`}
-                                title="Hapus materi"
-                                className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <span className="text-[11px] font-medium text-slate-400">
-                              {sourceLabels[item.sourceType] || 'Materi perkuliahan'}
-                            </span>
-                          )}
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(item)}
+                            className="rounded-lg p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition cursor-pointer"
+                            title="Hapus materi"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </div>
-                      </Card>
-                    )
-                  })}
-                </div>
-              </section>
-            )
-          })}
+                      )}
+                    </div>
+                  </Card>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ================================================================ */
+        /* LEVEL 1: GRID KARTU MATA KULIAH (PERSIS SEPERTI DI KELOMPOK)     */
+        /* ================================================================ */
+        <div className="space-y-4">
+          <Card className="p-3.5">
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Cari mata kuliah untuk melihat materi..."
+            />
+          </Card>
+
+          {filteredCourses.length === 0 ? (
+            <EmptyState
+              icon={BookOpen}
+              title="Mata kuliah tidak ditemukan"
+              description="Coba gunakan kata kunci pencarian yang lain."
+              action={
+                <Button variant="secondary" size="sm" onClick={() => setSearch('')}>
+                  Reset pencarian
+                </Button>
+              }
+            />
+          ) : (
+            <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
+              {filteredCourses.map((course) => (
+                <MaterialCourseCard
+                  key={course.key}
+                  course={course}
+                  onSelect={(key) => {
+                    setSelectedCourseKey(key)
+                    setSearch('')
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {isStaff ? (
-        <MaterialFormModal
-          open={formOpen}
-          material={editingMaterial}
-          courses={courses || []}
-          onClose={closeForm}
-          onSaved={refreshMaterials}
-        />
-      ) : null}
+      {/* Modal Form Tambah / Edit Materi */}
+      <MaterialFormModal
+        open={formOpen}
+        material={editingMaterial}
+        courses={courses || []}
+        initialCourseId={formCourseId}
+        onClose={closeForm}
+        onSaved={refreshMaterials}
+      />
     </div>
   )
 }

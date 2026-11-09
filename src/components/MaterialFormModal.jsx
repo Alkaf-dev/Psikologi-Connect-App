@@ -18,7 +18,14 @@ function normalizeUrl(value) {
   return `https://${raw}`
 }
 
-export default function MaterialFormModal({ open, material, courses = [], onClose, onSaved }) {
+export default function MaterialFormModal({
+  open,
+  material,
+  courses = [],
+  initialCourseId = '',
+  onClose,
+  onSaved,
+}) {
   const { toast } = useToast()
   const formId = useId()
   const [values, setValues] = useState(emptyValues)
@@ -28,14 +35,14 @@ export default function MaterialFormModal({ open, material, courses = [], onClos
   useEffect(() => {
     if (!open) return
     setValues({
-      course_id: material?.course_id || '',
+      course_id: material?.course_id || initialCourseId || '',
       title: material?.title || '',
       description: material?.description || '',
       url: material?.url || '',
       meeting_number: material?.meeting_number ? String(material.meeting_number) : '',
     })
     setErrors({})
-  }, [open, material])
+  }, [open, material, initialCourseId])
 
   const updateValue = (name, value) => {
     setValues((current) => ({ ...current, [name]: value }))

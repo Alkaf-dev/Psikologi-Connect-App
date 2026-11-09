@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
+  ArrowLeft,
   Bell,
   BookOpen,
   CalendarClock,
@@ -35,6 +36,7 @@ import { formatDate, formatDateTime } from '../../lib/utils'
 import { Button, Modal, SearchInput, Skeleton } from '../../components/ui'
 import { getMascot } from '../../lib/mascots'
 import { buildLearningMaterials } from '../../lib/materials'
+import MaterialCourseCard from '../../components/MaterialCourseCard'
 
 function MascotCharacter({ name, className = 'h-14 w-auto object-contain', loading = 'lazy' }) {
   const asset = getMascot(name)
@@ -223,6 +225,7 @@ export default function DisplayPage() {
   const [taskSearch, setTaskSearch] = useState('')
 
   // Filters for Materials tab
+  const [selectedMaterialCourseKey, setSelectedMaterialCourseKey] = useState('')
   const [materialFilterCourse, setMaterialFilterCourse] = useState('all')
   const [materialSearch, setMaterialSearch] = useState('')
 
@@ -491,23 +494,77 @@ export default function DisplayPage() {
     [allTasks, rawCourses, rawSchedules, rawMaterials],
   )
 
+  // Map courses with material counts (like Kelompok)
+  const materialCourseCards = useMemo(() => {
+    const courseMap = new Map()
+    const courseList = Array.isArray(rawCourses) ? rawCourses : []
+
+    courseList.forEach((c) => {
+      const key = String(c.id || c.name || '')
+      if (!key) return
+      courseMap.set(key, {
+        key,
+        id: String(c.id || ''),
+        name: c.name || 'Mata Kuliah',
+        code: c.code || '',
+        lecturer: c.lecturer || '',
+        class_name: c.class_name || '',
+        items: [],
+        materials_count: 0,
+      })
+    })
+
+    materialsList.forEach((item) => {
+      const key = String(item.course_id || item.course_name || '')
+      if (!key) return
+
+      if (!courseMap.has(key)) {
+        courseMap.set(key, {
+          key,
+          id: String(item.course_id || ''),
+          name: item.course_name || 'Mata Kuliah',
+          code: item.course_code || '',
+          lecturer: item.lecturer || '',
+          class_name: '',
+          items: [],
+          materials_count: 0,
+        })
+      }
+
+      const entry = courseMap.get(key)
+      entry.items.push(item)
+      entry.materials_count += 1
+    })
+
+    return Array.from(courseMap.values()).sort((a, b) => a.name.localeCompare(b.name, 'id'))
+  }, [rawCourses, materialsList])
+
+  const selectedMaterialCourse = useMemo(() => {
+    if (!selectedMaterialCourseKey) return null
+    return materialCourseCards.find((c) => c.key === selectedMaterialCourseKey) || null
+  }, [materialCourseCards, selectedMaterialCourseKey])
+
   // Filtered materials
   const displayedMaterials = useMemo(() => {
-    return materialsList.filter((item) => {
-      if (materialFilterCourse !== 'all' && item.course_id !== String(materialFilterCourse)) {
-        return false
-      }
-      if (materialSearch.trim()) {
-        const query = materialSearch.toLowerCase()
+    let list = selectedMaterialCourse ? selectedMaterialCourse.items : materialsList
+
+    if (materialFilterCourse !== 'all' && !selectedMaterialCourse) {
+      list = list.filter((item) => item.course_id === String(materialFilterCourse))
+    }
+
+    if (materialSearch.trim()) {
+      const query = materialSearch.toLowerCase()
+      list = list.filter((item) => {
         const matchTitle = (item.title || '').toLowerCase().includes(query)
         const matchCourse = (item.course_name || '').toLowerCase().includes(query)
         const matchCode = (item.course_code || '').toLowerCase().includes(query)
         const matchDesc = (item.description || '').toLowerCase().includes(query)
-        if (!matchTitle && !matchCourse && !matchCode && !matchDesc) return false
-      }
-      return true
-    })
-  }, [materialsList, materialFilterCourse, materialSearch])
+        return matchTitle || matchCourse || matchCode || matchDesc
+      })
+    }
+
+    return list
+  }, [materialsList, selectedMaterialCourse, materialFilterCourse, materialSearch])
 
   const timeString = currentTime.toLocaleTimeString('id-ID', {
     hour: '2-digit',
@@ -1384,120 +1441,170 @@ export default function DisplayPage() {
               </div>
             </div>
 
-            {/* Search and Course Filter Row */}
-            <div className="grid gap-2.5 sm:grid-cols-3">
-              <div className="sm:col-span-2">
-                <SearchInput
-                  value={materialSearch}
-                  onChange={setMaterialSearch}
-                  placeholder="Cari modul, materi pertemuan, atau mata kuliah..."
-                  label="Cari materi kuliah"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="material-course-filter" className="sr-only">
-                  Filter materi berdasarkan mata kuliah
-                </label>
-                <select
-                  id="material-course-filter"
-                  value={materialFilterCourse}
-                  onChange={(e) => setMaterialFilterCourse(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs focus:border-teal-500"
-                >
-                  <option value="all">Semua Mata Kuliah ({availableCourses.length})</option>
-                  {availableCourses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.code ? `${c.code} · ` : ''}{c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Materials Grid */}
-            {displayedMaterials.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center max-w-lg mx-auto">
-                <MascotCharacter name="berpikir" className="h-20 w-auto mx-auto mb-3" />
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Tidak Ada Materi Ditemukan
-                </h3>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                  {materialSearch || materialFilterCourse !== 'all'
-                    ? 'Coba ganti kata kunci pencarian atau pilih mata kuliah lainnya.'
-                    : 'Belum ada berkas materi digital atau tautan drive yang ditautkan untuk mata kuliah ini. Bahan ajar dibagikan secara luring di kelas.'}
-                </p>
-              </div>
-            ) : (
-              <div className={`grid gap-3.5 ${isMobileView ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
-                {displayedMaterials.map((item) => (
-                  <div
-                    key={item.id}
-                    className="group flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-500/50 hover:shadow-md"
-                  >
-                    <div>
-                      {/* Top Source Badge */}
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="inline-flex items-center gap-1 rounded-md bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800 px-2 py-0.5 text-[11px] font-bold">
-                          <FolderOpen className="h-3 w-3" aria-hidden="true" />
-                          <span>{item.sourceLabel}</span>
-                        </span>
-
-                        {item.meeting_number && (
-                          <span className="rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 text-[11px] font-bold">
-                            Pertemuan {item.meeting_number}
+            {/* Level 2: Detail Materi Mata Kuliah Terpilih */}
+            {selectedMaterialCourse ? (
+              <div className="space-y-4 animate-fade-in">
+                {/* Back button & Course banner */}
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-xs">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedMaterialCourseKey('')
+                        setMaterialSearch('')
+                      }}
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-3.5 py-2 text-xs font-semibold transition cursor-pointer"
+                    >
+                      <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span>Kembali ke Mata Kuliah</span>
+                    </button>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        {selectedMaterialCourse.code && (
+                          <span className="rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 text-[10px] font-bold">
+                            {selectedMaterialCourse.code}
                           </span>
                         )}
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                          {selectedMaterialCourse.name}
+                        </h3>
                       </div>
-
-                      {/* Title */}
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 group-hover:text-teal-700 dark:group-hover:text-teal-400 transition-colors">
-                        {item.title}
-                      </h3>
-
-                      <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        {item.course_code ? `${item.course_code} · ` : ''}{item.course_name}
+                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 truncate">
+                        {[
+                          selectedMaterialCourse.lecturer ? `Dosen: ${selectedMaterialCourse.lecturer}` : null,
+                          selectedMaterialCourse.class_name ? `Kelas ${selectedMaterialCourse.class_name}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </p>
-
-                      {item.lecturer && (
-                        <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-300 truncate">
-                          Dosen: <strong>{item.lecturer}</strong>
-                        </p>
-                      )}
-
-                      {/* Description */}
-                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
-                        {item.description}
-                      </p>
-                    </div>
-
-                    {/* Bottom Action Button */}
-                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-teal-700 hover:bg-teal-600 text-white px-3.5 py-2 text-xs font-semibold transition shadow-2xs"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                        <span>Buka / Unduh Materi</span>
-                      </a>
-
-                      {item.relatedTask && (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedTaskDetail(item.relatedTask)}
-                          className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2.5 py-2 text-xs font-medium transition cursor-pointer"
-                          title="Lihat tugas terkait materi ini"
-                          aria-haspopup="dialog"
-                        >
-                          <Info className="h-3 w-3" aria-hidden="true" />
-                          <span>Tugas</span>
-                        </button>
-                      )}
                     </div>
                   </div>
-                ))}
+
+                  <span className="inline-flex items-center rounded-full bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 px-3 py-1 text-xs font-semibold border border-teal-200 dark:border-teal-800">
+                    {displayedMaterials.length} materi tersedia
+                  </span>
+                </div>
+
+                {/* Materials of Selected Course */}
+                {displayedMaterials.length === 0 ? (
+                  <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center max-w-lg mx-auto">
+                    <MascotCharacter name="berpikir" className="h-20 w-auto mx-auto mb-3" />
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      Belum Ada Materi untuk Mata Kuliah Ini
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      Materi pembelajaran akan ditampilkan di sini saat dosen mengunggah berkas perkuliahan.
+                    </p>
+                  </div>
+                ) : (
+                  <div className={`grid gap-3.5 ${isMobileView ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
+                    {displayedMaterials.map((item) => (
+                      <div
+                        key={item.id}
+                        className="group flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-500/50 hover:shadow-md"
+                      >
+                        <div>
+                          {/* Top Source Badge */}
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className="inline-flex items-center gap-1 rounded-md bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800 px-2 py-0.5 text-[11px] font-bold">
+                              <FolderOpen className="h-3 w-3" aria-hidden="true" />
+                              <span>{item.sourceLabel}</span>
+                            </span>
+
+                            {item.meeting_number && (
+                              <span className="rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 text-[11px] font-bold">
+                                Pertemuan {item.meeting_number}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Title */}
+                          <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 group-hover:text-teal-700 dark:group-hover:text-teal-400 transition-colors">
+                            {item.title}
+                          </h3>
+
+                          {/* Description */}
+                          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                            {item.description}
+                          </p>
+                        </div>
+
+                        {/* Bottom Action Button */}
+                        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-teal-700 hover:bg-teal-600 text-white px-3.5 py-2 text-xs font-semibold transition shadow-2xs"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span>Buka / Unduh Materi</span>
+                          </a>
+
+                          {item.relatedTask && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedTaskDetail(item.relatedTask)}
+                              className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2.5 py-2 text-xs font-medium transition cursor-pointer"
+                              title="Lihat tugas terkait materi ini"
+                              aria-haspopup="dialog"
+                            >
+                              <Info className="h-3 w-3" aria-hidden="true" />
+                              <span>Tugas</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Level 1: Grid Kartu Mata Kuliah (seperti Kelompok) */
+              <div className="space-y-4">
+                <div className="w-full">
+                  <SearchInput
+                    value={materialSearch}
+                    onChange={setMaterialSearch}
+                    placeholder="Cari mata kuliah untuk melihat materi..."
+                    label="Cari mata kuliah"
+                  />
+                </div>
+
+                {materialCourseCards.length === 0 ? (
+                  <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center max-w-lg mx-auto">
+                    <MascotCharacter name="berpikir" className="h-20 w-auto mx-auto mb-3" />
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      Mata Kuliah Tidak Ditemukan
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      Coba gunakan kata kunci pencarian yang lain.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+                    {materialCourseCards
+                      .filter((c) => {
+                        if (!materialSearch.trim()) return true
+                        const q = materialSearch.toLowerCase()
+                        return (
+                          c.name.toLowerCase().includes(q) ||
+                          c.code.toLowerCase().includes(q) ||
+                          c.lecturer.toLowerCase().includes(q)
+                        )
+                      })
+                      .map((course) => (
+                        <MaterialCourseCard
+                          key={course.key}
+                          course={course}
+                          onSelect={(key) => {
+                            setSelectedMaterialCourseKey(key)
+                            setMaterialSearch('')
+                          }}
+                        />
+                      ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
