@@ -36,6 +36,10 @@
   object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
+  image-rendering: auto;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .psy-mascot-gif--login .psy-mascot-gif__image {
@@ -166,6 +170,10 @@
   filter: drop-shadow(0 10px 16px rgba(15, 23, 42, 0.14));
   user-select: none;
   -webkit-user-drag: none;
+  image-rendering: auto;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .psy-mascot-launcher {

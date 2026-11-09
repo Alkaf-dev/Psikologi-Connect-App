@@ -11,3 +11,4 @@ bin/
 demo-sheets.json
 demo-sheets.backup.json
 *.sqlite
+backup_mascots_lowres/
