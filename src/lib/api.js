@@ -73,6 +73,14 @@ async function parseBody(response) {
   }
 }
 
+const NETWORK_RETRY_DELAYS = [600, 1500]
+const RETRYABLE_STATUSES = new Set([502, 503, 504])
+const REQUEST_TIMEOUT_MS = 20000
+
+function sleep(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms))
+}
+
 export async function request(path, options = {}) {
   const {
     method = 'GET',
@@ -82,6 +90,7 @@ export async function request(path, options = {}) {
     headers = {},
   } = options
 
+  const url = buildUrl(path, params)
   const token = session.getToken()
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
 
@@ -98,17 +107,46 @@ export async function request(path, options = {}) {
     requestHeaders.Authorization = `Bearer ${token}`
   }
 
-  let response
+  const canRetry = method === 'GET' || method === 'HEAD'
+  const maxAttempts = canRetry ? NETWORK_RETRY_DELAYS.length + 1 : 1
+  let response = null
 
-  try {
-    response = await fetch(buildUrl(path, params), {
-      method,
-      headers: requestHeaders,
-      ...(body !== undefined ? { body: isFormData ? body : JSON.stringify(body) } : {}),
-    })
-  } catch {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    response = null
+
+    const controller = canRetry && typeof AbortController !== 'undefined' ? new AbortController() : null
+    const timeoutId = controller
+      ? window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+      : null
+
+    try {
+      response = await fetch(url, {
+        method,
+        headers: requestHeaders,
+        ...(controller ? { signal: controller.signal } : {}),
+        ...(body !== undefined ? { body: isFormData ? body : JSON.stringify(body) } : {}),
+      })
+    } catch {
+      response = null
+    } finally {
+      if (timeoutId !== null) window.clearTimeout(timeoutId)
+    }
+
+    const transientStatus = response !== null && RETRYABLE_STATUSES.has(response.status)
+
+    if ((response === null || transientStatus) && attempt < maxAttempts) {
+      await sleep(NETWORK_RETRY_DELAYS[attempt - 1])
+      continue
+    }
+
+    break
+  }
+
+  if (!response) {
     throw new ApiError(
-      'Tidak dapat terhubung ke server. Pastikan API berjalan di ' + API_BASE_URL,
+      'Tidak dapat terhubung ke server. Periksa koneksi internet Anda, lalu coba lagi. (' +
+        API_BASE_URL +
+        ')',
       0,
     )
   }
@@ -116,11 +154,17 @@ export async function request(path, options = {}) {
   const payload = await parseBody(response)
 
   if (!response.ok) {
+    const retryAfter = Number(response.headers.get('Retry-After'))
+
     const message =
-      payload?.message ||
-      (response.status === 401
-        ? 'Sesi Anda telah berakhir. Silakan masuk kembali.'
-        : 'Permintaan tidak dapat diproses.')
+      response.status === 429
+        ? `Terlalu banyak permintaan. Silakan coba lagi${
+            Number.isFinite(retryAfter) && retryAfter > 0 ? ` dalam ${retryAfter} detik` : ' beberapa saat lagi'
+          }.`
+        : payload?.message ||
+          (response.status === 401
+            ? 'Sesi Anda telah berakhir. Silakan masuk kembali.'
+            : 'Permintaan tidak dapat diproses.')
 
     if (response.status === 401 && auth && token) {
       window.dispatchEvent(new CustomEvent('psikologi:unauthorized'))
