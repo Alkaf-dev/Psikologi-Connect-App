@@ -87,6 +87,39 @@ const COVER_PRESETS = [
   },
 ]
 
+async function compressCoverImage(file, { maxDimension = 1920, quality = 0.85 } = {}) {
+  const sourceDataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(new Error('Gagal membaca file gambar.'))
+    reader.readAsDataURL(file)
+  })
+
+  const image = await new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error('Gagal memuat file gambar.'))
+    img.src = sourceDataUrl
+  })
+
+  const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight))
+  const width = Math.max(1, Math.round(image.naturalWidth * scale))
+  const height = Math.max(1, Math.round(image.naturalHeight * scale))
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, width, height)
+  ctx.drawImage(image, 0, 0, width, height)
+
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality))
+  if (!blob) throw new Error('Gagal mengompresi gambar.')
+
+  return { blob, dataUrl: canvas.toDataURL('image/jpeg', quality) }
+}
+
 export default function ProfilePage() {
   const { user, token, updateLocalUser, isMultiRole } = useAuth()
   const { toast, confirm } = useToast()
@@ -234,10 +267,12 @@ export default function ProfilePage() {
       } catch {}
 
       setShowAvatarCropModal(false)
-      toast.success('Foto profil disimpan', 'Foto profil berhasil disesuaikan dan diterapkan.')
 
       canvas.toBlob(async (blob) => {
-        if (!blob) return
+        if (!blob) {
+          toast.success('Foto profil disimpan', 'Foto profil berhasil disesuaikan dan diterapkan.')
+          return
+        }
         const formData = new FormData()
         formData.append('avatar', blob, 'avatar.jpg')
         try {
@@ -245,7 +280,13 @@ export default function ProfilePage() {
           if (res?.data?.avatar_url) {
             updateLocalUser({ ...user, avatar_url: res.data.avatar_url })
           }
-        } catch {}
+          toast.success('Foto profil disimpan', 'Foto profil berhasil disesuaikan dan diterapkan.')
+        } catch (error) {
+          toast.error(
+            'Gagal menyimpan foto ke server',
+            'Foto hanya tersimpan di perangkat ini. ' + errorMessage(error, 'Silakan coba unggah ulang.'),
+          )
+        }
       }, 'image/jpeg', 0.92)
     } catch {
       toast.error('Gagal memproses foto', 'Terjadi kesalahan saat memotong foto.')
@@ -395,42 +436,49 @@ export default function ProfilePage() {
       return
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Ukuran terlalu besar', 'Maksimal ukuran foto sampul adalah 5 MB.')
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error('Ukuran terlalu besar', 'Maksimal ukuran foto sampul adalah 15 MB.')
       return
     }
 
     setUploadingCover(true)
     setShowCoverMenu(false)
-    const reader = new FileReader()
-    reader.onload = async () => {
-      const dataUrl = reader.result
-      setCoverUrl(dataUrl)
-      setCoverPosX(50)
-      setCoverPosY(50)
-      setCoverZoom(1)
-      try {
-        localStorage.setItem(`psikologi_cover_${user?.id || user?.email}`, dataUrl)
-        localStorage.setItem(`psikologi_cover_pos_x_${user?.id || user?.email}`, '50')
-        localStorage.setItem(`psikologi_cover_pos_${user?.id || user?.email}`, '50')
-        localStorage.setItem(`psikologi_cover_zoom_${user?.id || user?.email}`, '1')
-      } catch {}
 
-      const formData = new FormData()
-      formData.append('cover', file)
+    const uploadCover = async () => {
       try {
+        const { blob, dataUrl } = await compressCoverImage(file)
+        setCoverUrl(dataUrl)
+        setCoverPosX(50)
+        setCoverPosY(50)
+        setCoverZoom(1)
+
+        try {
+          localStorage.setItem(`psikologi_cover_${user?.id || user?.email}`, dataUrl)
+          localStorage.setItem(`psikologi_cover_pos_x_${user?.id || user?.email}`, '50')
+          localStorage.setItem(`psikologi_cover_pos_${user?.id || user?.email}`, '50')
+          localStorage.setItem(`psikologi_cover_zoom_${user?.id || user?.email}`, '1')
+        } catch {}
+
+        const formData = new FormData()
+        formData.append('cover', blob, 'cover.jpg')
         const res = await api.upload('/auth/cover', formData)
         if (res?.data?.cover_url) {
           setCoverUrl(res.data.cover_url)
           updateLocalUser({ ...user, cover_url: res.data.cover_url })
         }
-      } catch {}
-
-      toast.success('Sampul diperbarui', 'Foto sampul berhasil dipasang.')
-      setUploadingCover(false)
-      if (coverInputRef.current) coverInputRef.current.value = ''
+        toast.success('Sampul diperbarui', 'Foto sampul berhasil dipasang.')
+      } catch (error) {
+        toast.error(
+          'Gagal mengunggah sampul',
+          errorMessage(error, 'Silakan coba lagi dengan file yang lebih kecil.'),
+        )
+      } finally {
+        setUploadingCover(false)
+        if (coverInputRef.current) coverInputRef.current.value = ''
+      }
     }
-    reader.readAsDataURL(file)
+
+    uploadCover()
   }
 
   const handleSelectPresetCover = async (presetUrl) => {
