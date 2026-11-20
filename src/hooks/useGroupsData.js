@@ -2,7 +2,8 @@ import { useCallback, useMemo } from 'react'
 import { useApiData } from './useApiData'
 import { buildCourseCards } from '../lib/groupHelpers'
 
-export function useGroupsData(mode) {
+export function useGroupsData(mode, options = {}) {
+  const { enabled = true } = options
   const isStaff = mode === 'staff'
 
   const courseParams = useMemo(
@@ -23,13 +24,13 @@ export function useGroupsData(mode) {
   const coursesState = useApiData(
     isStaff ? '/staff/courses' : '/student/courses',
     courseParams,
-    { allPages: true },
+    { allPages: true, enabled },
   )
 
   const groupsState = useApiData(
     isStaff ? '/staff/groups' : '/student/groups',
     groupParams,
-    { allPages: true },
+    { allPages: true, enabled },
   )
 
   const courses = coursesState.data || []

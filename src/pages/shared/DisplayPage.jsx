@@ -32,11 +32,14 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useApiData } from '../../hooks/useApiData'
+import { useGroupsData } from '../../hooks/useGroupsData'
 import { formatDate, formatDateTime } from '../../lib/utils'
+import { errorMessage } from '../../lib/api'
 import { Button, Modal, SearchInput, Skeleton } from '../../components/ui'
 import { getMascot } from '../../lib/mascots'
 import { buildLearningMaterials } from '../../lib/materials'
 import MaterialCourseCard from '../../components/MaterialCourseCard'
+import GroupDirectoryCard from '../../components/GroupDirectoryCard'
 
 function MascotCharacter({ name, className = 'h-14 w-auto object-contain', loading = 'lazy' }) {
   const asset = getMascot(name)
@@ -56,7 +59,7 @@ function MascotCharacter({ name, className = 'h-14 w-auto object-contain', loadi
   )
 }
 
-const DISPLAY_TAB_ORDER = ['schedules', 'tasks', 'materials', 'announcements', 'tips', 'guidelines']
+const DISPLAY_TAB_ORDER = ['schedules', 'groups', 'tasks', 'materials', 'announcements', 'tips', 'guidelines']
 
 // Minimalist self-care tips
 const PSYCHOLOGY_TIPS = [
@@ -218,6 +221,10 @@ export default function DisplayPage() {
   // State for dismissing the top reminder banner
   const [isReminderDismissed, setIsReminderDismissed] = useState(false)
 
+  // Filters for Groups tab
+  const [groupFilterCourse, setGroupFilterCourse] = useState('all')
+  const [groupSearch, setGroupSearch] = useState('')
+
   // Filters for Tasks tab
   const [taskFilterCourse, setTaskFilterCourse] = useState('all')
   const [taskFilterType, setTaskFilterType] = useState('all')
@@ -262,8 +269,6 @@ export default function DisplayPage() {
   // INTEGRASI TABEL DATABASE ASLI
   // --------------------------------------------------------------------------
   const schedulePath = user ? (isStaff ? '/staff/schedules' : '/student/schedules') : null
-  const coursePath = user ? (isStaff ? '/staff/courses' : '/student/courses') : null
-  const groupPath = user ? (isStaff ? '/staff/groups' : '/student/groups') : null
   const taskPath = user ? (isStaff ? '/staff/tasks' : '/student/tasks') : null
   const materialPath = user ? (isStaff ? '/staff/materials' : '/student/materials') : null
 
@@ -274,19 +279,15 @@ export default function DisplayPage() {
     refresh: refreshSchedules,
   } = useApiData(schedulePath, { per_page: 100 }, { allPages: true, enabled: Boolean(user && schedulePath) })
 
-  // 2. Tabel Mata Kuliah
+  // 2. Tabel Mata Kuliah & Kelompok (sumber data bersama dengan halaman Kelompok)
   const {
-    data: rawCourses,
-    loading: loadingCourses,
-    refresh: refreshCourses,
-  } = useApiData(coursePath, { per_page: 500 }, { allPages: true, enabled: Boolean(user && coursePath) })
-
-  // 3. Tabel Kelompok
-  const {
-    data: rawGroups,
+    courses: rawCourses,
+    groups: rawGroups,
+    groupsLoaded,
     loading: loadingGroups,
+    error: groupsError,
     refresh: refreshGroups,
-  } = useApiData(groupPath, { per_page: 500, with_members: 1 }, { allPages: true, enabled: Boolean(user && groupPath) })
+  } = useGroupsData(isStaff ? 'staff' : 'student', { enabled: Boolean(user) })
 
   // 4. Tabel Tugas & Materi Perkuliahan
   const {
@@ -312,7 +313,6 @@ export default function DisplayPage() {
   // Refresh all tables
   const refreshAll = () => {
     refreshSchedules()
-    refreshCourses()
     refreshGroups()
     refreshTasks()
     refreshMaterials()
@@ -321,7 +321,6 @@ export default function DisplayPage() {
 
   const isSyncing =
     loadingSchedules ||
-    loadingCourses ||
     loadingGroups ||
     loadingTasks ||
     loadingMaterials ||
@@ -592,6 +591,53 @@ export default function DisplayPage() {
   const availableCourses = useMemo(() => {
     return Array.isArray(rawCourses) ? rawCourses : []
   }, [rawCourses])
+
+  const groupCourseOptions = useMemo(() => {
+    const options = new Map()
+
+    ;(rawGroups || []).forEach((group) => {
+      const courseId = String(group.course_id || '')
+      if (!courseId || options.has(courseId)) return
+
+      options.set(courseId, {
+        id: courseId,
+        code: group.course_code || '',
+        name: group.course_name || 'Mata kuliah',
+      })
+    })
+
+    return Array.from(options.values()).sort((a, b) => a.name.localeCompare(b.name, 'id'))
+  }, [rawGroups])
+
+  const displayedGroups = useMemo(() => {
+    const query = groupSearch.trim().toLowerCase()
+
+    return (rawGroups || [])
+      .filter((group) => {
+        if (groupFilterCourse !== 'all' && String(group.course_id) !== String(groupFilterCourse)) {
+          return false
+        }
+
+        if (!query) return true
+
+        const memberNames = (group.members || []).map((member) =>
+          typeof member === 'object' ? member.name : member,
+        )
+
+        return [
+          group.name,
+          group.course_name,
+          group.course_code,
+          group.leader_name,
+          ...memberNames,
+        ].some((value) => String(value || '').toLowerCase().includes(query))
+      })
+      .sort(
+        (a, b) =>
+          String(a.course_name || '').localeCompare(String(b.course_name || ''), 'id') ||
+          String(a.name || '').localeCompare(String(b.name || ''), 'id', { numeric: true }),
+      )
+  }, [rawGroups, groupFilterCourse, groupSearch])
 
   const handleTabKeyDown = (event) => {
     const currentIndex = DISPLAY_TAB_ORDER.indexOf(activeTab)
@@ -865,6 +911,13 @@ export default function DisplayPage() {
                 title: 'Jadwal Kuliah',
                 count: displayedSchedules.length,
                 icon: CalendarDays,
+                alertDot: false,
+              },
+              {
+                id: 'groups',
+                title: 'Kelompok',
+                count: (rawGroups || []).length,
+                icon: UsersRound,
                 alertDot: false,
               },
               {
@@ -1146,7 +1199,144 @@ export default function DisplayPage() {
         )}
 
         {/* ============================================================== */}
-        {/* 5. TAB 2: TUGAS KULIAH & PENGINGAT TENGGAT (PRO-MAX)           */}
+        {/* 5. TAB 2: KELOMPOK MAHASISWA                                   */}
+        {/* ============================================================== */}
+        {activeTab === 'groups' && (
+          <div
+            role="tabpanel"
+            id="display-panel-groups"
+            aria-labelledby="display-tab-groups"
+            className="space-y-4"
+          >
+            <div className="rounded-2xl border border-teal-200 dark:border-teal-800 bg-gradient-to-r from-teal-50/70 via-white to-teal-50/30 dark:from-slate-900 dark:to-teal-950/20 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row items-center gap-4">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-teal-100 dark:bg-teal-950/80 border border-teal-200 dark:border-teal-800">
+                <UsersRound className="h-8 w-8 text-teal-700 dark:text-teal-300" aria-hidden="true" />
+              </div>
+              <div className="space-y-1 text-center sm:text-left flex-1">
+                <span className="inline-block rounded-md bg-teal-800 text-white px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider">
+                  Direktori Kelompok
+                </span>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                  Kelompok Mahasiswa
+                </h2>
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  Lihat pembagian kelompok, ketua, dan seluruh anggota untuk setiap mata kuliah yang tersedia di portal.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-2.5 sm:grid-cols-3">
+              <div className="sm:col-span-2">
+                <SearchInput
+                  value={groupSearch}
+                  onChange={setGroupSearch}
+                  placeholder="Cari nama kelompok, mata kuliah, ketua, atau anggota..."
+                  label="Cari kelompok"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="display-group-course-filter" className="sr-only">
+                  Filter kelompok berdasarkan mata kuliah
+                </label>
+                <select
+                  id="display-group-course-filter"
+                  value={groupFilterCourse}
+                  onChange={(event) => setGroupFilterCourse(event.target.value)}
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs focus:border-teal-500"
+                >
+                  <option value="all">Semua Mata Kuliah ({groupCourseOptions.length})</option>
+                  {groupCourseOptions.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.code ? `${course.code} · ` : ''}{course.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {!user ? (
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center max-w-lg mx-auto">
+                <UsersRound className="mx-auto mb-3 h-16 w-16 text-slate-300 dark:text-slate-700" aria-hidden="true" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Masuk untuk Melihat Kelompok
+                </h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  Daftar kelompok hanya ditampilkan untuk mahasiswa dan staf yang sudah masuk ke portal.
+                </p>
+                <Link
+                  to="/login"
+                  className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-teal-700 hover:bg-teal-600 text-white px-4 py-2 text-xs font-semibold transition"
+                >
+                  <LogIn className="h-4 w-4" aria-hidden="true" />
+                  <span>Masuk Sekarang</span>
+                </Link>
+              </div>
+            ) : loadingGroups && !groupsLoaded ? (
+              <div className={`grid gap-3.5 ${isMobileView ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
+                <Skeleton className="h-64 rounded-2xl" />
+                <Skeleton className="h-64 rounded-2xl" />
+                <Skeleton className="h-64 rounded-2xl" />
+              </div>
+            ) : groupsError && !groupsLoaded ? (
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center max-w-lg mx-auto">
+                <UsersRound className="mx-auto mb-3 h-16 w-16 text-slate-300 dark:text-slate-700" aria-hidden="true" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Gagal Memuat Kelompok
+                </h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  {errorMessage(groupsError, 'Periksa koneksi API dan coba lagi.')}
+                </p>
+                <Button variant="secondary" size="sm" className="mt-4" onClick={refreshGroups}>
+                  <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                  Coba Lagi
+                </Button>
+              </div>
+            ) : displayedGroups.length === 0 ? (
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center max-w-lg mx-auto">
+                <MascotCharacter name="berpikir" className="h-20 w-auto mx-auto mb-3" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  {groupSearch || groupFilterCourse !== 'all'
+                    ? 'Kelompok Tidak Ditemukan'
+                    : 'Belum Ada Kelompok'}
+                </h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  {groupSearch || groupFilterCourse !== 'all'
+                    ? 'Coba sesuaikan kata kunci atau filter mata kuliah untuk menemukan kelompok lainnya.'
+                    : isStaff
+                      ? 'Belum ada kelompok yang terdaftar pada sistem.'
+                      : 'Anda belum tergabung dalam kelompok mana pun. Hubungi admin atau dosen jika kelompok Anda belum dibuat.'}
+                </p>
+                {(groupSearch || groupFilterCourse !== 'all') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGroupSearch('')
+                      setGroupFilterCourse('all')
+                    }}
+                    className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition cursor-pointer"
+                  >
+                    Reset Filter
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  Menampilkan {displayedGroups.length} dari {(rawGroups || []).length} kelompok
+                </p>
+                <div className={`grid gap-3.5 ${isMobileView ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
+                  {displayedGroups.map((group) => (
+                    <GroupDirectoryCard key={group.id} group={group} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* 6. TAB 3: TUGAS KULIAH & PENGINGAT TENGGAT (PRO-MAX)           */}
         {/* ============================================================== */}
         {activeTab === 'tasks' && (
           <div
