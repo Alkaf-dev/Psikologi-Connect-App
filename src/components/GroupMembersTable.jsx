@@ -61,11 +61,11 @@ export default function GroupMembersTable({
   const memberCount = group?.members_count ?? members.length
 
   return (
-    <Card className="overflow-hidden">
-      <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+    <Card className="overflow-hidden dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-3.5 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900">Anggota Kelompok</h2>
-          <p className="mt-0.5 text-[11px] text-slate-500">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Anggota Kelompok</h2>
+          <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
             {group?.name || 'Pilih kelompok'} · {memberCount} anggota
           </p>
         </div>
@@ -115,23 +115,23 @@ export default function GroupMembersTable({
               }`}
             >
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] uppercase tracking-wider text-slate-500">
-                  <th className="w-14 border-r border-slate-200/80 px-4 py-3 text-center font-semibold">No</th>
-                  <th className="border-r border-slate-200/80 px-4 py-3 text-center font-semibold">Nama Mahasiswa/i</th>
-                  <th className="border-r border-slate-200/80 px-4 py-3 text-center font-semibold">Mata Kuliah</th>
+                <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-400">
+                  <th className="w-14 border-r border-slate-200/80 px-4 py-3 text-center font-semibold dark:border-slate-800">No</th>
+                  <th className="border-r border-slate-200/80 px-4 py-3 text-center font-semibold dark:border-slate-800">Nama Mahasiswa/i</th>
+                  <th className="border-r border-slate-200/80 px-4 py-3 text-center font-semibold dark:border-slate-800">Mata Kuliah</th>
                   {showContacts ? (
                     <>
-                      <th className="border-r border-slate-200/80 px-4 py-3 text-center font-semibold">No HP</th>
-                      <th className="border-r border-slate-200/80 px-4 py-3 text-center font-semibold">Email</th>
+                      <th className="border-r border-slate-200/80 px-4 py-3 text-center font-semibold dark:border-slate-800">No HP</th>
+                      <th className="border-r border-slate-200/80 px-4 py-3 text-center font-semibold dark:border-slate-800">Email</th>
                     </>
                   ) : null}
-                  <th className="border-r border-slate-200/80 px-4 py-3 text-center font-semibold">Jumlah Anggota</th>
+                  <th className="border-r border-slate-200/80 px-4 py-3 text-center font-semibold dark:border-slate-800">Jumlah Anggota</th>
                   {canManage ? (
                     <th className="px-4 py-3 text-center font-semibold">Aksi</th>
                   ) : null}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {visibleMembers.map((member, index) => {
                   const roleLabel = member.role === 'ketua' ? 'Ketua' : 'Anggota'
                   const isLeader =
@@ -140,45 +140,45 @@ export default function GroupMembersTable({
                   const removing = String(removingUserId) === String(member.user_id)
 
                   return (
-                    <tr key={member.id || member.user_id} className="transition hover:bg-slate-50/70">
-                      <td className="border-b border-r border-slate-100 px-4 py-3 text-center text-xs font-medium text-slate-400">
+                    <tr key={member.id || member.user_id} className="transition hover:bg-slate-50/70 dark:hover:bg-slate-800/50">
+                      <td className="border-b border-r border-slate-100 px-4 py-3 text-center text-xs font-medium text-slate-400 dark:border-slate-800 dark:text-slate-500">
                         {(currentPage - 1) * PAGE_SIZE + index + 1}
                       </td>
-                      <td className="border-b border-r border-slate-100 px-4 py-3">
+                      <td className="border-b border-r border-slate-100 px-4 py-3 dark:border-slate-800">
                         <Link
                           to={`/profil/${member.user_id}`}
-                          className="text-teal-600 hover:underline"
+                          className="text-teal-600 hover:underline dark:text-teal-400"
                         >
-                          <p className="text-sm font-semibold text-slate-800">
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                             {member.name || 'Tanpa nama'}
                           </p>
                         </Link>
-                        <p className="mt-0.5 text-[11px] text-slate-400">
+                        <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
                           {[member.npm ? `NIM ${member.npm}` : '', roleLabel]
                             .filter(Boolean)
                             .join(' · ')}
                         </p>
                       </td>
-                      <td className="border-b border-r border-slate-100 px-4 py-3 text-center text-xs text-slate-600">
+                      <td className="border-b border-r border-slate-100 px-4 py-3 text-center text-xs text-slate-600 dark:border-slate-800 dark:text-slate-400">
                         {group?.course_name || '-'}
                       </td>
                       {showContacts ? (
                         <>
-                          <td className="whitespace-nowrap border-b border-r border-slate-100 px-4 py-3 text-center text-xs text-slate-600">
+                          <td className="whitespace-nowrap border-b border-r border-slate-100 px-4 py-3 text-center text-xs text-slate-600 dark:border-slate-800 dark:text-slate-400">
                             {member.phone || '-'}
                           </td>
-                          <td className="border-b border-r border-slate-100 px-4 py-3 text-center text-xs text-slate-600">
+                          <td className="border-b border-r border-slate-100 px-4 py-3 text-center text-xs text-slate-600 dark:border-slate-800 dark:text-slate-400">
                             <span className="mx-auto block max-w-[190px] break-all">
                               {member.email || '-'}
                             </span>
                           </td>
                         </>
                       ) : null}
-                      <td className="border-b border-r border-slate-100 px-4 py-3 text-center">
+                      <td className="border-b border-r border-slate-100 px-4 py-3 text-center dark:border-slate-800">
                         <Badge variant="info">{memberCount}</Badge>
                       </td>
                       {canManage ? (
-                        <td className="border-b border-slate-100 px-4 py-2 text-center">
+                        <td className="border-b border-slate-100 px-4 py-2 text-center dark:border-slate-800">
                           <Button
                             variant="danger-soft"
                             size="sm"
@@ -203,7 +203,7 @@ export default function GroupMembersTable({
               </tbody>
             </table>
           </div>
-          <div className="border-t border-slate-100 px-4 py-3">
+          <div className="border-t border-slate-100 px-4 py-3 dark:border-slate-800">
             <Pagination
               currentPage={currentPage}
               lastPage={lastPage}

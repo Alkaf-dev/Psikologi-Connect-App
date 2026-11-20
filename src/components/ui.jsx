@@ -219,7 +219,7 @@ export function SearchInput({ value, onChange, placeholder = 'Cari...', classNam
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         aria-label={label ? undefined : placeholder}
-        className="h-10 w-full rounded-xl border border-slate-300 bg-white pl-9 pr-9 text-sm text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/15"
+        className="h-10 w-full rounded-xl border border-slate-300 bg-white pl-9 pr-9 text-sm text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/15 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder:text-slate-500"
       />
       {value ? (
         <button
@@ -394,7 +394,7 @@ export function Avatar({ name, src, className, tone = 'teal' }) {
 export function Pagination({ currentPage = 1, lastPage = 1, total, perPage, onChange, className }) {
   if (!lastPage || lastPage <= 1) {
     return total !== undefined ? (
-      <p className={cn('text-xs text-slate-500', className)}>{total} data ditemukan</p>
+      <p className={cn('text-xs text-slate-500 dark:text-slate-400', className)}>{total} data ditemukan</p>
     ) : null
   }
 
@@ -406,7 +406,7 @@ export function Pagination({ currentPage = 1, lastPage = 1, total, perPage, onCh
 
   return (
     <div className={cn('flex flex-wrap items-center justify-between gap-3', className)}>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-slate-500 dark:text-slate-400">
         {total !== undefined ? `${total} data` : 'Data'}
         {perPage ? ` · ${perPage} per halaman` : ''}
       </p>
@@ -415,12 +415,12 @@ export function Pagination({ currentPage = 1, lastPage = 1, total, perPage, onCh
           type="button"
           onClick={() => onChange(currentPage - 1)}
           disabled={currentPage <= 1}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:bg-slate-50 disabled:opacity-40"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
           aria-label="Halaman sebelumnya"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        {start > 1 ? <span className="px-1 text-xs text-slate-400">...</span> : null}
+        {start > 1 ? <span className="px-1 text-xs text-slate-400 dark:text-slate-500">...</span> : null}
         {pages.map((page) => (
           <button
             key={page}
@@ -430,18 +430,18 @@ export function Pagination({ currentPage = 1, lastPage = 1, total, perPage, onCh
               'h-8 min-w-8 rounded-lg px-2 text-xs font-semibold transition',
               page === currentPage
                 ? 'bg-teal-600 text-white shadow-sm'
-                : 'border border-slate-300 bg-white text-slate-600 hover:bg-slate-50',
+                : 'border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800',
             )}
           >
             {page}
           </button>
         ))}
-        {end < lastPage ? <span className="px-1 text-xs text-slate-400">...</span> : null}
+        {end < lastPage ? <span className="px-1 text-xs text-slate-400 dark:text-slate-500">...</span> : null}
         <button
           type="button"
           onClick={() => onChange(currentPage + 1)}
           disabled={currentPage >= lastPage}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:bg-slate-50 disabled:opacity-40"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
           aria-label="Halaman berikutnya"
         >
           <ChevronRight className="h-4 w-4" />
@@ -462,7 +462,7 @@ export function FilterChip({ active, children, count, onClick, className, title 
         'inline-flex h-8 min-w-[4.5rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-xs font-semibold transition',
         active
           ? 'border-teal-600 bg-teal-600 text-white shadow-sm shadow-teal-600/20'
-          : 'border-slate-200 bg-white text-slate-600 hover:border-teal-200 hover:text-teal-700',
+          : 'border-slate-200 bg-white text-slate-600 hover:border-teal-200 hover:text-teal-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-teal-700 dark:hover:text-teal-300',
         className,
       )}
     >
@@ -471,7 +471,7 @@ export function FilterChip({ active, children, count, onClick, className, title 
         <span
           className={cn(
             'inline-flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] font-bold leading-none',
-            active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500',
+            active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300',
           )}
         >
           {count}

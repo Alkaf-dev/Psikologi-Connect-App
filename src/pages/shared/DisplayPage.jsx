@@ -35,11 +35,14 @@ import { useApiData } from '../../hooks/useApiData'
 import { useGroupsData } from '../../hooks/useGroupsData'
 import { formatDate, formatDateTime } from '../../lib/utils'
 import { errorMessage } from '../../lib/api'
+import { groupsForCourse, preferredGroupId } from '../../lib/groupHelpers'
 import { Button, Modal, SearchInput, Skeleton } from '../../components/ui'
 import { getMascot } from '../../lib/mascots'
 import { buildLearningMaterials } from '../../lib/materials'
 import MaterialCourseCard from '../../components/MaterialCourseCard'
-import GroupDirectoryCard from '../../components/GroupDirectoryCard'
+import GroupCourseCard from '../../components/GroupCourseCard'
+import GroupChips from '../../components/GroupChips'
+import GroupMembersTable from '../../components/GroupMembersTable'
 
 function MascotCharacter({ name, className = 'h-14 w-auto object-contain', loading = 'lazy' }) {
   const asset = getMascot(name)
@@ -221,9 +224,9 @@ export default function DisplayPage() {
   // State for dismissing the top reminder banner
   const [isReminderDismissed, setIsReminderDismissed] = useState(false)
 
-  // Filters for Groups tab
-  const [groupFilterCourse, setGroupFilterCourse] = useState('all')
-  const [groupSearch, setGroupSearch] = useState('')
+  // Selected course and group for the Groups tab
+  const [groupDirectoryCourseId, setGroupDirectoryCourseId] = useState('')
+  const [groupDirectoryGroupId, setGroupDirectoryGroupId] = useState('')
 
   // Filters for Tasks tab
   const [taskFilterCourse, setTaskFilterCourse] = useState('all')
@@ -283,6 +286,7 @@ export default function DisplayPage() {
   const {
     courses: rawCourses,
     groups: rawGroups,
+    courseCards: groupCourseCards,
     groupsLoaded,
     loading: loadingGroups,
     error: groupsError,
@@ -592,52 +596,33 @@ export default function DisplayPage() {
     return Array.isArray(rawCourses) ? rawCourses : []
   }, [rawCourses])
 
-  const groupCourseOptions = useMemo(() => {
-    const options = new Map()
+  const selectedDirectoryCourse =
+    groupCourseCards.find(
+      (course) => String(course.id) === String(groupDirectoryCourseId),
+    ) || null
 
-    ;(rawGroups || []).forEach((group) => {
-      const courseId = String(group.course_id || '')
-      if (!courseId || options.has(courseId)) return
+  const directoryCourseGroups = useMemo(
+    () => groupsForCourse(rawGroups, selectedDirectoryCourse?.id),
+    [rawGroups, selectedDirectoryCourse?.id],
+  )
 
-      options.set(courseId, {
-        id: courseId,
-        code: group.course_code || '',
-        name: group.course_name || 'Mata kuliah',
-      })
-    })
+  const selectedDirectoryGroup =
+    directoryCourseGroups.find(
+      (group) => String(group.id) === String(groupDirectoryGroupId),
+    ) ||
+    directoryCourseGroups[0] ||
+    null
 
-    return Array.from(options.values()).sort((a, b) => a.name.localeCompare(b.name, 'id'))
-  }, [rawGroups])
+  const selectDirectoryCourse = (courseId) => {
+    const nextGroups = groupsForCourse(rawGroups, courseId)
+    setGroupDirectoryCourseId(String(courseId))
+    setGroupDirectoryGroupId(preferredGroupId(nextGroups, user?.id))
+  }
 
-  const displayedGroups = useMemo(() => {
-    const query = groupSearch.trim().toLowerCase()
-
-    return (rawGroups || [])
-      .filter((group) => {
-        if (groupFilterCourse !== 'all' && String(group.course_id) !== String(groupFilterCourse)) {
-          return false
-        }
-
-        if (!query) return true
-
-        const memberNames = (group.members || []).map((member) =>
-          typeof member === 'object' ? member.name : member,
-        )
-
-        return [
-          group.name,
-          group.course_name,
-          group.course_code,
-          group.leader_name,
-          ...memberNames,
-        ].some((value) => String(value || '').toLowerCase().includes(query))
-      })
-      .sort(
-        (a, b) =>
-          String(a.course_name || '').localeCompare(String(b.course_name || ''), 'id') ||
-          String(a.name || '').localeCompare(String(b.name || ''), 'id', { numeric: true }),
-      )
-  }, [rawGroups, groupFilterCourse, groupSearch])
+  const backToGroupCourses = () => {
+    setGroupDirectoryCourseId('')
+    setGroupDirectoryGroupId('')
+  }
 
   const handleTabKeyDown = (event) => {
     const currentIndex = DISPLAY_TAB_ORDER.indexOf(activeTab)
@@ -1225,36 +1210,6 @@ export default function DisplayPage() {
               </div>
             </div>
 
-            <div className="grid gap-2.5 sm:grid-cols-3">
-              <div className="sm:col-span-2">
-                <SearchInput
-                  value={groupSearch}
-                  onChange={setGroupSearch}
-                  placeholder="Cari nama kelompok, mata kuliah, ketua, atau anggota..."
-                  label="Cari kelompok"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="display-group-course-filter" className="sr-only">
-                  Filter kelompok berdasarkan mata kuliah
-                </label>
-                <select
-                  id="display-group-course-filter"
-                  value={groupFilterCourse}
-                  onChange={(event) => setGroupFilterCourse(event.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs focus:border-teal-500"
-                >
-                  <option value="all">Semua Mata Kuliah ({groupCourseOptions.length})</option>
-                  {groupCourseOptions.map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.code ? `${course.code} · ` : ''}{course.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
             {!user ? (
               <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center max-w-lg mx-auto">
                 <UsersRound className="mx-auto mb-3 h-16 w-16 text-slate-300 dark:text-slate-700" aria-hidden="true" />
@@ -1274,9 +1229,9 @@ export default function DisplayPage() {
               </div>
             ) : loadingGroups && !groupsLoaded ? (
               <div className={`grid gap-3.5 ${isMobileView ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
-                <Skeleton className="h-64 rounded-2xl" />
-                <Skeleton className="h-64 rounded-2xl" />
-                <Skeleton className="h-64 rounded-2xl" />
+                {[0, 1, 2, 3, 4, 5].map((item) => (
+                  <Skeleton key={item} className="h-44 rounded-2xl" />
+                ))}
               </div>
             ) : groupsError && !groupsLoaded ? (
               <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center max-w-lg mx-auto">
@@ -1292,44 +1247,79 @@ export default function DisplayPage() {
                   Coba Lagi
                 </Button>
               </div>
-            ) : displayedGroups.length === 0 ? (
+            ) : groupCourseCards.length === 0 ? (
               <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center max-w-lg mx-auto">
                 <MascotCharacter name="berpikir" className="h-20 w-auto mx-auto mb-3" />
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  {groupSearch || groupFilterCourse !== 'all'
-                    ? 'Kelompok Tidak Ditemukan'
-                    : 'Belum Ada Kelompok'}
+                  Belum Ada Kelompok
                 </h3>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                  {groupSearch || groupFilterCourse !== 'all'
-                    ? 'Coba sesuaikan kata kunci atau filter mata kuliah untuk menemukan kelompok lainnya.'
-                    : isStaff
-                      ? 'Belum ada kelompok yang terdaftar pada sistem.'
-                      : 'Anda belum tergabung dalam kelompok mana pun. Hubungi admin atau dosen jika kelompok Anda belum dibuat.'}
+                  {isStaff
+                    ? 'Belum ada mata kuliah atau kelompok yang terdaftar pada sistem.'
+                    : 'Anda belum tergabung dalam kelompok mana pun. Hubungi admin atau dosen jika kelompok Anda belum dibuat.'}
                 </p>
-                {(groupSearch || groupFilterCourse !== 'all') && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setGroupSearch('')
-                      setGroupFilterCourse('all')
-                    }}
-                    className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition cursor-pointer"
-                  >
-                    Reset Filter
-                  </button>
-                )}
               </div>
-            ) : (
+            ) : !selectedDirectoryCourse ? (
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  Menampilkan {displayedGroups.length} dari {(rawGroups || []).length} kelompok
+                  Pilih mata kuliah untuk melihat daftar kelompok. Tersedia {groupCourseCards.length} mata kuliah.
                 </p>
                 <div className={`grid gap-3.5 ${isMobileView ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
-                  {displayedGroups.map((group) => (
-                    <GroupDirectoryCard key={group.id} group={group} />
+                  {groupCourseCards.map((card) => (
+                    <GroupCourseCard key={card.id} card={card} onSelect={selectDirectoryCourse} />
                   ))}
                 </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <Button variant="secondary" size="sm" onClick={backToGroupCourses}>
+                      <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                      Kembali
+                    </Button>
+                    <div className="min-w-0">
+                      <h3 className="text-base font-bold leading-6 text-slate-900 dark:text-white">
+                        {selectedDirectoryCourse.name}
+                      </h3>
+                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                        {[
+                          selectedDirectoryCourse.code,
+                          selectedDirectoryCourse.class_name,
+                          selectedDirectoryCourse.prodi_name,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="inline-flex min-h-8 items-center rounded-full border border-teal-200 bg-teal-50 px-2.5 text-[11px] font-semibold text-teal-800 dark:border-teal-800 dark:bg-teal-950/60 dark:text-teal-300">
+                    {directoryCourseGroups.length} kelompok
+                  </span>
+                </div>
+
+                {directoryCourseGroups.length === 0 ? (
+                  <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center max-w-lg mx-auto">
+                    <MascotCharacter name="berpikir" className="h-20 w-auto mx-auto mb-3" />
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      Belum Ada Kelompok pada Mata Kuliah Ini
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      Hubungi admin atau dosen jika kelompok untuk mata kuliah ini belum dibuat.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <GroupChips
+                      groups={directoryCourseGroups}
+                      selectedGroupId={selectedDirectoryGroup?.id}
+                      onSelect={setGroupDirectoryGroupId}
+                    />
+                    {selectedDirectoryGroup ? (
+                      <GroupMembersTable group={selectedDirectoryGroup} />
+                    ) : null}
+                  </>
+                )}
               </div>
             )}
           </div>
