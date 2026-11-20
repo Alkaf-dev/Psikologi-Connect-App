@@ -11,9 +11,9 @@ import GroupChips from '../../components/GroupChips'
 import GroupMembersTable from '../../components/GroupMembersTable'
 
 export default function StudentGroups() {
-  const { user } = useAuth()
+  const { user, isStaff } = useAuth()
   const { groups, courseCards, coursesLoaded, groupsLoaded, loading, error, refresh } =
-    useGroupsData('student')
+    useGroupsData(isStaff ? 'staff' : 'student')
   const [selectedCourseId, setSelectedCourseId] = useState('')
   const [selectedGroupId, setSelectedGroupId] = useState('')
 

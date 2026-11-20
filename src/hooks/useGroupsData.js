@@ -1,10 +1,12 @@
 import { useCallback, useMemo } from 'react'
+import { useAuth } from '../context/AuthContext'
 import { useApiData } from './useApiData'
 import { buildCourseCards } from '../lib/groupHelpers'
 
 export function useGroupsData(mode, options = {}) {
   const { enabled = true } = options
-  const isStaff = mode === 'staff'
+  const { isStaff: authIsStaff } = useAuth()
+  const isStaffEndpoint = mode === 'staff' || Boolean(authIsStaff)
 
   const courseParams = useMemo(
     () => ({ per_page: 500, sort: 'name', direction: 'asc' }),
@@ -16,19 +18,19 @@ export function useGroupsData(mode, options = {}) {
       per_page: 500,
       sort: 'name',
       direction: 'asc',
-      ...(isStaff ? { with_members: 1 } : {}),
+      ...(isStaffEndpoint ? { with_members: 1 } : {}),
     }),
-    [isStaff],
+    [isStaffEndpoint],
   )
 
   const coursesState = useApiData(
-    isStaff ? '/staff/courses' : '/student/courses',
+    isStaffEndpoint ? '/staff/courses' : '/student/courses',
     courseParams,
     { allPages: true, enabled },
   )
 
   const groupsState = useApiData(
-    isStaff ? '/staff/groups' : '/student/groups',
+    isStaffEndpoint ? '/staff/groups' : '/student/groups',
     groupParams,
     { allPages: true, enabled },
   )
@@ -37,8 +39,8 @@ export function useGroupsData(mode, options = {}) {
   const groups = groupsState.data || []
 
   const courseCards = useMemo(
-    () => buildCourseCards(courses, groups, { onlyWithGroups: !isStaff }),
-    [courses, groups, isStaff],
+    () => buildCourseCards(courses, groups, { onlyWithGroups: mode !== 'staff' }),
+    [courses, groups, mode],
   )
 
   const refresh = useCallback(() => {
