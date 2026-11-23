@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { UserRound, Users, UsersRound } from 'lucide-react'
+import { UserRound, Users, UsersRound, KeyRound } from 'lucide-react'
 import CrudPage from '../../components/CrudPage'
 import UserGroupsModal from '../../components/UserGroupsModal'
+import ResetPasswordModal from '../../components/ResetPasswordModal'
 import { Avatar, Badge, Button } from '../../components/ui'
 import { formatDate } from '../../lib/utils'
 import { loadProgramOptions } from '../../lib/staffLookups'
@@ -29,6 +30,7 @@ const roleLabels = {
 export default function StaffUsers() {
   const navigate = useNavigate()
   const [groupTarget, setGroupTarget] = useState(null)
+  const [passwordTarget, setPasswordTarget] = useState(null)
 
   return (
     <>
@@ -148,6 +150,15 @@ export default function StaffUsers() {
               <Button
                 variant="ghost"
                 size="icon-sm"
+                title="Reset password"
+                aria-label={`Reset password ${user.name}`}
+                onClick={() => setPasswordTarget(user)}
+              >
+                <KeyRound className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 title="Lihat Profil"
                 aria-label="Lihat profil pengguna"
                 onClick={() => navigate(`/profil/${user.id}`)}
@@ -168,6 +179,12 @@ export default function StaffUsers() {
         user={groupTarget?.user}
         onClose={() => setGroupTarget(null)}
         onSaved={() => groupTarget?.refresh?.()}
+      />
+
+      <ResetPasswordModal
+        open={Boolean(passwordTarget)}
+        user={passwordTarget}
+        onClose={() => setPasswordTarget(null)}
       />
     </>
   )
