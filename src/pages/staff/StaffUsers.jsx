@@ -4,6 +4,7 @@ import { UserRound, Users, UsersRound, KeyRound } from 'lucide-react'
 import CrudPage from '../../components/CrudPage'
 import UserGroupsModal from '../../components/UserGroupsModal'
 import ResetPasswordModal from '../../components/ResetPasswordModal'
+import BulkResetPasswordModal from '../../components/BulkResetPasswordModal'
 import { Avatar, Badge, Button } from '../../components/ui'
 import { formatDate } from '../../lib/utils'
 import { loadProgramOptions } from '../../lib/staffLookups'
@@ -31,6 +32,7 @@ export default function StaffUsers() {
   const navigate = useNavigate()
   const [groupTarget, setGroupTarget] = useState(null)
   const [passwordTarget, setPasswordTarget] = useState(null)
+  const [bulkResetOpen, setBulkResetOpen] = useState(false)
 
   return (
     <>
@@ -39,6 +41,12 @@ export default function StaffUsers() {
         title="Manajemen User"
         description="Kelola seluruh akun pengguna, role, status aktif, program studi, dan akses panel administrasi."
         listPath="/staff/users"
+        headerActions={
+          <Button variant="secondary" onClick={() => setBulkResetOpen(true)}>
+            <KeyRound className="h-4 w-4" />
+            Reset semua password
+          </Button>
+        }
         searchPlaceholder="Cari nama, NIM/NIP, email, kelas, atau telepon..."
         createLabel="Tambah user"
         emptyIcon={Users}
@@ -185,6 +193,11 @@ export default function StaffUsers() {
         open={Boolean(passwordTarget)}
         user={passwordTarget}
         onClose={() => setPasswordTarget(null)}
+      />
+
+      <BulkResetPasswordModal
+        open={bulkResetOpen}
+        onClose={() => setBulkResetOpen(false)}
       />
     </>
   )
