@@ -10,6 +10,7 @@ import ThemeSelector from './ThemeSelector'
 
 const navLinks = [
   { to: '/', label: 'Beranda', end: true },
+  { to: '/display', label: 'Display' },
   { to: '/pengumuman', label: 'Pengumuman' },
 ]
 
@@ -134,6 +135,9 @@ export default function PublicLayout() {
             <p className="mt-0.5 text-xs">{BRAND_SUBTITLE}</p>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-xs">
+            <Link to="/display" className="hover:text-slate-800">
+              Display
+            </Link>
             <Link to="/pengumuman" className="hover:text-slate-800">
               Pengumuman
             </Link>

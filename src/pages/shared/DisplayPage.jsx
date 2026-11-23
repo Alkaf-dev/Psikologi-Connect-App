@@ -271,16 +271,16 @@ export default function DisplayPage() {
   // --------------------------------------------------------------------------
   // INTEGRASI TABEL DATABASE ASLI
   // --------------------------------------------------------------------------
-  const schedulePath = user ? (isStaff ? '/staff/schedules' : '/student/schedules') : null
-  const taskPath = user ? (isStaff ? '/staff/tasks' : '/student/tasks') : null
-  const materialPath = user ? (isStaff ? '/staff/materials' : '/student/materials') : null
+  const schedulePath = '/display/schedules'
+  const taskPath = '/display/tasks'
+  const materialPath = '/display/materials'
 
   // 1. Tabel Jadwal
   const {
     data: rawSchedules,
     loading: loadingSchedules,
     refresh: refreshSchedules,
-  } = useApiData(schedulePath, { per_page: 100 }, { allPages: true, enabled: Boolean(user && schedulePath) })
+  } = useApiData(schedulePath, { per_page: 100 }, { allPages: true })
 
   // 2. Tabel Mata Kuliah & Kelompok (sumber data bersama dengan halaman Kelompok)
   const {
@@ -291,21 +291,21 @@ export default function DisplayPage() {
     loading: loadingGroups,
     error: groupsError,
     refresh: refreshGroups,
-  } = useGroupsData(isStaff ? 'staff' : 'student', { enabled: Boolean(user) })
+  } = useGroupsData('public')
 
   // 4. Tabel Tugas & Materi Perkuliahan
   const {
     data: rawTasks,
     loading: loadingTasks,
     refresh: refreshTasks,
-  } = useApiData(taskPath, { per_page: 200 }, { allPages: true, enabled: Boolean(user && taskPath) })
+  } = useApiData(taskPath, { per_page: 200 }, { allPages: true })
 
   // 5. Tabel Materi Perkuliahan
   const {
     data: rawMaterials,
     loading: loadingMaterials,
     refresh: refreshMaterials,
-  } = useApiData(materialPath, { per_page: 100 }, { allPages: true, enabled: Boolean(user && materialPath) })
+  } = useApiData(materialPath, { per_page: 100 }, { allPages: true })
 
   // 6. Tabel Pengumuman
   const {
@@ -743,18 +743,16 @@ export default function DisplayPage() {
             </div>
 
             {/* Sync Database Button */}
-            {user && (
-              <button
-                type="button"
-                onClick={refreshAll}
-                disabled={isSyncing}
-                className="inline-flex h-11 w-11 items-center justify-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-medium text-gray-700 dark:text-gray-200 shadow-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50 cursor-pointer"
-                title="Sinkronkan data dari tabel database"
-                aria-label={isSyncing ? 'Menyinkronkan data' : 'Sinkronkan data dari tabel database'}
-              >
-                <RotateCcw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} aria-hidden="true" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={refreshAll}
+              disabled={isSyncing}
+              className="inline-flex h-11 w-11 items-center justify-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-medium text-gray-700 dark:text-gray-200 shadow-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50 cursor-pointer"
+              title="Sinkronkan data dari tabel database"
+              aria-label={isSyncing ? 'Menyinkronkan data' : 'Sinkronkan data dari tabel database'}
+            >
+              <RotateCcw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} aria-hidden="true" />
+            </button>
 
             {/* Standalone Route Portal Button */}
             {isStandaloneRoute ? (
@@ -782,7 +780,7 @@ export default function DisplayPage() {
         {/* ============================================================== */}
         {/* 2. PENGINGAT TUGAS / DEADLINE REMINDER HERO WIDGET             */}
         {/* ============================================================== */}
-        {user && urgentTasks.length > 0 && !isReminderDismissed && (
+        {urgentTasks.length > 0 && !isReminderDismissed && (
           <div className="relative overflow-hidden rounded-2xl border-2 border-amber-300 dark:border-amber-500/50 bg-gradient-to-r from-amber-50 via-teal-50/50 to-white dark:from-amber-950/40 dark:via-slate-900 dark:to-teal-950/20 p-4 sm:p-5 shadow-sm transition-all animate-fade-in">
             {/* Top decorative badge */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -866,7 +864,7 @@ export default function DisplayPage() {
                   Selamat Datang di Portal Display Akademik
                 </h2>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-                  Masuk dengan akun terdaftar untuk melihat jadwal harian lengkap, mengakses materi perkuliahan, dan memantau tugas Anda.
+                  Semua jadwal, kelompok, tugas, materi, dan pengumuman dapat dilihat tanpa login. Masuk untuk mengumpulkan tugas dan mengelola data akademik.
                 </p>
               </div>
             </div>
@@ -1210,24 +1208,7 @@ export default function DisplayPage() {
               </div>
             </div>
 
-            {!user ? (
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center max-w-lg mx-auto">
-                <UsersRound className="mx-auto mb-3 h-16 w-16 text-slate-300 dark:text-slate-700" aria-hidden="true" />
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Masuk untuk Melihat Kelompok
-                </h3>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                  Daftar kelompok hanya ditampilkan untuk mahasiswa dan staf yang sudah masuk ke portal.
-                </p>
-                <Link
-                  to="/login"
-                  className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-teal-700 hover:bg-teal-600 text-white px-4 py-2 text-xs font-semibold transition"
-                >
-                  <LogIn className="h-4 w-4" aria-hidden="true" />
-                  <span>Masuk Sekarang</span>
-                </Link>
-              </div>
-            ) : loadingGroups && !groupsLoaded ? (
+            {loadingGroups && !groupsLoaded ? (
               <div className={`grid gap-3.5 ${isMobileView ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
                 {[0, 1, 2, 3, 4, 5].map((item) => (
                   <Skeleton key={item} className="h-44 rounded-2xl" />
@@ -1254,9 +1235,7 @@ export default function DisplayPage() {
                   Belum Ada Kelompok
                 </h3>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                  {isStaff
-                    ? 'Belum ada mata kuliah atau kelompok yang terdaftar pada sistem.'
-                    : 'Anda belum tergabung dalam kelompok mana pun. Hubungi admin atau dosen jika kelompok Anda belum dibuat.'}
+                  Belum ada mata kuliah atau kelompok yang terdaftar pada sistem.
                 </p>
               </div>
             ) : !selectedDirectoryCourse ? (

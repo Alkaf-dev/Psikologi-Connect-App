@@ -6,7 +6,8 @@ import { buildCourseCards } from '../lib/groupHelpers'
 export function useGroupsData(mode, options = {}) {
   const { enabled = true } = options
   const { isStaff: authIsStaff } = useAuth()
-  const isStaffEndpoint = mode === 'staff' || Boolean(authIsStaff)
+  const isPublicEndpoint = mode === 'public'
+  const isStaffEndpoint = !isPublicEndpoint && (mode === 'staff' || Boolean(authIsStaff))
 
   const courseParams = useMemo(
     () => ({ per_page: 500, sort: 'name', direction: 'asc' }),
@@ -18,19 +19,19 @@ export function useGroupsData(mode, options = {}) {
       per_page: 500,
       sort: 'name',
       direction: 'asc',
-      ...(isStaffEndpoint ? { with_members: 1 } : {}),
+      ...(isStaffEndpoint || isPublicEndpoint ? { with_members: 1 } : {}),
     }),
-    [isStaffEndpoint],
+    [isStaffEndpoint, isPublicEndpoint],
   )
 
   const coursesState = useApiData(
-    isStaffEndpoint ? '/staff/courses' : '/student/courses',
+    isPublicEndpoint ? '/display/courses' : isStaffEndpoint ? '/staff/courses' : '/student/courses',
     courseParams,
     { allPages: true, enabled },
   )
 
   const groupsState = useApiData(
-    isStaffEndpoint ? '/staff/groups' : '/student/groups',
+    isPublicEndpoint ? '/display/groups' : isStaffEndpoint ? '/staff/groups' : '/student/groups',
     groupParams,
     { allPages: true, enabled },
   )
