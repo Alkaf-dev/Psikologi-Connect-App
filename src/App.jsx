@@ -1,11 +1,13 @@
-import { lazy, useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import { ThemeProvider } from './context/ThemeContext'
+import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicLayout from './components/PublicLayout'
 import PortalLayout from './components/PortalLayout'
+import { Spinner } from './components/ui'
 import LoginPage from './pages/public/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
 
@@ -49,61 +51,72 @@ export default function App() {
 
   return (
     <BrowserRouter basename={basename}>
-      <ThemeProvider>
-        <AuthProvider>
-          <ToastProvider>
-          <ScrollToTop />
-          <Routes>
-            <Route element={<PublicLayout />}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/pengumuman" element={<AnnouncementsPage />} />
-              <Route path="/pengumuman/:id" element={<AnnouncementDetailPage />} />
-              <Route path="/profil/:id" element={<ProfileView />} />
-            </Route>
+      <ErrorBoundary>
+        <ThemeProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <ScrollToTop />
+              <Suspense
+                fallback={
+                  <div className="flex min-h-screen items-center justify-center gap-3 bg-slate-50 text-sm font-medium text-slate-500">
+                    <Spinner className="h-6 w-6 text-teal-600" />
+                    Memuat halaman...
+                  </div>
+                }
+              >
+                <Routes>
+                  <Route element={<PublicLayout />}>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/pengumuman" element={<AnnouncementsPage />} />
+                    <Route path="/pengumuman/:id" element={<AnnouncementDetailPage />} />
+                    <Route path="/profil/:id" element={<ProfileView />} />
+                  </Route>
 
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/display" element={<DisplayPage />} />
-            <Route path="/app" element={<Navigate to="/portal" replace />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/display" element={<DisplayPage />} />
+                  <Route path="/app" element={<Navigate to="/portal" replace />} />
 
-            <Route element={<ProtectedRoute role="student" />}>
-              <Route path="/portal" element={<PortalLayout />}>
-                <Route index element={<StudentDashboard />} />
-                <Route path="display" element={<DisplayPage />} />
-                <Route path="materi" element={<MaterialsPage />} />
-                <Route path="tugas" element={<StudentTasks />} />
-                <Route path="jadwal" element={<StudentSchedule />} />
-                <Route path="kelompok" element={<StudentGroups />} />
-                <Route path="pengumuman" element={<StudentAnnouncements />} />
-                <Route path="notifikasi" element={<NotificationsPage />} />
-                <Route path="profil" element={<ProfilePage />} />
-              </Route>
-            </Route>
+                  <Route element={<ProtectedRoute role="student" />}>
+                    <Route path="/portal" element={<PortalLayout />}>
+                      <Route index element={<StudentDashboard />} />
+                      <Route path="display" element={<DisplayPage />} />
+                      <Route path="materi" element={<MaterialsPage />} />
+                      <Route path="tugas" element={<StudentTasks />} />
+                      <Route path="jadwal" element={<StudentSchedule />} />
+                      <Route path="kelompok" element={<StudentGroups />} />
+                      <Route path="pengumuman" element={<StudentAnnouncements />} />
+                      <Route path="notifikasi" element={<NotificationsPage />} />
+                      <Route path="profil" element={<ProfilePage />} />
+                    </Route>
+                  </Route>
 
-            <Route element={<ProtectedRoute role="staff" />}>
-              <Route path="/admin" element={<PortalLayout />}>
-                <Route index element={<StaffDashboard />} />
-                <Route path="display" element={<DisplayPage />} />
-                <Route path="mata-kuliah" element={<StaffCourses />} />
-                <Route path="jadwal" element={<StaffSchedule />} />
-                <Route path="kelompok" element={<StaffGroups />} />
-                <Route path="materi" element={<MaterialsPage />} />
-                <Route path="tugas" element={<StaffTasks />} />
-                <Route path="pengumpulan" element={<StaffSubmissions />} />
-                <Route path="mahasiswa" element={<StaffStudents />} />
-                <Route path="program-studi" element={<StaffStudyPrograms />} />
-                <Route path="pengumuman" element={<StaffAnnouncements />} />
-                <Route path="user" element={<StaffUsers />} />
-                <Route path="notifikasi" element={<NotificationsPage />} />
-                <Route path="profil" element={<ProfilePage />} />
-                <Route path="pengaturan" element={<StaffSettings />} />
-              </Route>
-            </Route>
+                  <Route element={<ProtectedRoute role="staff" />}>
+                    <Route path="/admin" element={<PortalLayout />}>
+                      <Route index element={<StaffDashboard />} />
+                      <Route path="display" element={<DisplayPage />} />
+                      <Route path="mata-kuliah" element={<StaffCourses />} />
+                      <Route path="jadwal" element={<StaffSchedule />} />
+                      <Route path="kelompok" element={<StaffGroups />} />
+                      <Route path="materi" element={<MaterialsPage />} />
+                      <Route path="tugas" element={<StaffTasks />} />
+                      <Route path="pengumpulan" element={<StaffSubmissions />} />
+                      <Route path="mahasiswa" element={<StaffStudents />} />
+                      <Route path="program-studi" element={<StaffStudyPrograms />} />
+                      <Route path="pengumuman" element={<StaffAnnouncements />} />
+                      <Route path="user" element={<StaffUsers />} />
+                      <Route path="notifikasi" element={<NotificationsPage />} />
+                      <Route path="profil" element={<ProfilePage />} />
+                      <Route path="pengaturan" element={<StaffSettings />} />
+                    </Route>
+                  </Route>
 
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </ToastProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </BrowserRouter>
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </Suspense>
+            </ToastProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
+    </BrowserRouter>
   )
 }

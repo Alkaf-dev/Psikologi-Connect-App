@@ -304,6 +304,7 @@ export default function CrudPage({
   )
 
   const { data, meta, loading, error, refresh, setData } = useApiData(listPath, queryParams)
+  const rows = Array.isArray(data) ? data : []
 
   useEffect(() => {
     if (!onDataLoaded || !data) return
@@ -716,11 +717,11 @@ export default function CrudPage({
       ) : null}
 
       <Card className="relative overflow-hidden">
-        {loading && data && data.length > 0 ? (
+        {loading && rows.length > 0 ? (
           <div className="absolute inset-x-0 top-0 z-10 h-0.5 bg-gradient-to-r from-teal-400 via-teal-600 to-teal-400 animate-pulse" />
         ) : null}
 
-        {loading && (!data || data.length === 0) ? (
+        {loading && rows.length === 0 ? (
           <div className="space-y-2 p-4">
             {[0, 1, 2, 3, 4].map((item) => (
               <Skeleton key={item} className="h-12" />
@@ -740,7 +741,7 @@ export default function CrudPage({
               }
             />
           </div>
-        ) : data?.length === 0 ? (
+        ) : rows.length === 0 ? (
           <div className="p-6">
             <EmptyState
               icon={emptyIcon}
@@ -812,7 +813,7 @@ export default function CrudPage({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {data.map((item) => {
+                  {rows.map((item) => {
                     const isSelected = selectedIds.includes(item.id)
                     return (
                       <tr
